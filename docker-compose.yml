@@ -1,0 +1,27 @@
+version: '3.4'
+services:
+  # chroma:
+  #   container_name: chroma_db
+  #   image: chromadb/chroma:0.5.4.dev16
+  #   volumes:
+  #     - ./index_data:/chroma/chroma   # This is the path to the index data for turboard docs
+  #   environment:
+  #     IS_PERSISTENT: 'TRUE'
+  #     # ALLOW_RESET: 'TRUE'
+  #   restart: always
+
+  api:
+    container_name: proj0_api
+    build: ./api
+    image: proj0_api_image
+    ports:
+      - 580:80
+    volumes:
+      - ./api:/api
+    # depends_on:
+    #   - chroma
+
+    environment:
+      DEBUG: '1'  # Set to '0' for production
+    restart: always
+

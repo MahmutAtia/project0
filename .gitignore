@@ -1,0 +1,6 @@
+api/__pycache__
+api/models
+api/.env
+*.pyc
+index_data
+index_data.tar.gz
