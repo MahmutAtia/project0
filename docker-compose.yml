@@ -1,4 +1,4 @@
-version: '3.4'
+version: '3.9'
 services:
   # chroma:
   #   container_name: chroma_db
@@ -25,3 +25,17 @@ services:
       DEBUG: '1'  # Set to '0' for production
     restart: always
 
+  mongodb:
+    image: mongo:latest # Or a specific version if you prefer (02e.g., mongo:6.0)
+    container_name: proj0_mongodb
+    restart: always # Restart the container if it crashes
+    ports:
+      - "27017:27017" # Expose the MongoDB port
+    volumes:
+      - mongodb_data:/data/db # Persist data across container restarts
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mamo # Set a root username (important for security)
+      MONGO_INITDB_ROOT_PASSWORD: 123456 # Set a root password (important for security)
+
+volumes:
+  mongodb_data: # Define the volume for data persistence

@@ -1,0 +1,55 @@
+about: "" # At least 150 words - a personalized overview of the candidate
+personal_information:
+  name: ""
+  email: ""
+  phone: ""
+  location: 
+    address: ""
+    city: ""
+    state: ""
+    postal_code: ""
+  profiles:
+    linkedin: ""
+    github: ""
+    website: ""
+    portfolio: ""
+summary: ""
+objective: ""
+experience:
+  - company: ""
+    title: ""
+    location: ""
+    start_date: ""
+    end_date: ""
+    description: ""
+    technologies: []
+education:
+  - institution: ""
+    degree: ""
+    major: ""
+    minor: ""
+    gpa: ""
+    graduation_date: ""
+    relevant_courses: []
+skills:
+  - name: ""
+    keywords: []
+projects:
+  - name: ""
+    description: ""
+    link: ""
+    technologies: []
+awards_and_recognition:
+  - name: ""
+    date: ""
+    description: ""
+certifications:
+    - name: ""
+      issuing_authority: ""
+      date_obtained: ""
+      expiry_date: ""
+languages:
+    - language: ""
+      proficiency: ""
+interests:
+    - ""

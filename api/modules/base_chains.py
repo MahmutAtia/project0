@@ -7,7 +7,6 @@ from langchain_core.output_parsers import StrOutputParser
 from operator import itemgetter
 
 from .llm import llm_with_alternatives
-from .helpers import parse_table_info, get_chat_history_messages
 
 
 class BaseChain:
@@ -40,30 +39,3 @@ class BaseChain:
         llm = llm_with_alternatives
         self.chain = self.input_chain | prompt | llm | self.output_parser
         return self.chain
-
-
-class SQLChain(BaseChain):
-    def __init__(self, output_parser=StrOutputParser()):
-        input_components = RunnableParallel(
-            {
-                "prompt": itemgetter("prompt"),
-                "tables": itemgetter("tables"),
-                "dialect": itemgetter("engine"),
-                "ddl": itemgetter("ddl"),
-                "sample_data": itemgetter("sample_data"),
-                "chat_history": itemgetter("history"),
-            }
-        )
-
-        final_input = RunnableParallel(
-            {
-                "table_info": RunnableLambda(parse_table_info),
-                "dialect": itemgetter("dialect"),
-                "input": itemgetter("prompt"),
-                "chat_history": lambda x: get_chat_history_messages(x["chat_history"]),
-            }
-        )
-
-        input_chain = input_components | final_input
-
-        super().__init__(input_chain=input_chain, output_parser=output_parser)

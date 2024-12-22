@@ -1,0 +1,52 @@
+# Ignore Python cache files
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignore environment files and secrets
+# .env
+# *.env
+# *.key
+# *.pem
+
+# Ignore compiled model files
+# *.safetensors
+
+# Ignore archives and compressed files
+*.tar
+*.tar.gz
+*.zip
+*.rar
+
+# Ignore model directories (if not needed in the image)
+# models/
+
+# Ignore stores (if not needed in the image)
+# stores/
+stores.tar.gz
+
+# Ignore unnecessary config files
+# *.yml
+# *.yaml
+
+# Ignore logs and temporary files
+*.log
+*.tmp
+*.bak
+
+# Ignore IDE and OS-specific files
+.vscode/
+.idea/
+*.DS_Store
+Thumbs.db
+
+# Ignore Git-related files
+.git/
+.gitignore
+
+# Ignore Dockerfile itself if needed
+# Dockerfile
+
+# Include specific files if required (uncomment as needed)
+# !models/specific_model_directory/
+# !stores/specific_store_file.pkl
