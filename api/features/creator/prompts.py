@@ -31,9 +31,11 @@ Summarization and Objective: Provide a concise, impactful summary and rewrite th
 
 Arrays, Nested Structures, Skill Categorization, and Technologies: Follow previous instructions for handling these elements.
 
-No Fabrication: Do not invent information.
+No Fabrication: Do not invent information but enhance and present the candidate's actual experiences and achievements in the best possible light.
 
 Simple, Readable, and Impactful Language: Use clear, concise, and professional language throughout.
+
+Use primeicons find the icon that best represents the candidate's profession and include it in the primeicon field.
 
 Input Resume Text: {input_text}
 Output YAML:"""
@@ -43,3 +45,16 @@ create_resume_prompt = (
     + yaml_template
     + template_last_part
 )
+
+edit_resume_section_template = """  You are a Human Resources professional tasked with editing a specific section of a structured YAML file created from a resume.
+Understand Candidate's Prompt: Read the candidate's prompt to understand the context and requirements for the section you will edit. the candidate's prompt is provided to guide your editing of filling information in the section according to the candidate's requirements.
+
+Provided Section yaml to edit:
+```yaml
+{section_yaml}
+```
+Candidate's Prompt:{prompt}
+Output YAML:"""
+
+
+edit_resume_section_prompt =  PromptTemplate.from_template(edit_resume_section_template)

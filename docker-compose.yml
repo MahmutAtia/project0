@@ -25,17 +25,54 @@ services:
       DEBUG: '1'  # Set to '0' for production
     restart: always
 
-  mongodb:
-    image: mongo:latest # Or a specific version if you prefer (02e.g., mongo:6.0)
-    container_name: proj0_mongodb
-    restart: always # Restart the container if it crashes
-    ports:
-      - "27017:27017" # Expose the MongoDB port
+
+
+  django:
+    container_name: proj0_django
+    build: ./django
+    image: proj0_django_image
     volumes:
-      - mongodb_data:/data/db # Persist data across container restarts
+      - ./django:/app
+    ports:
+      - 8000:8000
+    depends_on:
+      - db
     environment:
-      MONGO_INITDB_ROOT_USERNAME: mamo # Set a root username (important for security)
-      MONGO_INITDB_ROOT_PASSWORD: 123456 # Set a root password (important for security)
+      - DEBUG=1
+      - DJANGO_ALLOWED_HOSTS=*
+      - DJANGO_SECRET_KEY=secret
+      - DJANGO_SETTINGS_MODULE=proj0.settings
+      - DJANGO_DB_NAME=postgres
+      - DJANGO_DB_USER=postgres
+      - DJANGO_DB_PASSWORD=postgres
+      - DJANGO_DB_HOST=db
+      - DJANGO_DB_PORT=5432
+      - PYTHONUNBUFFERED=1
+      - AI_SERVICE_URL=http://api:80/resumes/
+
+
+    restart: always
+
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+
+    restart: always
+
+
+  redis:
+    image: redis:6.2-alpine  # More specific version, alpine for smaller size
+    # ports:
+    #   - "6379:6379"
+    volumes:
+      - redis_data:/data  # Add persistence
+    command: redis-server --appendonly yes  # Enable persistence
+    restart: always
 
 volumes:
-  mongodb_data: # Define the volume for data persistence
+  redis_data:  # Define volume for persistence

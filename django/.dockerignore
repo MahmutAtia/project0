@@ -1,0 +1,7 @@
+# --- .dockerignore ---
+__pycache__
+.venv
+*.pyc
+.DS_Store
+*.swp
+db.sqlite3 # If you were using SQLite

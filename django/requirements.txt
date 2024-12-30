@@ -1,0 +1,15 @@
+django
+djangorestframework
+psycopg2-binary 
+gunicorn
+drf_yasg
+requests
+django-cors-headers
+django-redis
+redis
+dj-rest-auth
+django-allauth
+djangorestframework-simplejwt
+cryptography
+dj-rest-auth[with_social]
+python-dotenv

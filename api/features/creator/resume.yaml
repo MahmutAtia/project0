@@ -1,55 +1,70 @@
-about: "" # At least 150 words - a personalized overview of the candidate
-personal_information:
-  name: ""
-  email: ""
-  phone: ""
-  location: 
-    address: ""
-    city: ""
-    state: ""
-    postal_code: ""
-  profiles:
-    linkedin: ""
-    github: ""
-    website: ""
-    portfolio: ""
-summary: ""
-objective: ""
-experience:
-  - company: ""
-    title: ""
-    location: ""
-    start_date: ""
-    end_date: ""
-    description: ""
-    technologies: []
-education:
-  - institution: ""
-    degree: ""
-    major: ""
-    minor: ""
-    gpa: ""
-    graduation_date: ""
-    relevant_courses: []
-skills:
-  - name: ""
-    keywords: []
-projects:
-  - name: ""
-    description: ""
-    link: ""
-    technologies: []
-awards_and_recognition:
-  - name: ""
-    date: ""
-    description: ""
-certifications:
-    - name: ""
+title: Data Analyst Resume Collection # Title of the resume should be idenified by the candidate's experience or job title of interest 
+dicription: # very brief description of the resume few words
+primeicon: # icon name from primeicons library. an icon that represents the resume for example: pi pi-code ,pi pi-chart-line etc
+about: At least 100 words maximum 150 - a very personalized overview of the candidate and its resume and should contain personal information, career goals, and a brief summary of the resume.
+other_docs:
+    - id : cover_letter
+      title: Cover Letter # Title of the document
+      content:  # should be in markdown format
+      primeicon: pi pi-file # icon name from primeicons library
+    - id : motivation_letter
+      title: Motivation Letter # Title of the document
+      content:  # should be in markdown format
+      primeicon: pi pi-envelope # icon name from primeicons library
+
+resume:
+  personal_information:
+    name: ""
+    email: ""
+    phone: [] # Phone numbers as a list
+    location: 
+      address: null # Use null for optional string fields
+      city: null
+      state: null
+      postal_code: null
+    profiles:
+      linkedin: null
+      github: null
+      website: null
+      portfolio: null
+  summary: null # Use null for optional top-level fields
+  objective: null
+  experience:
+    - id: 1 # Unique identifier for each experience
+      company: ""
+      title: ""
+      location: null
+      start_date: ""
+      end_date: null # Can be "Present"
+      description: ""
+      technologies: []
+  education:
+    - id: 1 # Unique identifier for each education
+      institution: ""
+      degree: ""
+      major: ""
+      minor: null
+      gpa: null
+      graduation_date: ""
+      relevant_courses: []
+  skills:
+    - id: 1 # Unique identifier for each skill
+      name: ""
+      keywords: []
+  projects:
+    - id: 1 # Unique identifier for each project
+      name: ""
+      description: ""
+      link: null
+  awards_and_recognition: [] # Use empty list for optional arrays
+  certifications:
+    - id: 1 # Unique identifier for each certification
+      name: ""
       issuing_authority: ""
       date_obtained: ""
-      expiry_date: ""
-languages:
-    - language: ""
+      expiry_date: null
+  languages:
+    - id: 1 # Unique identifier for each language
+      language: ""
       proficiency: ""
-interests:
-    - ""
+  interests: [] # Use empty list for optional arrays
