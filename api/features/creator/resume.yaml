@@ -16,7 +16,7 @@ resume:
   personal_information:
     name: ""
     email: ""
-    phone: [] # Phone numbers as a list
+    phone: "" # Phone number can be comma separated for multiple numbers
     location: 
       address: null # Use null for optional string fields
       city: null
@@ -37,7 +37,7 @@ resume:
       start_date: ""
       end_date: null # Can be "Present"
       description: ""
-      technologies: []
+      technologies: [] # type: array of strings
   education:
     - id: 1 # Unique identifier for each education
       institution: ""
@@ -46,25 +46,158 @@ resume:
       minor: null
       gpa: null
       graduation_date: ""
-      relevant_courses: []
+      relevant_courses: [] # type: array of strings
   skills:
     - id: 1 # Unique identifier for each skill
       name: ""
-      keywords: []
+      proficiency: ""
+      keywords: [] # type: array of strings
   projects:
     - id: 1 # Unique identifier for each project
       name: ""
       description: ""
       link: null
-  awards_and_recognition: [] # Use empty list for optional arrays
+  awards_and_recognition:
+    - id: 1 
+      title: ""
+      issuing_organization: ""
+      date_received: ""
+      description: ""
+
+  Volunteer_and_social_activities:
+    - id: 1 
+      organization: ""
+      position: ""
+      start_date: ""
+      end_date: ""
+      description: ""
+
   certifications:
     - id: 1 # Unique identifier for each certification
       name: ""
       issuing_authority: ""
       date_obtained: ""
       expiry_date: null
+      discription: ""
   languages:
     - id: 1 # Unique identifier for each language
       language: ""
       proficiency: ""
-  interests: [] # Use empty list for optional arrays
+  interests: 
+    - id: 1 # Unique identifier for each interest
+      name: ""
+      keywords: []  # type: array of strings
+  references:
+    - id: 1 # Unique identifier for each reference
+      name: ""
+      position: ""
+      company_or_institution: ""
+      email: ""
+      phone: ""
+      relationship: ""
+      years_known: ""
+      description: ""
+  publications:
+    - id: 1 # Unique identifier for each publication
+      title: ""
+      authors: []  # type: array of strings
+      publication_date: ""
+      publisher: ""
+      link: null
+      description: ""
+  courses:
+    - id: 1 # Unique identifier for each course
+      title: ""
+      institution: ""
+      completion_date: ""
+      link: null
+      description: ""
+  conferences:
+    - id: 1 # Unique identifier for each conference
+      name: ""
+      date: ""
+      location: ""
+      link: null
+      description: ""
+
+  speaking_engagements:
+    - id: 1
+      title: ""
+      event: ""
+      date: ""
+      location: ""
+      audience_size: null
+      video_link: null
+      slides_link: null
+      description: ""
+
+  patents:
+    - id: 1
+      title: ""
+      patent_number: ""
+      filing_date: ""
+      issue_date: null
+      status: ""
+      inventors: [] # type: array of strings
+      description: ""
+
+  professional_memberships:
+    - id: 1
+      organization: ""
+      role: ""
+      start_date: ""
+      end_date: null
+      benefits: [] # type: array of strings
+      description: ""
+
+  military_service:
+    - id: 1
+      branch: ""
+      rank: ""
+      start_date: ""
+      end_date: ""
+      location: ""
+      duties: [] # type: array of strings
+      awards: [] # type: array of strings
+
+  teaching_experience:
+    - id: 1
+      institution: ""
+      position: ""
+      subject: ""
+      start_date: ""
+      end_date: null
+      description: ""
+      student_level: ""
+      class_size: null
+      description: ""
+
+  research_experience:
+    - id: 1
+      institution: ""
+      project: ""
+      role: ""
+      start_date: ""
+      end_date: null
+      description: ""
+      funding_source: null
+      publications: []  # type: array of strings
+      collaborators: []  # type: array of strings
+      description: ""
+  
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+

@@ -159,7 +159,8 @@ def generate_resume_section(request):
     body = {
         "input": {
             "prompt": prompt,
-            "section_yaml": section_yaml
+            "section_yaml": section_yaml,
+            "section_title": input_data.get("sectionTitle"),
         }
     }
     response = requests.post(ai_service_url, json=body)
@@ -175,3 +176,76 @@ def generate_resume_section(request):
             return Response({"error": f"Invalid data received from AI service: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     else:
         return Response(response.json(), status=response.status_code)
+
+
+
+
+@api_view(["POST"])
+def generate_from_job_desc(request):
+    input_data = request.data
+    print(input_data)
+    ai_service_url = os.environ.get("AI_SERVICE_URL") + "genereate_from_job_desc/invoke"
+    print(ai_service_url)
+    response = requests.post(ai_service_url, json=input_data)
+
+    if response.status_code == 200:
+        try:
+            generated_resume_yaml = response.json().get("output")
+            generated_resume_data = yaml.safe_load(generated_resume_yaml)
+            
+            ## Extract the data
+            title = generated_resume_data.get("title") # the title of the resume
+            description = generated_resume_data.get("description") # the description of the resume
+            icon = generated_resume_data.get("primeicon") # the icon of the resume
+            other_docs = generated_resume_data.get("other_docs") # a list of other documents
+            resume_data = generated_resume_data.get("resume") # the resume data
+            about = generated_resume_data.get("about") # the about of the resume
+            
+            if not request.user.is_authenticated:
+                timestamp = int(time.time())
+                session_key = f"temp_resume_{timestamp}"
+
+                # Store directly in Redis cache
+                cache_data = {
+                    'data': resume_data,
+                    'created_at': timestamp,
+                }
+            
+                cache.set(session_key, json.dumps(cache_data), timeout=3600)    
+            
+                # Verify storage
+                stored_data = cache.get(session_key)
+                print(f"DEBUG: Stored in Redis - {stored_data}")
+                
+                response = Response({
+                    'id': session_key,
+                    'message': 'Resume stored in Redis',
+                }, status=status.HTTP_201_CREATED)
+                
+                return response
+            
+            else: # the user is authenticated it will save the resume in the database
+                
+                # if this the first resume of the user it will set it as the default resume
+                if not Resume.objects.filter(user=request.user).exists():
+                    is_default = True
+                else:
+                    is_default = False
+                    
+                resume = Resume.objects.create(user=request.user, resume=resume_data, other_docs=other_docs, is_default=is_default, title=title, about=about ,icon=icon, description=description)
+                print(f"DEBUG: Resume saved - {resume}")
+                return Response({
+                    'id': resume.id,
+                    'message': 'Resume saved successfully',
+                }, status=status.HTTP_201_CREATED)
+                
+                
+        except (json.JSONDecodeError, yaml.YAMLError) as e:
+            return Response(
+                {"error": f"Invalid data received from AI service: {e}"}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    else:
+        return Response(response.json(), status=response.status_code)
+    
+                
