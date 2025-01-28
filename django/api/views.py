@@ -2,7 +2,7 @@ from rest_framework import generics, permissions, status
 from .models import Resume
 from .serializers import ResumeSerializer
 from django.http import Http404
-from .utils import cleanup_old_sessions
+from .utils import cleanup_old_sessions, extract_text_from_file
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 import requests # For calling the AI service
@@ -14,6 +14,7 @@ import json
 import yaml
 import os
 import time
+
 
 
 
@@ -179,73 +180,147 @@ def generate_resume_section(request):
 
 
 
-
 @api_view(["POST"])
 def generate_from_job_desc(request):
-    input_data = request.data
-    print(input_data)
-    ai_service_url = os.environ.get("AI_SERVICE_URL") + "genereate_from_job_desc/invoke"
-    print(ai_service_url)
-    response = requests.post(ai_service_url, json=input_data)
+    try:
+        print("DEBUG: Request Headers:", request.headers)
+        print("DEBUG: Request Files:", request.FILES)
+        print("DEBUG: Request POST Data:", request.POST)
 
-    if response.status_code == 200:
-        try:
-            generated_resume_yaml = response.json().get("output")
-            generated_resume_data = yaml.safe_load(generated_resume_yaml)
-            
-            ## Extract the data
-            title = generated_resume_data.get("title") # the title of the resume
-            description = generated_resume_data.get("description") # the description of the resume
-            icon = generated_resume_data.get("primeicon") # the icon of the resume
-            other_docs = generated_resume_data.get("other_docs") # a list of other documents
-            resume_data = generated_resume_data.get("resume") # the resume data
-            about = generated_resume_data.get("about") # the about of the resume
-            
-            if not request.user.is_authenticated:
-                timestamp = int(time.time())
-                session_key = f"temp_resume_{timestamp}"
+        uploaded_file = request.FILES.get('resume')
+        if not uploaded_file:
+            return Response({'error': 'No file uploaded'}, status=400)
 
-                # Store directly in Redis cache
-                cache_data = {
-                    'data': resume_data,
-                    'created_at': timestamp,
-                }
-            
-                cache.set(session_key, json.dumps(cache_data), timeout=3600)    
-            
-                # Verify storage
-                stored_data = cache.get(session_key)
-                print(f"DEBUG: Stored in Redis - {stored_data}")
-                
-                response = Response({
-                    'id': session_key,
-                    'message': 'Resume stored in Redis',
-                }, status=status.HTTP_201_CREATED)
-                
-                return response
-            
-            else: # the user is authenticated it will save the resume in the database
-                
-                # if this the first resume of the user it will set it as the default resume
-                if not Resume.objects.filter(user=request.user).exists():
-                    is_default = True
-                else:
-                    is_default = False
-                    
-                resume = Resume.objects.create(user=request.user, resume=resume_data, other_docs=other_docs, is_default=is_default, title=title, about=about ,icon=icon, description=description)
-                print(f"DEBUG: Resume saved - {resume}")
-                return Response({
-                    'id': resume.id,
-                    'message': 'Resume saved successfully',
-                }, status=status.HTTP_201_CREATED)
-                
-                
-        except (json.JSONDecodeError, yaml.YAMLError) as e:
-            return Response(
-                {"error": f"Invalid data received from AI service: {e}"}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        print("DEBUG: Uploaded File Name:", uploaded_file.name)
+        print("DEBUG: Uploaded File Content Type:", uploaded_file.content_type)
+        print("DEBUG: Uploaded File Size:", uploaded_file.size)
+
+        text = extract_text_from_file(uploaded_file)
+        print("DEBUG: Extracted Text:", text)
+
+        form_data = json.loads(request.POST.get('formData', '{}'))
+        print("DEBUG: Form Data:", form_data)
+
+ 
+
+        input_data = {"input" : {
+            'input_text': text,
+            'job_description': form_data.get('description') or '',
+            'language': form_data.get('targetLanguage') or 'en',
+            'docs_instructions': "\n".join(
+                f"Write a {key} tailored to the job description"
+                for key, value in form_data.get('documentPreferences', {}).items()
+                if value
             )
-    else:
-        return Response(response.json(), status=response.status_code)
-    
-                
+        }}
+        print(input_data.keys())
+        print("DEBUG: Input Data for AI Service:", input_data)
+
+        ai_service_url = os.environ.get("AI_SERVICE_URL") + "genereate_from_job_desc/invoke"
+        print("DEBUG: AI Service URL:", ai_service_url)
+
+        response = requests.post(ai_service_url, json=input_data)
+        print("DEBUG: AI Service Response Status Code:", response.status_code)
+        print("DEBUG: AI Service Response Content:", response.content)
+
+        if response.status_code == 200:
+            try:
+                generated_resume_yaml = response.json().get("output")
+                generated_resume_data = yaml.safe_load(generated_resume_yaml)
+
+                title = generated_resume_data.get("title")
+                description = generated_resume_data.get("description")
+                icon = generated_resume_data.get("primeicon")
+                other_docs = generated_resume_data.get("other_docs")
+                resume_data = generated_resume_data.get("resume")
+                about = generated_resume_data.get("about")
+
+                if not request.user.is_authenticated:
+                    timestamp = int(time.time())
+                    session_key = f"temp_resume_{timestamp}"
+                    cache_data = {
+                        'data': resume_data,
+                        'created_at': timestamp,
+                    }
+                    cache.set(session_key, json.dumps(cache_data), timeout=3600)
+                    print(f"DEBUG: Stored in Redis - {cache.get(session_key)}")
+                    return Response({
+                        'id': session_key,
+                        'message': 'Resume stored in Redis',
+                    }, status=status.HTTP_201_CREATED)
+                else:
+                    is_default = not Resume.objects.filter(user=request.user).exists()
+                    resume = Resume.objects.create(
+                        user=request.user,
+                        resume=resume_data,
+                        other_docs=other_docs,
+                        is_default=is_default,
+                        title=title,
+                        about=about,
+                        icon=icon,
+                        description=description
+                    )
+                    print(f"DEBUG: Resume saved - {resume}")
+                    return Response({
+                        'id': resume.id,
+                        'message': 'Resume saved successfully',
+                    }, status=status.HTTP_201_CREATED)
+            except (json.JSONDecodeError, yaml.YAMLError) as e:
+                return Response(
+                    {"error": f"Invalid data received from AI service: {e}"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+        else:
+            return Response(response.json(), status=response.status_code)
+    except Exception as e:
+        print("DEBUG: Exception:", str(e))
+        return Response({'error': str(e)}, status=500)    
+
+
+# @api_view(["POST"])
+# def generate_from_job_desc(request):
+#     try:
+#         # Handle file upload
+#         uploaded_file = request.FILES.get('resume')
+#         form_data = json.loads(request.POST.get('formData', '{}'))
+        
+#         # Extract text based on file type
+#         text = ''
+#         if uploaded_file.content_type == 'application/pdf':
+#             pdf_reader = PdfReader(io.BytesIO(uploaded_file.read()))
+#             text = '\n'.join([page.extract_text() for page in pdf_reader.pages])
+            
+#         elif uploaded_file.content_type in [
+#             'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+#             'application/msword'
+#         ]:
+#             doc = Document(io.BytesIO(uploaded_file.read()))
+#             text = '\n'.join([para.text for para in doc.paragraphs])
+            
+#         elif uploaded_file.content_type == 'text/plain':
+#             text = uploaded_file.read().decode('utf-8')
+            
+#         else:
+#             return Response({'error': 'Unsupported file type'}, status=400)
+
+#         # Prepare input for AI service
+#         input_data = {
+#             'input_text': text,
+#             'job_description': form_data.get('description'),
+#             'language': form_data.get('targetLanguage'),
+#             'docs_instructions': "\n".join(
+#                 f"Write a {key} tailored to the job description" 
+#                 for key, value in form_data.get('documentPreferences', {}).items() 
+#                 if value
+#             )
+#         }
+
+#         # Rest of your existing AI service call
+#         ai_service_url = f"{os.environ.get('AI_SERVICE_URL')}genereate_from_job_desc/invoke"
+#         response = requests.post(ai_service_url, json=input_data)
+#         # ... rest of your existing processing logic
+        
+        
+
+#     except Exception as e:
+#         return Response({'error': str(e)}, status=500)

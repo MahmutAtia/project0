@@ -11,5 +11,6 @@ dj-rest-auth
 django-allauth
 djangorestframework-simplejwt
 cryptography
-dj-rest-auth[with_social]
 python-dotenv
+python-docx
+PyPDF2
