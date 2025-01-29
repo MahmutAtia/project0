@@ -35,11 +35,9 @@ class ResumeRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     
     def get_object(self):
         session_key = str(self.kwargs.get('pk'))
-        print(f"DEBUG: Looking up key: {session_key}")
         
         if session_key.startswith('temp_resume_'):
             cached_data = cache.get(session_key)
-            print(f"DEBUG: Redis data found: {cached_data}")
             
             if cached_data:
                 try:
@@ -56,14 +54,11 @@ class ResumeRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
                     
                     return TempResume(resume_data)
                 except (json.JSONDecodeError, KeyError) as e:
-                    print(f"DEBUG: Error parsing cached data: {e}")
                     raise Http404("Invalid cache data")
             
             raise Http404("Temporary resume not found or expired")
         
         if self.request.user.is_authenticated:
-            print(f"DEBUG: User is authenticated: {self.request.user}")
-            print(Resume.objects.get(id=session_key, user=self.request.user))
             return Resume.objects.get(id=session_key, user=self.request.user)
             
         raise Http404("Resume not found")   
@@ -75,15 +70,12 @@ def generate_resume(request):
     try:
         cache.set('test_key', 'test_value')
         test_value = cache.get('test_key')
-        print(f"DEBUG: Redis test - {test_value}")
     except Exception as e:
-        print(f"DEBUG: Redis connection error - {str(e)}")
         return Response({"error": "Redis connection failed"}, status=500)
 
     input_data = request.data
     ai_service_url = os.environ.get("AI_SERVICE_URL") + "genereate_from_input/invoke"
     response = requests.post(ai_service_url, json=input_data)
-    print(input_data.keys())
 
     if response.status_code == 200:
         try:
@@ -213,16 +205,11 @@ def generate_from_job_desc(request):
                 if value
             )
         }}
-        print(input_data.keys())
-        print("DEBUG: Input Data for AI Service:", input_data)
 
         ai_service_url = os.environ.get("AI_SERVICE_URL") + "genereate_from_job_desc/invoke"
-        print("DEBUG: AI Service URL:", ai_service_url)
 
         response = requests.post(ai_service_url, json=input_data)
-        print("DEBUG: AI Service Response Status Code:", response.status_code)
-        print("DEBUG: AI Service Response Content:", response.content)
-
+    
         if response.status_code == 200:
             try:
                 generated_resume_yaml = response.json().get("output")
@@ -243,7 +230,6 @@ def generate_from_job_desc(request):
                         'created_at': timestamp,
                     }
                     cache.set(session_key, json.dumps(cache_data), timeout=3600)
-                    print(f"DEBUG: Stored in Redis - {cache.get(session_key)}")
                     return Response({
                         'id': session_key,
                         'message': 'Resume stored in Redis',
@@ -260,7 +246,6 @@ def generate_from_job_desc(request):
                         icon=icon,
                         description=description
                     )
-                    print(f"DEBUG: Resume saved - {resume}")
                     return Response({
                         'id': resume.id,
                         'message': 'Resume saved successfully',
@@ -273,7 +258,6 @@ def generate_from_job_desc(request):
         else:
             return Response(response.json(), status=response.status_code)
     except Exception as e:
-        print("DEBUG: Exception:", str(e))
         return Response({'error': str(e)}, status=500)    
 
 
