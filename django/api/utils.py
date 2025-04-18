@@ -7,6 +7,14 @@ from docx import Document
 import io
 
 
+import json
+from django.conf import settings
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+from weasyprint import HTML, CSS
+# from weasyprint.fonts import FontConfiguration # Optional - Not used, so removed
+
+
+
 def cleanup_old_sessions(request):
     """Remove session data older than 1 hour"""
     current_time = int(time.time())
@@ -53,3 +61,40 @@ def extract_text_from_file(uploaded_file):
     except Exception as e:
         logger.error(f'Error extracting text from file: {e}')
         raise
+    
+    
+def generate_pdf_from_resume_data(resume_data, template_theme='resume_template_2.html', chosen_theme='theme-default'):
+    """
+    Generates a PDF from resume data.
+
+    Args:
+        resume_data (dict): The resume data as a dictionary.
+        template_theme (str, optional): The name of the HTML template file.
+            Defaults to 'resume_template_2.html'.
+        chosen_theme (str, optional): The name of the CSS theme to apply.
+            Defaults to 'theme-default'.
+
+    Returns:
+        bytes: The PDF file content as bytes. Returns None on error.
+    """
+    try:
+        env = Environment(
+            loader=FileSystemLoader('./html_templates'),
+            autoescape=select_autoescape(['html', 'xml'])
+        )
+        template = env.get_template(template_theme)
+        # Pass theme_class to the template
+        html_out = template.render(theme_class=chosen_theme, **resume_data)
+        html_obj = HTML(string=html_out, base_url='.') # added base_url
+        pdf_file = html_obj.write_pdf()
+        
+        # Save the PDF to a file (optional)
+        # pdf_file_path = f"resume.pdf"
+        # with open(pdf_file_path, 'wb') as f:
+        #     f.write(pdf_file)
+        
+        
+        return pdf_file
+    except Exception as e:
+        print(f"Error generating PDF: {e}")
+        return None

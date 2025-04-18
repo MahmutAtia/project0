@@ -2,13 +2,16 @@ from rest_framework import generics, permissions, status
 from .models import Resume
 from .serializers import ResumeSerializer
 from django.http import Http404
-from .utils import cleanup_old_sessions, extract_text_from_file
+from .utils import cleanup_old_sessions, extract_text_from_file,generate_pdf_from_resume_data
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 import requests # For calling the AI service
 from rest_framework.decorators import api_view
 from django.core.cache import cache
 from django.utils import timezone
+from django.shortcuts import get_object_or_404
+from django.http import StreamingHttpResponse, FileResponse
+
 from datetime import datetime  # Import datetime class directly
 import json
 import yaml
@@ -260,6 +263,66 @@ def generate_from_job_desc(request):
     except Exception as e:
         return Response({'error': str(e)}, status=500)    
 
+
+################################## genereate_pdf ################################
+
+def file_iterator(file_like, chunk_size=8192):  # 8KB chunk size
+    """Generator to stream file in chunks."""
+    while True:
+        chunk = file_like.read(chunk_size)
+        if not chunk:
+            break
+        yield chunk
+        
+@api_view(["POST"])
+def generate_pdf(request):
+    """
+    API endpoint to generate and serve a PDF resume.
+    """
+    resume_id = request.data.get('resumeId')
+    template_theme = request.data.get('templateTheme', 'default.html')  # Default value
+    chosen_theme = request.data.get('chosenTheme', 'theme-default')
+
+    if not resume_id:
+        return Response({"error": "resumeId is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        resume = get_object_or_404(Resume, pk=resume_id)
+        resume_data = resume.resume
+       
+
+    except Exception as e:
+        return Response(
+            {"error": f"Error fetching resume data: {e}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+    pdf_data = generate_pdf_from_resume_data(resume_data, template_theme, chosen_theme)
+
+    if pdf_data:
+        # logger.info("PDF data generated successfully.  Type: %s, Length: %s", type(pdf_data), len(pdf_data))
+        try:
+            # Use the file_iterator with BytesIO
+            import io
+            pdf_buffer = io.BytesIO(pdf_data)
+            response = StreamingHttpResponse(file_iterator(pdf_buffer), # file chuncking is very important, i tried too much to send the whole file at once and it was not working.
+                                            content_type='application/pdf')
+            response['Content-Disposition'] = 'inline; filename="generated_resume.pdf"'
+            #  Set content length (optional, but good practice)
+            response['Content-Length'] = len(pdf_data)
+            return response
+        except Exception as e:
+            # logger.exception("Error creating StreamingHttpResponse:")  # Log this too!
+            return Response(
+                {"error": f"Error creating response: {e}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+    else:
+        return Response(
+            {"error": "Error generating PDF"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+   
+     )
 
 # @api_view(["POST"])
 # def generate_from_job_desc(request):

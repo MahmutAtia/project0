@@ -256,11 +256,15 @@ EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 
 # Auth Settings
-ACCOUNT_EMAIL_REQUIRED = True
+# ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_UNIQUE_EMAIL = True
-ACCOUNT_EMAIL_VERIFICATION = 'none'
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_USERNAME_REQUIRED = False
+
+
+# --- ADD or MODIFY these lines ---
+ACCOUNT_LOGIN_METHODS = {'email'}  # Or {'username'}, {'username', 'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*'] # Add 'username*' if needed
+ACCOUNT_EMAIL_VERIFICATION = 'none' # Example: Keep other allauth settings
+# ---
 ACCOUNT_EMAIL_SUBJECT_PREFIX = 'Your Site - '
 
 

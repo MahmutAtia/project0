@@ -54,14 +54,15 @@ services:
     restart: always
 
   db:
-    image: postgres:13
+    image: postgres:16  # Changed from postgres:13 to postgres:16
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
     ports:
       - "5432:5432"
-
+    volumes: # It's highly recommended to use a named volume to persist your data
+      - postgres_data:/var/lib/postgresql/data
     restart: always
 
 
@@ -76,3 +77,4 @@ services:
 
 volumes:
   redis_data:  # Define volume for persistence
+  postgres_data:  # Define volume for persistence

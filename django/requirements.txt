@@ -14,3 +14,4 @@ cryptography
 python-dotenv
 python-docx
 PyPDF2
+jinja2
