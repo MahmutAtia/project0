@@ -1,5 +1,5 @@
 from rest_framework import generics, permissions, status
-from .models import Resume
+from .models import Resume, GeneratedWebsite
 from .serializers import ResumeSerializer
 from django.http import Http404
 from .utils import cleanup_old_sessions, extract_text_from_file,generate_pdf_from_resume_data
@@ -10,16 +10,16 @@ from rest_framework.decorators import api_view
 from django.core.cache import cache
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
-from django.http import StreamingHttpResponse, FileResponse
+from django.http import StreamingHttpResponse, FileResponse, HttpResponse
 
 from datetime import datetime  # Import datetime class directly
 import json
 import yaml
 import os
 import time
+import uuid
 
-
-
+FRONTEND_BASE_URL="http://localhost:8000" # settings.FRONTEND_BASE_URL
 
 
 class ResumeListCreateView(generics.ListCreateAPIView):
@@ -273,7 +273,10 @@ def file_iterator(file_like, chunk_size=8192):  # 8KB chunk size
         if not chunk:
             break
         yield chunk
-        
+
+
+    
+
 @api_view(["POST"])
 def generate_pdf(request):
     """
@@ -323,6 +326,100 @@ def generate_pdf(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
    
      )
+        
+        
+############################# generate website resume #############################
+
+@api_view(["POST"])
+def generate_personal_website(request):
+    """
+    API endpoint to generate and save a personal website.
+    """
+    resume_id = request.data.get('resumeId')
+    preferences = request.data.get('preferences', {})
+    
+    if not resume_id:
+        return Response({"error": "resumeId is required"}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        resume = get_object_or_404(Resume, pk=resume_id)
+        resume_data = resume.resume
+
+        # Check if a website has already been generated for this resume
+        generated_website = GeneratedWebsite.objects.filter(resume=resume).first()
+        if generated_website:
+            # Website already exists, return the unique link
+            
+            website_url = f"{FRONTEND_BASE_URL}/api/website/{generated_website.unique_id}/"
+            return Response({"website_url": website_url}, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response(
+            {"error": f"Error fetching resume data: {e}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+    # Generate the personal website
+    resume_yaml = yaml.dump(resume_data)
+    preferences = yaml.dump(preferences)  # Convert preferences to YAML
+    ai_service_url = os.environ.get("AI_SERVICE_URL") + "create_resume_website/invoke"
+    body = {"input": {"resume_yaml": resume_yaml, "preferences": preferences}}
+
+    try:
+        ai_response = requests.post(ai_service_url, json=body)
+        ai_response.raise_for_status()
+        generated_website_yaml = ai_response.json().get("output")
+        generated_website_data = yaml.safe_load(generated_website_yaml)
+        html_code = generated_website_data.get("html")
+        css_code = generated_website_data.get("css")
+        js_code = generated_website_data.get("js")
+
+        full_html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Website</title>
+    <style>
+        {css_code}
+    </style>
+</head>
+<body>
+    {html_code}
+    <script>
+        {js_code}
+    </script>
+</body>
+</html>"""
+
+        # Save the generated website
+        unique_id = str(uuid.uuid4())
+        GeneratedWebsite.objects.create(resume=resume, unique_id=unique_id, html_content=full_html)
+
+        # Return the unique link
+        website_url = f"{FRONTEND_BASE_URL}/api/website/{unique_id}/"
+        return Response({"website_url": website_url}, status=status.HTTP_201_CREATED)
+
+    except requests.exceptions.RequestException as e:
+        return Response(
+            {"error": f"Error communicating with AI service: {e}"},
+            status=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+    except (yaml.YAMLError, AttributeError) as e:
+        return Response(
+            {"error": f"Error processing AI service response: {e}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+@api_view(["GET"])
+def serve_personal_website(request, unique_id):
+    """
+    API endpoint to serve a pre-generated personal website.
+    """
+    try:
+        generated_website = get_object_or_404(GeneratedWebsite, unique_id=unique_id)
+        return HttpResponse(generated_website.html_content, content_type="text/html")
+    except Exception as e:
+        return Response({"error": f"Website not found: {e}"}, status=status.HTTP_404_NOT_FOUND)
 
 # @api_view(["POST"])
 # def generate_from_job_desc(request):
