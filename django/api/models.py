@@ -19,6 +19,7 @@ class GeneratedWebsite(models.Model):
     resume = models.OneToOneField(Resume, on_delete=models.CASCADE, related_name='personal_website')
     unique_id = models.UUIDField(unique=True, editable=False, default=uuid.uuid4)
     html_content = models.TextField()
+    yaml_content = models.TextField(default="")  # Default to an empty string
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

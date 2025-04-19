@@ -2,7 +2,7 @@ from rest_framework import generics, permissions, status
 from .models import Resume, GeneratedWebsite
 from .serializers import ResumeSerializer
 from django.http import Http404
-from .utils import cleanup_old_sessions, extract_text_from_file,generate_pdf_from_resume_data
+from .utils import cleanup_old_sessions, extract_text_from_file,generate_pdf_from_resume_data,generate_html_from_yaml
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 import requests # For calling the AI service
@@ -10,8 +10,8 @@ from rest_framework.decorators import api_view
 from django.core.cache import cache
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
-from django.http import StreamingHttpResponse, FileResponse, HttpResponse
-
+from django.http import StreamingHttpResponse, FileResponse, HttpResponse, JsonResponse
+import textwrap
 from datetime import datetime  # Import datetime class directly
 import json
 import yaml
@@ -410,6 +410,120 @@ def generate_personal_website(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
+@api_view(["POST"])
+def generate_personal_website_bloks(request):
+    """
+    API endpoint to generate and save a personal website using Bloks.
+    """
+    resume_id = request.data.get('resumeId')
+    preferences = request.data.get('preferences', {})
+    
+    if not resume_id:
+        return Response({"error": "resumeId is required"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        resume = get_object_or_404(Resume, pk=resume_id)
+        resume_data = resume.resume
+
+        # Check if a website has already been generated for this resume
+        generated_website = GeneratedWebsite.objects.filter(resume=resume).first()
+        if generated_website:
+            # Website already exists, return the unique link
+            website_url = f"{FRONTEND_BASE_URL}/api/website/{generated_website.unique_id}/"
+            return Response({"website_url": website_url}, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response(
+            {"error": f"Error fetching resume data: {e}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+    # Generate the personal website using Bloks
+    resume_yaml = yaml.dump(resume_data)
+    preferences = yaml.dump(preferences)
+    ai_service_url = os.environ.get("AI_SERVICE_URL") + "create_resume_website_bloks/invoke"
+    body = {"input": {"resume_yaml": resume_yaml, "preferences": preferences}}
+
+    try:
+        ai_response = requests.post(ai_service_url, json=body)
+        ai_response.raise_for_status()
+        generated_website_bloks_yaml = ai_response.json().get("output")
+
+        # Save the generated website YAML
+        unique_id = str(uuid.uuid4())
+        GeneratedWebsite.objects.create(
+            resume=resume,
+            unique_id=unique_id,
+            yaml_content=generated_website_bloks_yaml,
+        )
+
+        # Return the unique link
+        website_url = f"{FRONTEND_BASE_URL}/api/website_yaml/{unique_id}/"
+        return Response({"website_url": website_url}, status=status.HTTP_201_CREATED)
+
+    except requests.exceptions.RequestException as e:
+        return Response(
+            {"error": f"Error communicating with AI service: {e}"},
+            status=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+    except (yaml.YAMLError, AttributeError) as e:
+        return Response(
+            {"error": f"Error processing AI service response: {e}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@api_view(["GET"])
+def serve_website_yaml_json(request, resume_id):
+    """
+    API endpoint to serve the parsed YAML content for a given website ID (resume_id).
+    """
+    try:
+        # Assuming unique_id in your model corresponds to the resume_id from frontend
+        # Adjust lookup field if necessary (e.g., pk=resume_id)
+        generated_website = get_object_or_404(GeneratedWebsite, unique_id=resume_id)
+
+        yaml_content = generated_website.yaml_content
+
+        # Parse the YAML content
+        try:
+            parsed_yaml = yaml.safe_load(yaml_content)
+        except yaml.YAMLError as e:
+            # Handle YAML parsing errors
+            return Response(
+                {"error": f"Error parsing YAML content: {e}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        # Return the parsed YAML (Python dict/list) as JSON
+        return Response(parsed_yaml, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        # Catch any other unexpected errors (e.g., database issues)
+        print(f"An unexpected error occurred: {e}") # Log the error
+        return Response(
+            {"error": "An internal server error occurred."},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@api_view(["GET"])
+def serve_personal_website_yaml(request, unique_id):
+    """
+    API endpoint to serve a pre-generated personal website using Bloks.
+    """
+    try:
+        generated_website = get_object_or_404(GeneratedWebsite, unique_id=unique_id)
+        json_data = yaml.safe_load(generated_website.yaml_content)
+        # Generate the HTML from the YAML data
+        full_html = generate_html_from_yaml(json_data)
+        return HttpResponse(full_html, content_type="text/html")
+    except Exception as e:
+        return Response({"error": f"Website not found: {e}"}, status=status.HTTP_404_NOT_FOUND)
+
+        
+
+
 @api_view(["GET"])
 def serve_personal_website(request, unique_id):
     """
@@ -420,6 +534,61 @@ def serve_personal_website(request, unique_id):
         return HttpResponse(generated_website.html_content, content_type="text/html")
     except Exception as e:
         return Response({"error": f"Website not found: {e}"}, status=status.HTTP_404_NOT_FOUND)
+    
+    
+    
+############################### edit website block ###############################
+
+@api_view(["POST"])
+def edit_website_block(request):
+    data = json.loads(request.body)
+    resume_id = data.get('resumeId')
+    current_name = data.get('blockName')
+    current_html = data.get('currentHtml')
+    current_css = data.get('currentCss')
+    current_js = data.get('currentJs')
+    prompt = data.get('prompt')
+    artifacts = data.get('artifacts', [])
+    
+    if not all([resume_id, current_name, prompt]):
+            return JsonResponse({'error': 'Missing required parameters.'}, status=400)
+        
+    # Call the AI service
+    ai_service_url = os.environ.get("AI_SERVICE_URL") + "edit_block/invoke"
+    body = {
+        "input": {
+            "current_name": current_name,
+            "current_html": textwrap.indent(current_html, '  '),# used to indent the html code
+            "current_css":  textwrap.indent(current_css, '  '),# used to indent the css code
+            "current_js": textwrap.indent(current_js, '  '),# used to indent the js code
+            "prompt": prompt,
+            "artifacts": artifacts
+        }
+    }
+    
+    response = requests.post(ai_service_url, json=body)
+    if response.status_code == 200:
+        try:
+            generated_block_yaml = response.json().get("output")
+            generated_block_data = yaml.safe_load(generated_block_yaml)
+            html_code = generated_block_data.get("html")
+            css_code = generated_block_data.get("css")
+            js_code = generated_block_data.get("js")
+
+            return JsonResponse({
+                'html': html_code,
+                'css': css_code,
+                'js': js_code
+            }, status=200)
+        except (json.JSONDecodeError, yaml.YAMLError) as e:
+            return JsonResponse({"error": f"Invalid data received from AI service: {e}"}, status=500)
+    else:
+        return JsonResponse({"error": "Error from AI service"}, status=response.status_code)
+
+            
+      
+        
+
 
 # @api_view(["POST"])
 # def generate_from_job_desc(request):

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        {% if data.global.name %}
+            {{ data.global.name | capitalize }}
+        {% else %}
+            Website
+        {% endif %}
+    </title>
+    <style>
+        /* Global Styles */
+        {{ data.global.css | safe }}
+    </style>
+</head>
+<body>
+    <header>
+        {{ data.global.html | safe }}
+    </header>
+    <main>
+        {% for block in data.code_bloks %}
+            <section id="{{ block.name | lower }}">
+                <style>
+                    /* Styles for {{ block.name }} */
+                    {{ block.css | safe }}
+                </style>
+                {{ block.html | safe }}
+                {% if block.js %}
+                    <script>
+                        /* Script for {{ block.name }} */
+                        {{ block.js | safe }}
+                    </script>
+                {% endif %}
+            </section>
+        {% endfor %}
+    </main>
+    
+    <script>
+        /* Global Scripts */
+        {{ data.global.js | safe }}
+    </script>
+</body>
+</html>

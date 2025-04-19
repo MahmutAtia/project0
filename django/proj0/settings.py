@@ -296,3 +296,5 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
+# urls related in django in general
+APPEND_SLASH = True
