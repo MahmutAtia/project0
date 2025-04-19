@@ -169,3 +169,84 @@ Client Preferences:
 personal website yaml output"""
 
 create_resume_website_prompt = PromptTemplate.from_template(create_resume_website_template)
+create_resume_website_bloks_template = """ You are a professional designer and frontend developer tasked with creating a structured YAML file which contains the html,css and js code for a personal portfolio website based on a client resume information.
+Just output the yaml file with the html, css and js code for the personal portfolio website. Do not output anything else. no comments or explanations.
+
+yaml output example format:
+```yaml
+global:
+  name: "global"
+  js: | # global js code here
+  css: | # global css and themes code here
+  html: | # global html code here
+  feedback: "Here you can modify the global styles and themes for the website." # short feedback for the client max 100 characters
+code_bloks: # examples of code bloks. you should add bloks according to the resume information and the client preferences.
+  - name: "header"
+    html: | # header html code here
+    css: | # header css code here
+    js: | # header js code here
+    feedback: "here you can modify the header of the website." # short feedback for the client max 100 characters
+  - name: "hero_section"
+    html: | # hero section html code here
+    css: | # hero section css code here
+    js: | # hero section js code here
+    feedback: "Hero section."
+```
+
+ 
+
+ 
+the resume information is provided below:
+YAML Template:
+```yaml
+{resume_yaml}
+```
+
+Client Preferences:
+{preferences}
+
+Instructions: 
+Pay attention to the following points in your design:
+Visually compelling & modern design.
+Reflect professional identity (based on resume).
+Prioritize key resume info; summarize/omit as needed.
+Clean layout, strong visual hierarchy.
+High-quality, relevant images/graphics.
+Strategic use of consistent icons/illustrations.
+Visually appealing & memorable.
+Modern design trends & techniques.
+Intuitive navigation, responsive design.
+Subtle, tasteful animated transitions/effects.
+Engaging hover/animation on interactive elements.
+User-friendly experience.
+Valid HTML5, CSS3, efficient JS.
+Optimize for fast loading.
+Consistent design across all elements.
+
+personal portfolio website yaml output"""
+
+create_resume_website_bloks_prompt = PromptTemplate.from_template(create_resume_website_bloks_template)
+
+
+edit_resume_website_block_template = """ You are a professional designer and frontend developer tasked with editing a specific section of a personal portfolio website based on a client prompt.
+You must output just the updated yaml file with the html, css and js code for the personal portfolio website. Do not output anything else. no comments or explanations.
+
+the yaml to edit:
+```yaml
+name: "{current_name}"
+html: |
+{current_html}
+css: |
+{current_css}
+js: |
+{current_js}
+```
+
+
+here also some artifacts that user added you can use them to edit the yaml:
+{artifacts}
+
+Client Prompt: {prompt}
+
+Updated yaml output:"""
+edit_website_block_prompt = PromptTemplate.from_template(edit_resume_website_block_template)
