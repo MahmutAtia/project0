@@ -176,7 +176,7 @@ Ensure initial content visibility in CSS and use JavaScript to dynamically add h
 Pay attention to the yaml output indentation and format.
 
 
-yaml output example format:s
+yaml output example format:
 ```yaml
 global:
   name: "global"
