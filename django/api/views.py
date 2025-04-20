@@ -349,8 +349,7 @@ def generate_personal_website(request):
         if generated_website:
             # Website already exists, return the unique link
             
-            website_url = f"{FRONTEND_BASE_URL}/api/website/{generated_website.unique_id}/"
-            return Response({"website_url": website_url}, status=status.HTTP_200_OK)
+            return Response({"website_uuid": generated_website.unique_id}, status=status.HTTP_200_OK)
 
     except Exception as e:
         return Response(
@@ -429,8 +428,7 @@ def generate_personal_website_bloks(request):
         generated_website = GeneratedWebsite.objects.filter(resume=resume).first()
         if generated_website:
             # Website already exists, return the unique link
-            website_url = f"{FRONTEND_BASE_URL}/api/website/{generated_website.unique_id}/"
-            return Response({"website_url": website_url}, status=status.HTTP_200_OK)
+            return Response({"website_uuid": generated_website.unique_id}, status=status.HTTP_200_OK)
 
     except Exception as e:
         return Response(
@@ -457,9 +455,8 @@ def generate_personal_website_bloks(request):
             yaml_content=generated_website_bloks_yaml,
         )
 
-        # Return the unique link
-        website_url = f"{FRONTEND_BASE_URL}/api/website_yaml/{unique_id}/"
-        return Response({"website_url": website_url}, status=status.HTTP_201_CREATED)
+        # Return the unique id
+        return Response({"website_uuid": unique_id}, status=status.HTTP_201_CREATED)
 
     except requests.exceptions.RequestException as e:
         return Response(
@@ -474,7 +471,7 @@ def generate_personal_website_bloks(request):
 
 
 @api_view(["GET"])
-def serve_website_yaml_json(request, resume_id):
+def get_website_yaml_json(request, resume_id):
     """
     API endpoint to serve the parsed YAML content for a given website ID (resume_id).
     """
@@ -535,7 +532,27 @@ def serve_personal_website(request, unique_id):
     except Exception as e:
         return Response({"error": f"Website not found: {e}"}, status=status.HTTP_404_NOT_FOUND)
     
-    
+############################## Update yaml website content ##############################
+@api_view(["PUT"])
+def update_website_yaml(request, unique_id):
+    """
+    API endpoint to update the YAML content of a personal website.
+    """
+    try:
+        generated_website = get_object_or_404(GeneratedWebsite, unique_id=unique_id)
+   
+        json_content = request.data #the json content from the frontend has global and code_bloks
+        
+
+       
+        # Update the YAML content in the database
+        generated_website.yaml_content = yaml.dump(json_content)
+        generated_website.save()
+
+        return Response({"message": "YAML content updated successfully"}, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response({"error": f"Error updating website: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 ############################### edit website block ###############################
 

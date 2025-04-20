@@ -11,13 +11,14 @@ urlpatterns = [
     path('resumes/generate_from_job_desc/', views.generate_from_job_desc, name='generate-resume-from-job-desc'),
     path('resumes/edit/', views.generate_resume_section, name='edit-resume'),
 
-    # Add the new editor views here
-    path('website-yaml/<uuid:resume_id>/', views.serve_website_yaml_json, name='serve_website_yaml_json'),
+    # editor views here
+    path('website-yaml/<uuid:resume_id>/', views.get_website_yaml_json, name='serve_website_yaml_json'),
+    path('website-yaml/update/<uuid:unique_id>/', views.update_website_yaml, name='save-updates-to-personal-website'),
     path('website-yaml/edit-block/', views.edit_website_block, name='edit_website_block'), # With trailing slash
 
     # 2. Other prefixes with parameters
     path('website/<uuid:unique_id>/', views.serve_personal_website, name='view-personal-website'),
-    path('website_yaml/<uuid:unique_id>/', views.serve_personal_website_yaml, name='view-personal-website-yaml'),
+    path('<uuid:unique_id>/', views.serve_personal_website_yaml, name='view-personal-website-yaml'),
 
     # 3. Specific parameterized paths under 'resumes/'
     path('resumes/<str:pk>/generate/', views.generate_resume, name='generate-resume-with-pk'),
