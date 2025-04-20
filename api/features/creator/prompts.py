@@ -172,9 +172,11 @@ create_resume_website_prompt = PromptTemplate.from_template(create_resume_websit
 create_resume_website_bloks_template = """ You are a professional designer and frontend developer tasked with creating a structured YAML file which contains the html,css and js code for a personal portfolio website based on a client resume information.
 Just output the yaml file with the html, css and js code for the personal portfolio website. Do not output anything else. no comments or explanations.
 Do not add any comments in the code. do not use unnecessary tokens in the code.
+Ensure initial content visibility in CSS and use JavaScript to dynamically add hiding/animation classes for progressive enhancement.
 Pay attention to the yaml output indentation and format.
 
-yaml output example format:
+
+yaml output example format:s
 ```yaml
 global:
   name: "global"
