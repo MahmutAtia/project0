@@ -172,7 +172,7 @@ create_resume_website_prompt = PromptTemplate.from_template(create_resume_websit
 create_resume_website_bloks_template = """ You are a professional designer and frontend developer tasked with creating a structured YAML file which contains the html,css and js code for a personal portfolio website based on a client resume information.
 Just output the yaml file with the html, css and js code for the personal portfolio website. Do not output anything else. no comments or explanations.
 Do not add any comments in the code. do not use unnecessary tokens in the code.
-Pay attention to the yaml output indentation and format.
+Pay attention to the yaml output indentation and format. the yaml safety is very important.
 If a field is not needed ot empty, just leave it empty with "" or " | " and do not add any comments or explanations.
 
 
@@ -181,6 +181,7 @@ yaml output example format:
 website:
   name: "site name"
 global:
+  name: "global" # do not change this name. it is always global.
   fonts: |
     /* Global font styles */
   
@@ -205,24 +206,30 @@ global:
 
   other_global_css: |
     /* Other global CSS */
-  description: "Her you can modify Global styles, themes, JavaScript, and a floating theme switch." # descriptions max 100 characters
+  feedback: "Her you can modify Global styles, themes, JavaScript, and a floating theme switch." # descriptions max 100 characters
 code_blocks:
   - name: "header"
     html: |
+      <!-- Header HTML -->
     
     css: |
+      /* Header CSS */
     
     js: |
+      // Header JavaScript
     
-    description: "The website header."
+    feedback: "Here you can modify the header of the website."
   - name: "hero_section"
     html: |
+      <!-- Hero Section HTML -->
 
     css: |
+      /* Hero Section CSS */
     
     js: |
+      // Hero Section JavaScript
 
-    description: "here you can modify the hero section of the website."
+    feedback: "here you can modify the hero section of the website."
     ```
 
 
@@ -279,3 +286,34 @@ here also some artifacts that user added you can use them to edit the yaml:
 Client Prompt: {prompt}
 Updated yaml output:"""
 edit_website_block_prompt = PromptTemplate.from_template(edit_resume_website_block_template)
+
+edit_resume_website_global_template = """ You are a professional designer and frontend developer tasked with editing a specific section of a personal portfolio website based on a client prompt.
+You must output just the updated yaml file with the html, css and js code for the personal portfolio website. Do not output anything else. no comments or explanations.
+Do not add any comments in the code. do not use unnecessary tokens in the code.
+Pay attention to the yaml output indentation and format.
+the yaml to edit:
+```yaml
+global:
+  fonts: |
+{current_fonts}
+  global_cdn:
+{current_global_cdn}
+  base_css: |
+{current_base_css}
+  themes:
+{current_themes}
+  global_js: |
+{current_global_js}
+  other_global_css: |
+{current_other_global_css}
+```
+
+here also some artifacts that user added you can use them to edit the yaml:
+{artifacts}
+
+Client Prompt: {prompt}
+Updated yaml output:"""
+
+
+
+edit_website_global_prompt = PromptTemplate.from_template(edit_resume_website_global_template)

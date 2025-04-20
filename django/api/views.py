@@ -514,6 +514,9 @@ def serve_personal_website_yaml(request, unique_id):
         json_data = yaml.safe_load(generated_website.yaml_content)
         # Generate the HTML from the YAML data
         full_html = generate_html_from_yaml(json_data)
+        # write the html to a file
+        with open("generated_website.html", "w") as f:
+            f.write(full_html)
         return HttpResponse(full_html, content_type="text/html")
     except Exception as e:
         return Response({"error": f"Website not found: {e}"}, status=status.HTTP_404_NOT_FOUND)
@@ -601,10 +604,88 @@ def edit_website_block(request):
             return JsonResponse({"error": f"Invalid data received from AI service: {e}"}, status=500)
     else:
         return JsonResponse({"error": "Error from AI service"}, status=response.status_code)
+#frontend payload            #     const backendPayload = {
+            #     resumeId: resumeId,
+            #     blockName: currentBlock.name,
+            #     prompt: aiPrompt,
+            #     artifacts: validArtifacts,
+            # };
 
-            
-      
+            # // Conditionally add currentHtml, currentCss, currentJs based on the block type
+            # if (!isGlobalBlock) {
+            #     backendPayload.currentHtml = currentBlock.html;
+            #     backendPayload.currentCss = currentBlock.css;
+            #     backendPayload.currentJs = currentBlock.js;
+            # } else {
+            #     // For the global block, send relevant properties directly
+            #     backendPayload.currentFonts = currentBlock.fonts || ''; // Ensure it's a string
+            #     backendPayload.currentBaseCss = currentBlock.base_css || ''; // Ensure it's a string
+            #     backendPayload.currentGlobalJs = currentBlock.global_js || ''; // Ensure it's a string
+            #     backendPayload.currentOtherGlobalCss = currentBlock.other_global_css || ''; // Ensure it's a string
+            #     backendPayload.currentThemes = currentBlock.themes || {}; // Ensure it's an object
+            #     backendPayload.currentGlobalCdn = currentBlock.global_cdn || {}; // Ensure it's an object
+            #     // You might need to adjust these based on what your backend expects
+            # }
+@api_view(["POST"])
+def edit_website_global(request):
+    data = json.loads(request.body)
+    resume_id = data.get('resumeId')
+    current_name = data.get('blockName')
+    current_fonts = data.get('currentFonts')
+    current_base_css = data.get('currentBaseCss')
+    current_global_js = data.get('currentGlobalJs')
+    current_other_global_css = data.get('currentOtherGlobalCss')
+    current_themes = data.get('currentThemes')
+    current_global_cdn = data.get('currentGlobalCdn')
+    prompt = data.get('prompt')
+    artifacts = data.get('artifacts', [])
+    if not all([resume_id, current_name, prompt]):
+            return JsonResponse({'error': 'Missing required parameters.'}, status=400)
         
+    # Call the AI service
+    ai_service_url = os.environ.get("AI_SERVICE_URL") + "edit_global/invoke"
+    body = {
+        "input": {
+            "current_name": current_name,
+            "current_fonts": textwrap.indent(current_fonts, '   '),# used to indent the html code
+            "current_base_css":  textwrap.indent(current_base_css, '   '),# used to indent the css code
+            "current_global_js": textwrap.indent(current_global_js, '   '),# used to indent the js code
+            "current_other_global_css": textwrap.indent(current_other_global_css, '  '),# used to indent the js code
+            "current_themes": textwrap.indent(current_themes, '  '),# used to indent the js code
+            "current_global_cdn": textwrap.indent(current_global_cdn, '   '),# used to indent the js code
+            "prompt": prompt,
+            "artifacts": artifacts
+        }
+    }
+    
+    response = requests.post(ai_service_url, json=body)
+    if response.status_code == 200:
+        try:
+            generated_block_yaml = response.json().get("output")
+            generated_block_data = yaml.safe_load(generated_block_yaml)
+            fonts_code = generated_block_data.get("fonts")
+            base_css_code = generated_block_data.get("base_css")
+            global_js_code = generated_block_data.get("global_js")
+            other_global_css_code = generated_block_data.get("other_global_css")
+            themes_code = generated_block_data.get("themes")
+            global_cdn_code = generated_block_data.get("global_cdn")
+
+            return JsonResponse({
+                'fonts': fonts_code,
+                'base_css': base_css_code,
+                'global_js': global_js_code,
+                'other_global_css': other_global_css_code,
+                'themes': themes_code,
+                'global_cdn': global_cdn_code
+            }, status=200)
+        except (json.JSONDecodeError, yaml.YAMLError) as e:
+            return JsonResponse({"error": f"Invalid data received from AI service: {e}"}, status=500)
+    else:
+        return JsonResponse({"error": "Error from AI service"}, status=response.status_code)
+    
+        
+
+    
 
 
 # @api_view(["POST"])

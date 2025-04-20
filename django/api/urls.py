@@ -15,6 +15,7 @@ urlpatterns = [
     path('website-yaml/<uuid:resume_id>/', views.get_website_yaml_json, name='serve_website_yaml_json'),
     path('website-yaml/update/<uuid:unique_id>/', views.update_website_yaml, name='save-updates-to-personal-website'),
     path('website-yaml/edit-block/', views.edit_website_block, name='edit_website_block'), # With trailing slash
+    path('website-yaml/edit-global/', views.edit_website_global, name='edit_website_global'), # With trailing slash
 
     # 2. Other prefixes with parameters
     path('website/<uuid:unique_id>/', views.serve_personal_website, name='view-personal-website'),

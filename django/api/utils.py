@@ -99,32 +99,32 @@ def generate_pdf_from_resume_data(resume_data, template_theme='resume_template_2
         print(f"Error generating PDF: {e}")
         return None
     
-def generate_html_from_yaml(json_data, template_name='html_bloks_template.html'):
-    """
-    Generates HTML from YAML data using a Jinja template.
+    def generate_html_from_yaml(json_data, template_name='html_bloks_template.html'):
+        """
+        Generates HTML from YAML data using a Jinja template.
 
-    Args:
-        yaml_data (dict): The YAML data as a dictionary.
-        template_name (str, optional): The name of the Jinja template file.
-            Defaults to 'utils.html.jinja'.
+        Args:
+            yaml_data (dict): The YAML data as a dictionary.
+            template_name (str, optional): The name of the Jinja template file.
+                Defaults to 'utils.html.jinja'.
 
-    Returns:
-        str: The generated HTML as a string.  Returns None on error.
-    """
-    try:
+        Returns:
+            str: The generated HTML as a string.  Returns None on error.
+        """
+        try:
 
 
-        env = Environment(
-            loader=FileSystemLoader('./html_templates/'),
-            autoescape=select_autoescape(['html', 'xml'])  # Auto-escape HTML
-        )
-        template = env.get_template(template_name)
+            env = Environment(
+                loader=FileSystemLoader('./html_templates/'),
+                autoescape=select_autoescape(['html', 'xml'])  # Auto-escape HTML
+            )
+            template = env.get_template(template_name)
 
-        # 4. Render the Jinja template with the data
-        html_output = template.render(data=json_data)  # Pass the entire data dictionary
+            # 4. Render the Jinja template with the data
+            html_output = template.render(data=json_data)  # Pass the entire data dictionary
 
-        return html_output
+            return html_output
 
-    except Exception as e:
-        print(f"Error generating HTML: {e}")
-        return None
+        except Exception as e:
+            print(f"Error generating HTML: {e}")
+            return None

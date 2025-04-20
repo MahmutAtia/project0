@@ -26,10 +26,6 @@
         /* Default Theme Styles */
         {{ data.global.themes.default | safe }}
 
-        /* Theme Overrides */
-        {% if request.args.get('theme') and request.args.get('theme') in data.global.themes %}
-        {{ data.global.themes[request.args.get('theme')] | safe }}
-        {% endif %}
     </style>
 </head>
 <body>
