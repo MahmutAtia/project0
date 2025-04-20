@@ -4,23 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>
-        {% if data.global.name %}
-            {{ data.global.name | capitalize }}
+        {% if data.website.name %}
+            {{ data.website.name | capitalize }}
         {% else %}
             Website
         {% endif %}
     </title>
+    {{ data.global.fonts | safe }}
+    {% if data.global.cdn and data.global.cdn.css %}
+        {% for css_url in data.global.cdn.css %}
+            <link rel="stylesheet" href="{{ css_url }}">
+        {% endfor %}
+    {% endif %}
     <style>
-        /* Global Styles */
-        {{ data.global.css | safe }}
+        /* Base Global Styles */
+        {{ data.global.base_css | safe }}
+
+        /* Other Global CSS */
+        {{ data.global.other_global_css | safe }}
+
+        /* Default Theme Styles */
+        {{ data.global.themes.default | safe }}
+
+        /* Theme Overrides */
+        {% if request.args.get('theme') and request.args.get('theme') in data.global.themes %}
+        {{ data.global.themes[request.args.get('theme')] | safe }}
+        {% endif %}
     </style>
 </head>
 <body>
-    <header>
-        {{ data.global.html | safe }}
-    </header>
     <main>
-        {% for block in data.code_bloks %}
+        {% for block in data.code_blocks %}
             <section id="{{ block.name | lower }}">
                 <style>
                     /* Styles for {{ block.name }} */
@@ -36,10 +50,15 @@
             </section>
         {% endfor %}
     </main>
-    
+
     <script>
         /* Global Scripts */
-        {{ data.global.js | safe }}
+        {{ data.global.global_js | safe }}
     </script>
+    {% if data.global.cdn and data.global.cdn.js %}
+        {% for js_url in data.global.cdn.js %}
+            <script src="{{ js_url }}"></script>
+        {% endfor %}
+    {% endif %}
 </body>
 </html>

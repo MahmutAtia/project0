@@ -173,40 +173,59 @@ create_resume_website_bloks_template = """ You are a professional designer and f
 Just output the yaml file with the html, css and js code for the personal portfolio website. Do not output anything else. no comments or explanations.
 Do not add any comments in the code. do not use unnecessary tokens in the code.
 Pay attention to the yaml output indentation and format.
+If a field is not needed ot empty, just leave it empty with "" or " | " and do not add any comments or explanations.
+
 
 yaml output example format:
 ```yaml
+website:
+  name: "site name"
 global:
-  name: "global"
-  js: | 
-    # global js code here
-  css: | 
-    # global css and themes code here
-  html: | 
-    # global html code here
-  feedback: "Here you can modify the global styles and themes for the website." # short feedback for the client max 100 characters
-code_bloks: # examples of code bloks. you should add bloks according to the resume information and the client preferences.
+  fonts: |
+    /* Global font styles */
+  
+  global_cdn:
+    css:
+      - "https://.../.."
+      - "https://.../.."
+    js:
+      - "https://.../.."
+      - "https://.../.."
+  base_css: |
+    /* Base global CSS */
+  themes:
+    default: |
+      /* Default theme */
+    dark: |
+      /* Dark theme */
+  
+  global_js: |
+    // Global JavaScript
+    // here the js code for the global site like animations, effects, loading, etc. Do not any specific js code for the blocks.
+
+  other_global_css: |
+    /* Other global CSS */
+  description: "Her you can modify Global styles, themes, JavaScript, and a floating theme switch." # descriptions max 100 characters
+code_blocks:
   - name: "header"
-    html: | 
-      # header html code here
-    css: | 
-      # header css code here
-    js: | 
-      # header js code here
-    feedback: "here you can modify the header of the website." # short feedback for the client max 100 characters
+    html: |
+    
+    css: |
+    
+    js: |
+    
+    description: "The website header."
   - name: "hero_section"
-    html: | 
-      # hero section html code here
-    css: | 
-      # hero section css code here
-    js: | 
-      # hero section js code here
-    feedback: "Hero section."
-```
+    html: |
 
- 
+    css: |
+    
+    js: |
 
- 
+    description: "here you can modify the hero section of the website."
+    ```
+
+
 the resume information is provided below:
 YAML Template:
 ```yaml
