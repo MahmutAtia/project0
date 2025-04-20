@@ -179,11 +179,11 @@ yaml output example format:
 global:
   name: "global"
   js: | 
-    # global js code here
+    # global js code here. global js code will be rendered between <script> and </script> tags. Here you can add global js code like libraries, frameworks, etc. also global animations and effects.
   css: | 
     # global css and themes code here
   html: | 
-    # global html code here
+    # global html code here. This global html will be rendered between <head> and </head> tags. Here you can add global html code like meta tags, title, favicon, fonts links, etc.
   feedback: "Here you can modify the global styles and themes for the website." # short feedback for the client max 100 characters
 code_bloks: # examples of code bloks. you should add bloks according to the resume information and the client preferences.
   - name: "header"
@@ -260,3 +260,4 @@ here also some artifacts that user added you can use them to edit the yaml:
 Client Prompt: {prompt}
 Updated yaml output:"""
 edit_website_block_prompt = PromptTemplate.from_template(edit_resume_website_block_template)
+
