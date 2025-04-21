@@ -25,4 +25,11 @@ urlpatterns = [
 
     # 4. General parameterized paths under 'resumes/'
     path('resumes/<str:pk>/', views.ResumeRetrieveUpdateDestroyView.as_view(), name='resume-retrieve-update-destroy'),
+    
+    
+    # 5. Generate document
+    path('resumes/<str:pk>/generate_document/', views.generate_document, name='generate-document'),
+    path('resumes/<str:pk>/document/<uuid:unique_id>/', views.serve_document, name='view-document'),
+    # path('resumes/<str:pk>/document/<uuid:unique_id>/update/', views.update_document, name='update-document'),
+    
 ]

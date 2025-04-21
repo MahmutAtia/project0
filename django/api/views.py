@@ -1,5 +1,5 @@
 from rest_framework import generics, permissions, status
-from .models import Resume, GeneratedWebsite
+from .models import Resume, GeneratedWebsite,GeneratedDocument
 from .serializers import ResumeSerializer
 from django.http import Http404
 from .utils import cleanup_old_sessions, extract_text_from_file,generate_pdf_from_resume_data,generate_html_from_yaml
@@ -602,9 +602,96 @@ def edit_website_block(request):
     else:
         return JsonResponse({"error": "Error from AI service"}, status=response.status_code)
 
-            
-      
-        
+############################# Documents ##############################
+
+@api_view(["POST"])
+def generate_document_bloks(request):
+    """
+    API endpoint to generate a document using Bloks.
+    """
+    resume_id = request.data.get('resumeId')
+    preferences = request.data.get('preferences', {})
+    document_type = request.data.get('documentType', '') 
+    language = request.data.get('language', 'en')  # Default to English if not provided
+    
+    if not resume_id:
+        return Response({"error": "resumeId is required"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        resume = get_object_or_404(Resume, pk=resume_id)
+        about = resume.about
+
+        # Check if a document has already been generated for this resume
+        generated_document = GeneratedDocument.objects.filter(resume=resume).first()
+        if generated_document:
+            # Document already exists, return the unique link
+            return Response({"document_uuid": generated_document.unique_id}, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response(
+            {"error": f"Error fetching resume data: {e}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+    ai_service_url = os.environ.get("AI_SERVICE_URL") + "create_document/invoke"
+    body = {
+        "input": {
+            "preferences": preferences,
+            "document_type": document_type,
+            "language": language,
+            "about": about
+        }
+    }
+    try:
+        ai_response = requests.post(ai_service_url, json=body)
+        ai_response.raise_for_status()
+        generated_document_yaml = ai_response.json().get("output")
+        generated_document_data = yaml.safe_load(generated_document_yaml)
+
+        # Save the generated document
+        unique_id = str(uuid.uuid4())
+        GeneratedDocument.objects.create(
+            resume=resume,
+            unique_id=unique_id,
+            yaml_content=generated_document_yaml,
+        )
+
+        # Return the unique id
+        return Response({"document_uuid": unique_id}, status=status.HTTP_201_CREATED)
+    except requests.exceptions.RequestException as e:
+        return Response(
+            {"error": f"Error communicating with AI service: {e}"},
+            status=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+    except (yaml.YAMLError, AttributeError) as e:
+        return Response(
+            {"error": f"Error processing AI service response: {e}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+@api_view(["GET"])
+def get_document_pdf(request, document_id):
+    """
+    API endpoint to serve the generated document as a PDF.
+    """
+    try:
+        generated_document = get_object_or_404(GeneratedDocument, unique_id=document_id)
+        yaml_content = generated_document.yaml_content
+        json_data = yaml.safe_load(yaml_content)
+
+        # Convert YAML content to PDF
+        pdf_data = generate_pdf_from_resume_data(json_data, template_theme='document-default.html', chosen_theme='')
+
+        if pdf_data:
+            import io
+            pdf_buffer = io.BytesIO(pdf_data)
+            response = StreamingHttpResponse(file_iterator(pdf_buffer), content_type='application/pdf')
+            response['Content-Disposition'] = 'inline; filename="generated_document.pdf"'
+            response['Content-Length'] = len(pdf_data)
+            return response
+        else:
+            return Response({"error": "Error generating PDF"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except Exception as e:
+        return Response({"error": f"Document not found: {e}"}, status=status.HTTP_404_NOT_FOUND)
+
+                
 
 
 # @api_view(["POST"])

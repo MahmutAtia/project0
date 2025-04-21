@@ -24,3 +24,14 @@ class GeneratedWebsite(models.Model):
 
     def __str__(self):
         return f"Website for Resume ID: {self.resume.id}"
+    
+class GeneratedDocument(models.Model):
+    # we may have multiple documents for a single resume, 
+    # e.g., cover letter, CV, etc.
+    resume = models.ForeignKey(Resume, on_delete=models.CASCADE, related_name='generated_documents')
+    unique_id = models.UUIDField(unique=True, editable=False, default=uuid.uuid4)
+    yaml_content = models.TextField(default="")  # Default to an empty string
+    created_at = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        return f"Document for Resume ID: {self.resume.id}"
+
