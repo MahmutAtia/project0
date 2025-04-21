@@ -262,4 +262,60 @@ here also some artifacts that user added you can use them to edit the yaml:
 Client Prompt: {prompt}
 Updated yaml output:"""
 edit_website_block_prompt = PromptTemplate.from_template(edit_resume_website_block_template)
+  
+  
+create_document_template = """ You are a human resources professional,also designer and frontend developer tasked with creating a structured YAML file which contains the html and css for {document_type} document based on the information provided about the candidate below.
+Just output the yaml file with the html and css code for the {document_type} document. Do not output anything else. no comments or explanations.
+Do not add any comments in the code. do not use unnecessary tokens in the code.
 
+Output yaml format:
+```yaml
+# --- Document Data (Simple) ---
+document_type: "{document_type}" 
+document_css: |  # CSS for the document
+  # add styles for the document here
+document_html:
+  header_content: |
+    # html for the header area
+  body_paragraphs: # A list of paragraphs for the main document body
+    - |
+      # Paragraph 1 content
+    - |
+      # Paragraph 2 content
+  footer_content: |  # Content for the bottom of the document
+    # html for the footer area
+```
+About the candidate:
+{about}
+
+The document should be visually appealing and professional. Use modern design principles and best practices.
+Ensure the document is responsive and works well on different devices. 
+Use fonts and colors that are suitable for the candidate's profession. 
+Use icons to enhance the visual appeal. 
+Use valid HTML and CSS code. And mide that the html document will be converted to A4 PDF document later.
+The output must be in the {language} language.
+
+The html and css yaml output:"""
+
+
+create_document_prompt = PromptTemplate.from_template(create_document_template)
+# edit_document_template = """ You are a human resources professional,also designer and frontend developer tasked with editing a specific section of a document based on a client prompt.
+# You must output just the updated yaml file with the html and css code for the {document_type} document. Do not output anything else. no comments or explanations.
+# Do not add any comments in the code. do not use unnecessary tokens in the code.
+# Pay attention to the yaml output indentation and format.
+# the yaml to edit:
+# ```yaml
+# document_type: "{current_document_type}"
+# document_css: |  # CSS for the document
+#   # add styles for the document here
+# document_html:
+#   header_content: |
+#     # html for the header area
+#   body_paragraphs: # A list of paragraphs for the main document body
+#     - |
+#       # Paragraph 1 content
+#     - |
+#       # Paragraph 2 content
+#   footer_content: |  # Content for the bottom of the document
+#     # html for the footer area
+# ```
