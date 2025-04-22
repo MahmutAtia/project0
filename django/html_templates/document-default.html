@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="{{ language | default('en') }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ document_name | default('Document') }}</title>
+    <style>
+        /*
+           This placeholder will be filled by your Python script
+           with the content from document_global_css.
+           The | safe filter is crucial if the CSS string contains
+           Jinja2-like characters that shouldn't be escaped.
+        */
+        {{ document_global_css | safe }}
+
+        /*
+           You might also put your CSS theme definitions here,
+           or include them within document_global_css itself.
+        */
+    </style>
+    {#
+       If you have external CSS files (e.g., for fonts or complex themes)
+       you would link them here. Example:
+       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+       <link rel="stylesheet" href="/path/to/your/theme.css">
+       Make sure WeasyPrint can access these paths or URLs.
+    #}
+</head>
+{#
+   Your Python script should pass the 'theme_class' variable to render().
+   Apply it to the body tag.
+#}
+<body class="{{ theme_class | default('theme-default') }}">
+
+    {#
+       Access the header content from the document_html dictionary.
+       Use the | safe filter because header_content likely contains HTML.
+    #}
+    <div class="document-header">
+        {{ document_html.header_content | safe }}
+    </div>
+
+    {#
+       Access the body paragraphs list from the document_html dictionary.
+       Loop through each paragraph.
+       Each paragraph is rendered inside a <p> tag.
+       Use | safe because paragraph content might contain simple HTML like <strong> or <em>.
+    #}
+    <div class="document-body">
+    {% for paragraph in document_html.body_paragraphs %}
+        <p>{{ paragraph | safe }}</p>
+    {% endfor %}
+    </div>
+
+    {#
+       Access the footer content from the document_html dictionary.
+       Use the | safe filter because footer_content likely contains HTML.
+    #}
+    <div class="document-footer">
+        {{ document_html.footer_content | safe }}
+    </div>
+
+    {#
+       Optional: Add script tags here if you had any client-side JS,
+       though less common/useful for PDF generation.
+       <script src="/path/to/your/script.js"></script>
+    #}
+</body>
+</html>
