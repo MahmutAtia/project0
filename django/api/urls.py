@@ -33,7 +33,7 @@ urlpatterns = [
     
     # 5. Generate document
     path('resumes/generate_document/', views.generate_document_bloks, name='generate-document'),
-    path('resumes/document/<uuid:unique_id>/', views.get_document_pdf, name='view-document'),
+    path('resumes/document/<uuid:document_id>/', views.get_document_pdf, name='view-document'),
     # path('resumes/<str:pk>/document/<uuid:unique_id>/update/', views.update_document, name='update-document'),
     
 ]

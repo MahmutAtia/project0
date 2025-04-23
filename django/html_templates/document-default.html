@@ -2,7 +2,6 @@
 <html lang="{{ language | default('en') }}">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ document_name | default('Document') }}</title>
     <style>
         /*
@@ -18,13 +17,7 @@
            or include them within document_global_css itself.
         */
     </style>
-    {#
-       If you have external CSS files (e.g., for fonts or complex themes)
-       you would link them here. Example:
-       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-       <link rel="stylesheet" href="/path/to/your/theme.css">
-       Make sure WeasyPrint can access these paths or URLs.
-    #}
+
 </head>
 {#
    Your Python script should pass the 'theme_class' variable to render().

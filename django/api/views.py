@@ -613,6 +613,7 @@ def generate_document_bloks(request):
     preferences = request.data.get('preferences', {})
     document_type = request.data.get('documentType', '') 
     language = request.data.get('language', 'en')  # Default to English if not provided
+    document_name = request.data.get('documentName', 'Generated Document')  # Default name if not provided
     
     if not resume_id:
         return Response({"error": "resumeId is required"}, status=status.HTTP_400_BAD_REQUEST)
@@ -637,21 +638,21 @@ def generate_document_bloks(request):
             "preferences": preferences,
             "document_type": document_type,
             "language": language,
-            "about": about
+            "about": about,
+            "document_name": document_name,
         }
     }
     try:
         ai_response = requests.post(ai_service_url, json=body)
         ai_response.raise_for_status()
-        generated_document_yaml = ai_response.json().get("output")
-        generated_document_data = yaml.safe_load(generated_document_yaml)
+        generated_document_json = ai_response.json().get("output")
 
         # Save the generated document
         unique_id = str(uuid.uuid4())
         GeneratedDocument.objects.create(
             resume=resume,
             unique_id=unique_id,
-            yaml_content=generated_document_yaml,
+            json_content=generated_document_json,
         )
 
         # Return the unique id
@@ -673,8 +674,7 @@ def get_document_pdf(request, document_id):
     """
     try:
         generated_document = get_object_or_404(GeneratedDocument, unique_id=document_id)
-        yaml_content = generated_document.yaml_content
-        json_data = yaml.safe_load(yaml_content)
+        json_data = generated_document.json_content
 
         # Convert YAML content to PDF
         pdf_data = generate_pdf_from_resume_data(json_data, template_theme='document-default.html', chosen_theme='')
