@@ -297,8 +297,103 @@ The output must be in the {language} language.
 
 The html and css yaml output:"""
 
-
 create_document_prompt = PromptTemplate.from_template(create_document_template)
+
+###################### ATS Checker ######################
+
+ats_checker_template = """ You are an Applicant Tracking System (ATS) Resume Evaluator.
+
+Evaluate the candidate's resume against the job description below. Return your analysis in the following format:
+
+---
+[RESULT]
+
+🏆 OVERALL SCORE: [score]/100
+
+🧩 COMPONENT SCORES:
+- Skills Match: [score]/40
+- Experience Relevance: [score]/20
+- Education Fit: [score]/10
+- Contact Info & Formatting: [score]/10
+- Keyword Match: [score]/10
+- Overall Language Relevance: [score]/10
+
+🛠️ STRENGTHS:
+[List key strengths found in the resume, such as strong technical skills, leadership experience, etc.]
+
+⚠️ WEAKNESSES:
+[List weaknesses or issues found in the resume, such as missing keywords, unclear formatting, or lack of relevant experience.]
+
+💡 ADVICE:
+[Give clear and concise advice on how to improve the resume to better match the job description.]
+
+---
+[END]
+
+Here is the job description:
+
+{job_description}
+
+Here is the resume text:
+{resume_text}
+
+The output should be in the {language} language.
+The output should be in markdown formated and do not output any other text or comments.
+The output should be very short and concise.
+
+the evaluation output: """
+
+ats_checker_prompt = PromptTemplate.from_template(ats_checker_template)
+
+
+ats_checker_no_job_desc_template = """You are an ATS Resume Evaluator. A user has uploaded a resume and wants to know how well it would perform in a real-world ATS system.
+
+Evaluate the resume based on general job market standards and the target role (if provided). Return your analysis in the following format:
+
+---
+[RESULT]
+
+🏆 OVERALL SCORE: [score]/100
+
+🧩 COMPONENT SCORES:
+- Skills Relevance: [score]/30
+- Experience Quality & Clarity: [score]/20
+- Education & Certifications: [score]/10
+- Formatting & Readability: [score]/20
+- ATS-Friendliness: [score]/10
+- Clarity of Career Direction: [score]/10
+
+🎯 TARGET ROLE: [target_role or "Not specified"]
+
+🛠️ STRENGTHS:
+[List the strongest elements of the resume.]
+
+⚠️ WEAKNESSES:
+[List the weakest elements or common red flags.]
+
+💡 ADVICE:
+[Provide actionable, practical advice for improving the resume.]
+
+---
+[END]
+
+Here is the resume:
+
+{resume_text}
+
+Target role: "{user_input_role}
+
+The output should be in the {language} language.
+The output should be in markdown formated and do not output any other text or comments.
+The output should be very short and concise.
+
+the evaluation output: """
+
+ats_checker_no_job_desc_prompt = PromptTemplate.from_template(ats_checker_no_job_desc_template)
+
+
+
+
 # edit_document_template = """ You are a human resources professional,also designer and frontend developer tasked with editing a specific section of a document based on a client prompt.
 # You must output just the updated yaml file with the html and css code for the {document_type} document. Do not output anything else. no comments or explanations.
 # Do not add any comments in the code. do not use unnecessary tokens in the code.
