@@ -67,11 +67,10 @@ Instructions:
 
 Extract, Interpret, and Enhance: Extract explicit information, interpret context to infer implicit details (without fabrication), and enhance content for a professional and impactful presentation. Use strong action verbs, quantify achievements where possible (without inventing numbers), use concise language, and focus on impact.
 
-"About" Section (Crucial): Create a compelling "about" section (at least 150 words) that provides a personalized overview of the candidate beyond the resume's factual content. This section should:
+"About" Section (Crucial): Create a compelling "about" section (at least 100 words) that provides a personalized overview of the candidate beyond the resume's factual content. This section should:
 
 Capture the candidate's personality, motivations, and career aspirations.
 Highlight their unique strengths and what drives them.
-Use engaging and professional language.
 Synthesize information from the entire resume but avoid simply repeating it. Focus on the "why" behind their choices and experiences.
 Imagine this is a brief personal introduction the candidate would give in a networking setting.
 Data Mapping, Cleaning, and YAML Output: Map extracted and enhanced information to the YAML template. Perform data cleaning (standardizing dates, handling missing data). Output valid YAML.
@@ -90,11 +89,11 @@ Do not output any comments or and other explanations just the YAML file.
 
 Output all in the {language} language.
 
-{docs_instructions}
-
 Tailor the resume to the job description provided below, ensuring that the candidate's skills and experiences are aligned with the job requirements. Use the job description to guide your enhancements and ensure the resume is tailored to the job.
 
 {job_description}
+
+{ats_result}
 
 Input Resume Text: {input_text}
 Output YAML:"""
@@ -335,7 +334,7 @@ Here is the job description:
 {job_description}
 
 Here is the resume text:
-{resume_text}
+{input_text}
 
 The output should be in the {language} language.
 The output should be in markdown formated and do not output any other text or comments.
@@ -379,7 +378,7 @@ Evaluate the resume based on general job market standards and the target role (i
 
 Here is the resume:
 
-{resume_text}
+{input_text}
 
 Target role: "{user_input_role}
 
