@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ personal_information.name | default('Resume') }} // Datastream v2</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --font-primary: 'Exo 2', sans-serif;
+            --font-heading: 'Rajdhani', sans-serif;
+            /* Default Theme: Refined Dark */
+            --color-bg: #181a20; /* Slightly softer dark */
+            --color-text: #c5c8d3; /* Lighter grey, better contrast */
+            --color-text-medium: #8a91a0; /* Medium grey */
+            --color-accent1: #4fc3f7; /* Light Blue */
+            --color-accent2: #8e7cc3; /* Muted Purple */
+            --color-border: rgba(79, 195, 247, 0.2); /* Faint blue border */
+            --color-card-bg: rgba(40, 44, 52, 0.5); /* Slightly more opaque card bg */
+            --base-font-size: 9pt; /* Slightly larger base font */
+            --line-height: 1.5; /* Increased line height */
+        }
+
+        /* --- Theme: Cyberpunk Neon --- */
+        body.theme-cyberpunk {
+            --color-bg: #0d0d1a;
+            --color-text: #e8e8ff;
+            --color-text-medium: #a0a0cc;
+            --color-accent1: #f02e8a; /* Vibrant Pink/Magenta */
+            --color-accent2: #00e0ff; /* Electric Blue */
+            --color-border: rgba(240, 46, 138, 0.3);
+            --color-card-bg: rgba(20, 20, 40, 0.6);
+        }
+
+        /* --- Theme: Clean Light --- */
+        body.theme-cleanlight {
+            --color-bg: #f4f7f9; /* Very light grey */
+            --color-text: #2c3e50; /* Dark blue-grey text */
+            --color-text-medium: #7f8c9a;
+            --color-accent1: #3498db; /* Standard Blue */
+            --color-accent2: #2ecc71; /* Green */
+            --color-border: rgba(52, 152, 219, 0.3);
+            --color-card-bg: #ffffff; /* White cards */
+        }
+        body.theme-cleanlight .resume-header-t6 {
+             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        body.theme-cleanlight .item {
+             border-color: var(--color-border);
+             box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        }
+
+
+        /* --- Theme: Deep Space Mono --- */
+        body.theme-deepspace {
+            --color-bg: #0a0a0f; /* Near black */
+            --color-text: #bdbdbd;
+            --color-text-medium: #757575;
+            --color-accent1: #ffffff; /* White accent */
+            --color-accent2: #64b5f6; /* Lighter blue secondary */
+            --color-border: rgba(255, 255, 255, 0.15);
+            --color-card-bg: rgba(255, 255, 255, 0.04);
+        }
+        /* --- End Theme Variations --- */
+
+        @page {
+            size: A4;
+            margin: 0; /* Remove page margin */
+        }
+
+        html {
+             background-color: var(--color-bg); /* Apply background to html */
+        }
+
+        body {
+            font-family: var(--font-primary);
+            font-size: var(--base-font-size);
+            line-height: var(--line-height);
+            color: var(--color-text);
+            background-color: var(--color-bg); /* Ensure body also has bg */
+            margin: 0;
+            padding: 1cm 1cm; /* Use body padding instead of page margin */
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            min-height: 27.7cm; /* A4 height minus padding */
+            box-sizing: border-box;
+        }
+
+        /* --- Layout --- */
+        .resume-container {
+            max-width: 19cm; /* A4 width minus body padding */
+            margin: 0 auto;
+            /* Container doesn't need background or padding now */
+        }
+
+        /* --- Header --- */
+        .resume-header-t6 {
+            padding: 1em 1.2em; /* Slightly more padding */
+            margin-bottom: 2em; /* More space below header */
+            border: 1px solid var(--color-border);
+            border-radius: 4px; /* Slightly softer radius */
+            background-color: var(--color-card-bg);
+            position: relative;
+            overflow: hidden;
+            page-break-after: avoid;
+        }
+        .resume-header-t6::after { /* Keep subtle lines if desired */
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(45deg, rgba(255,255,255,0.015) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.015) 50%, rgba(255,255,255,0.015) 75%, transparent 75%, transparent);
+            background-size: 12px 12px;
+            opacity: 0.4;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .header-content-t6 {
+             position: relative; z-index: 1;
+        }
+
+        .header-content-t6 h1 {
+            font-family: var(--font-heading);
+            font-size: 2.3rem; /* Slightly larger name */
+            margin: 0 0 0.15em 0;
+            font-weight: 700;
+            color: var(--color-accent1);
+            line-height: 1.1;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .header-content-t6 .headline {
+            font-size: 1.05rem; /* Slightly larger headline */
+            margin: 0 0 0.8em 0; /* More space below headline */
+            font-weight: 400;
+            color: var(--color-text);
+            font-style: normal; /* Remove italic for cleaner look */
+            opacity: 0.9;
+        }
+        .contact-info-header-t6 {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 0.85rem; /* Slightly larger contact info */
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5em 1.5em; /* More spacing */
+        }
+        .contact-info-header-t6 li {
+            display: flex;
+            align-items: center;
+            color: var(--color-text-medium);
+        }
+        .contact-info-header-t6 i.icon {
+            width: 15px;
+            margin-right: 8px; /* More space for icon */
+            text-align: center;
+            color: var(--color-accent2);
+            opacity: 0.8;
+            flex-shrink: 0;
+        }
+        .contact-info-header-t6 a {
+            color: var(--color-text-medium);
+            text-decoration: none;
+            word-break: break-word;
+            transition: color 0.2s ease;
+        }
+        .contact-info-header-t6 a:hover {
+            color: var(--color-accent1);
+            text-decoration: none; /* Remove underline on hover for cleaner look */
+        }
+
+        /* --- Main Content (Shared Styles) --- */
+        h2 {
+            font-family: var(--font-heading);
+            font-size: 1.4rem; /* Larger section heading */
+            font-weight: 600;
+            color: var(--color-accent1);
+            margin: 0 0 1em 0; /* More margin below heading */
+            padding-bottom: 0.4em; /* More padding */
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            align-items: center;
+            gap: 0.5em;
+            text-transform: uppercase;
+            letter-spacing: 0.8px; /* More letter spacing */
+            position: relative;
+            page-break-after: avoid;
+        }
+        /* Simpler heading decoration */
+        h2::before {
+            /* content: '>'; */ /* Remove bracket */
+            /* Or use a simpler element */
+             content: '';
+             display: inline-block;
+             width: 8px;
+             height: 8px;
+             background-color: var(--color-accent2);
+             margin-right: 0.4em;
+             transform: rotate(45deg); /* Diamond shape */
+             opacity: 0.8;
+        }
+        h2 i.icon {
+            color: var(--color-accent1);
+            font-size: 1.2rem; /* Larger icon */
+            opacity: 0.8;
+            order: -1;
+            margin-right: 0.4em;
+        }
+        section {
+            margin-bottom: 2em; /* More space between sections */
+        }
+        p {
+            margin: 0 0 0.7em 0; /* More space below paragraphs */
+            color: var(--color-text);
+        }
+        ul {
+            padding-left: 18px; /* More indent */
+            margin: 0.4em 0 0.8em 0; /* More vertical margin */
+            list-style: none;
+        }
+        ul li {
+            margin-bottom: 0.4em; /* More space between list items */
+            position: relative;
+            padding-left: 14px; /* More space for bullet */
+            color: var(--color-text);
+        }
+        /* Custom bullet: Simple filled circle */
+        ul li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0.35em; /* Adjust alignment */
+            width: 6px;
+            height: 6px;
+            background-color: var(--color-accent2);
+            border-radius: 50%;
+            opacity: 0.8;
+        }
+         ul li::after { /* Remove end bracket */
+            content: none;
+        }
+
+        /* --- Item Styling (Experience, Education, Projects) --- */
+        .item {
+            margin-bottom: 1.2em; /* More space between items */
+            padding: 0.8em 1em; /* More padding */
+            border: 1px solid var(--color-border);
+            border-left-width: 4px; /* Thicker accent border */
+            border-left-color: var(--color-accent1);
+            background-color: var(--color-card-bg);
+            border-radius: 3px;
+        }
+        .item-header {
+            margin-bottom: 0.4em; /* More space */
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 0.2em 1em; /* Add gap for wrapping */
+        }
+        .item-title-subtitle {
+             flex-grow: 1;
+        }
+        .item-title {
+            font-size: 1.05rem; /* Larger title */
+            font-weight: 600;
+            color: var(--color-text);
+            display: block;
+            margin-bottom: 0.1em;
+        }
+        .item-subtitle {
+            font-size: 0.95rem; /* Larger subtitle */
+            font-weight: 500;
+            color: var(--color-accent2);
+            display: block;
+            margin-bottom: 0.1em;
+        }
+        .item-date-location {
+            font-size: 0.8rem; /* Larger date/location */
+            color: var(--color-text-medium);
+            text-align: right;
+            flex-shrink: 0;
+            padding-left: 1em;
+            line-height: 1.4; /* Ensure date/location lines aren't too cramped */
+        }
+        .item-date-location .date, .item-date-location .location {
+            display: block;
+            margin-bottom: 0.1em; /* Small space between date/location lines */
+        }
+        .item-date-location i.icon {
+             margin-right: 5px;
+             font-size: 0.75rem;
+             opacity: 0.7;
+             vertical-align: middle; /* Align icon better */
+        }
+        .item .description {
+            font-size: 0.9rem; /* Larger description text */
+            color: var(--color-text-medium);
+            padding-top: 0.4em; /* More space */
+        }
+        .item .description ul {
+            margin-top: 0.3em;
+            margin-bottom: 0.5em;
+        }
+        .item .description ul li {
+            margin-bottom: 0.3em; /* More space */
+            color: var(--color-text-medium);
+        }
+         .item .description ul li::before {
+             opacity: 0.7;
+             top: 0.4em; /* Adjust */
+             width: 5px; /* Slightly smaller */
+             height: 5px;
+         }
+
+        /* --- Skills Styling --- */
+        .skills-section .skills-container {
+             /* column-count: 2; */ /* Consider enabling columns if list is long */
+             /* column-gap: 2em; */
+        }
+        .skills-section .skill-group-item {
+            margin-bottom: 1em; /* More space */
+        }
+        .skills-section .skill-category-title {
+            font-family: var(--font-heading);
+            font-size: 1rem; /* Larger category title */
+            font-weight: 600;
+            color: var(--color-accent1);
+            margin-bottom: 0.5em; /* More space */
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .skills-section .skill-keywords-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 8px; /* More gap */
+        }
+        .skills-section .skill-keywords-list li {
+            background-color: var(--color-card-bg); /* Add subtle bg to tags */
+            border: 1px solid var(--color-border); /* Use main border color */
+            color: var(--color-text); /* Use main text color */
+            border-radius: 3px;
+            padding: 3px 8px; /* More padding */
+            font-size: 0.85rem; /* Larger tag text */
+            margin: 0;
+            line-height: 1.4;
+            font-weight: 400;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .skills-section .skill-keywords-list li:hover {
+             background-color: var(--color-accent1);
+             color: var(--color-bg);
+             border-color: var(--color-accent1);
+        }
+         .skills-section .skill-keywords-list li::before {
+             display: none;
+         }
+
+        /* --- Project Styling --- */
+        .project-link, .project-tech {
+            font-size: 0.85rem; /* Larger */
+            margin-top: 0.6em; /* More space */
+            color: var(--color-text-medium);
+        }
+        .project-link i { color: var(--color-accent1); margin-right: 6px; opacity: 0.8; }
+        .project-link a {
+            color: var(--color-accent1);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .project-link a:hover { text-decoration: underline; }
+        .project-tech strong { font-weight: 600; color: var(--color-text); }
+        .project-tech span {
+             border: 1px solid var(--color-border);
+             background-color: var(--color-card-bg);
+             padding: 2px 6px; /* More padding */
+             border-radius: 3px;
+             margin-left: 4px;
+             font-size: 0.8rem; /* Larger */
+             color: var(--color-text-medium);
+        }
+
+        /* --- Language Styling --- */
+        .languages-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            column-count: 2;
+            column-gap: 2em; /* More gap */
+        }
+        .languages-list li {
+            margin-bottom: 0.4em; /* More space */
+            padding-left: 0;
+        }
+         .languages-list li::before { display: none; }
+        .languages-list .lang-proficiency {
+            color: var(--color-text-medium);
+            font-size: 0.9rem; /* Larger */
+            margin-left: 0.5em;
+            font-style: italic;
+        }
+
+        /* --- RTL Support --- */
+        /* ... (Review RTL rules if needed after spacing changes) ... */
+        html[lang="ar"] body { direction: rtl; text-align: right; }
+        html[lang="ar"] .contact-info-header-t6 i.icon { margin-right: 0; margin-left: 8px; }
+        html[lang="ar"] h2 { flex-direction: row-reverse; }
+        html[lang="ar"] h2::before { margin-right: 0; margin-left: 0.4em; }
+        html[lang="ar"] h2 i.icon { order: 1; margin-right: 0; margin-left: 0.4em; }
+        html[lang="ar"] ul { padding-left: 0; padding-right: 18px; }
+        html[lang="ar"] ul li { padding-left: 0; padding-right: 14px; }
+        html[lang="ar"] ul li::before { left: auto; right: 0; }
+        html[lang="ar"] .item { border-left: 1px solid var(--color-border); border-right: 4px solid var(--color-accent1); }
+        html[lang="ar"] .item-header { flex-direction: row-reverse; }
+        html[lang="ar"] .item-date-location { text-align: left; padding-left: 0; padding-right: 1em; }
+        html[lang="ar"] .project-link i { margin-right: 0; margin-left: 6px; }
+        html[lang="ar"] .project-tech span { margin-left: 0; margin-right: 4px; }
+        html[lang="ar"] .languages-list .lang-proficiency { margin-left: 0; margin-right: 0.5em; }
+
+
+    </style>
+</head>
+<body class="{{ theme_class | default('') }}">
+
+<div class="resume-container">
+
+    <!-- === Header === -->
+    <header class="resume-header-t6">
+        <!-- ... Header content remains the same ... -->
+        <div class="header-content-t6">
+            {% if personal_information.name %}<h1>{{ personal_information.name }}</h1>{% endif %}
+            {% if personal_information.headline %}<p class="headline">{{ personal_information.headline }}</p>{% endif %}
+            {% if personal_information %}
+            <ul class="contact-info-header-t6">
+                {% if personal_information.phone %}<li><i class="fas fa-mobile-alt icon"></i>{{ personal_information.phone }}</li>{% endif %}
+                {% if personal_information.email %}<li><i class="fas fa-envelope icon"></i><a href="mailto:{{ personal_information.email }}">{{ personal_information.email }}</a></li>{% endif %}
+                {% if personal_information.location and (personal_information.location.address or personal_information.location.city) %}
+                <li><i class="fas fa-map-marker-alt icon"></i>
+                    {% if personal_information.location.address %}{{ personal_information.location.address }}, {% endif %}
+                    {{ personal_information.location.postalCode | default('') }} {{ personal_information.location.city | default('') }}{% if personal_information.location.countryCode %}, {{ personal_information.location.countryCode }}{% endif %}
+                </li>
+                {% endif %}
+                {% if personal_information.profiles.website %}<li><i class="fas fa-globe icon"></i><a href="{{ personal_information.profiles.website }}" target="_blank">{{ personal_information.profiles.website | replace("https://","") | replace("http://","") }}</a></li>{% endif %}
+                {% if personal_information.profiles.linkedin %}<li><i class="fab fa-linkedin icon"></i><a href="{{ personal_information.profiles.linkedin }}" target="_blank">LinkedIn</a></li>{% endif %}
+                {% if personal_information.profiles.github %}<li><i class="fab fa-github icon"></i><a href="{{ personal_information.profiles.github }}" target="_blank">GitHub</a></li>{% endif %}
+                {# Add other relevant profiles #}
+            </ul>
+            {% endif %}
+        </div>
+    </header>
+
+    <!-- === Main Content === -->
+    <main>
+        <!-- ... All main content sections (summary, experience, projects, etc.) remain the same ... -->
+        {% if summary %}
+        <section class="summary-section">
+            <h2><i class="fas fa-user icon"></i> Identity Profile</h2>
+            <p>{{ summary }}</p>
+        </section>
+        {% endif %}
+
+        {% if experience %}
+        <section class="experience-section">
+            <h2><i class="fas fa-briefcase icon"></i> Career Trajectory</h2>
+            {% for job in experience %}
+            <article class="item">
+                <div class="item-header">
+                    <div class="item-title-subtitle">
+                        {% if job.title %}<span class="item-title">{{ job.title }}</span>{% endif %}
+                        {% if job.company %}<span class="item-subtitle">{{ job.company }}</span>{% endif %}
+                    </div>
+                    <div class="item-date-location">
+                        {% if job.start_date or job.end_date %}
+                        <span class="date"><i class="fas fa-calendar-alt icon"></i> {{ job.start_date }}{% if job.start_date and job.end_date %} – {% endif %}{{ job.end_date | default('Current') }}</span>
+                        {% endif %}
+                        {% if job.location %}<span class="location"><i class="fas fa-map-marker-alt icon"></i> {{ job.location }}</span>{% endif %}
+                    </div>
+                </div>
+                 {% if job.description %}
+                    <div class="description">
+                        {% if '\n' in job.description %}
+                            <ul>
+                            {% for point in job.description.split('\n') if point.strip() %}
+                                <li>{{ point.strip() }}</li>
+                            {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>{{ job.description }}</p>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </article>
+            {% endfor %}
+        </section>
+        {% endif %}
+
+         {% if projects %}
+        <section class="projects-section">
+             <h2><i class="fas fa-project-diagram icon"></i> Project Archive</h2>
+             {% for project in projects %}
+             <article class="item">
+                 <div class="item-header">
+                     <div class="item-title-subtitle">
+                         {% if project.name %}<span class="item-title">{{ project.name }}</span>{% endif %}
+                     </div>
+                 </div>
+                 {% if project.description %}
+                     <div class="description">
+                        {% if '\n' in project.description %}
+                            <ul>
+                            {% for point in project.description.split('\n') if point.strip() %}
+                                <li>{{ point.strip() }}</li>
+                            {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>{{ project.description }}</p>
+                        {% endif %}
+                     </div>
+                 {% endif %}
+                 {% if project.technologies %}
+                      <p class="project-tech"><strong>// Tech Stack:</strong>
+                         {% for tech in project.technologies %}<span>{{ tech }}</span>{% endfor %}
+                      </p>
+                 {% endif %}
+                 {% if project.link %}
+                     <p class="project-link"><i class="fas fa-link icon"></i> <a href="{{ project.link }}" target="_blank">Access Link/Repo</a></p>
+                 {% endif %}
+             </article>
+             {% endfor %}
+         </section>
+         {% endif %}
+
+        {% if skills %}
+        <section class="skills-section">
+             <h2><i class="fas fa-cogs icon"></i> Skill Matrix</h2>
+             <div class="skills-container">
+                {% for skill_group in skills %}
+                    <div class="skill-group-item">
+                        {% if skill_group.category %}
+                            <h4 class="skill-category-title">{{ skill_group.category }}</h4>
+                        {% endif %}
+                        {% if skill_group.keywords %}
+                            <ul class="skill-keywords-list">
+                            {% for keyword in skill_group.keywords %}<li>{{ keyword }}</li>{% endfor %}
+                            </ul>
+                        {% elif skill_group.name %}
+                             <ul class="skill-keywords-list"><li>{{ skill_group.name }}</li></ul>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+             </div>
+        </section>
+        {% endif %}
+
+        {% if education %}
+        <section class="education-section">
+             <h2><i class="fas fa-graduation-cap icon"></i> Training & Education</h2>
+              {% for edu in education %}
+             <article class="item">
+                 <div class="item-header">
+                     <div class="item-title-subtitle">
+                         {% if edu.degree or edu.major %}<span class="item-title">{{ edu.degree | default('') }}{% if edu.degree and edu.major %}: {% endif %}{{ edu.major | default('') }}</span>{% endif %}
+                         {% if edu.institution %}<span class="item-subtitle">{{ edu.institution }}</span>{% endif %}
+                     </div>
+                     <div class="item-date-location">
+                          {% if edu.graduation_date %}
+                          <span class="date"><i class="fas fa-calendar-check icon"></i> {{ edu.graduation_date }}</span>
+                          {% elif edu.start_date or edu.end_date %}
+                           <span class="date"><i class="fas fa-calendar-alt icon"></i> {{ edu.start_date }}{% if edu.start_date and edu.end_date %} – {% endif %}{{ edu.end_date | default('Ongoing') }}</span>
+                          {% endif %}
+                          {% if edu.location %}<span class="location"><i class="fas fa-map-marker-alt icon"></i> {{ edu.location }}</span>{% endif %}
+                     </div>
+                 </div>
+                  {% if edu.minor or edu.gpa or edu.description %}
+                     <div class="description">
+                         {% if edu.minor %} <p><em>Minor Field:</em> {{ edu.minor }}</p> {% endif %}
+                         {% if edu.gpa %} <p><em>Performance Index:</em> {{ edu.gpa }}</p> {% endif %}
+                         {% if edu.description %} <p>{{ edu.description }}</p> {% endif %}
+                     </div>
+                   {% endif %}
+             </article>
+             {% endfor %}
+        </section>
+        {% endif %}
+
+        {% if languages %}
+        <section class="languages-section">
+            <h2><i class="fas fa-language icon"></i> Language Protocols</h2>
+            <ul class="languages-list">
+                 {% for lang in languages %}
+                 <li>{{ lang.language }}{% if lang.proficiency %}<span class="lang-proficiency">({{ lang.proficiency }})</span>{% endif %}</li>
+                 {% endfor %}
+            </ul>
+        </section>
+        {% endif %}
+
+         {% if volunteer_and_social_activities %}
+         <section class="volunteer-section">
+              <h2><i class="fas fa-hands-helping icon"></i> Extracurricular Engagements</h2>
+              {% for vol in volunteer_and_social_activities %}
+              <article class="item">
+                  <div class="item-header">
+                      <div class="item-title-subtitle">
+                           {% if vol.position %}<span class="item-title">{{ vol.position }}</span>{% endif %}
+                           {% if vol.organization %}<span class="item-subtitle">{{ vol.organization }}</span>{% endif %}
+                      </div>
+                      <div class="item-date-location">
+                          {% if vol.start_date or vol.end_date %}
+                          <span class="date"><i class="fas fa-calendar-alt icon"></i> {{ vol.start_date }}{% if vol.start_date and vol.end_date %} – {% endif %}{{ vol.end_date | default('Active') }}</span>
+                          {% endif %}
+                           {% if vol.location %}<span class="location"><i class="fas fa-map-marker-alt icon"></i> {{ vol.location }}</span>{% endif %}
+                      </div>
+                  </div>
+                  {% if vol.description %}
+                       <div class="description"><p>{{ vol.description }}</p></div>
+                  {% endif %}
+              </article>
+              {% endfor %}
+          </section>
+          {% endif %}
+
+    </main>
+
+</div>
+
+</body>
+</html>

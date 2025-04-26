@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ personal_information.name | default('Resume') }} // Midnight Bloom</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <!-- Optional: Script font for specific elements if desired -->
+    <!-- <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet"> -->
+
+    <style>
+        :root {
+            /* --- Midnight Bloom Theme --- */
+            --font-primary: 'Lora', serif; /* Elegant, readable serif */
+            --font-heading: 'Playfair Display', serif; /* Bold, sophisticated serif for headings */
+            /* --font-script: 'Dancing Script', cursive; */ /* Optional script font */
+            --color-bg: #1a1a2e; /* Deep Indigo/Purple */
+            --color-bg-medium: #2a2a4e; /* Slightly lighter dark purple */
+            --color-text-light: #e0e0fc; /* Lavender White */
+            --color-text-medium: #a0a0cc; /* Muted Lavender Grey */
+            --color-text-darker: #7070aa; /* Darker muted lavender for subtle details */
+            --color-accent1: #f03aab; /* Vibrant Magenta */
+            --color-accent2: #0abcf9; /* Electric Blue */
+            --color-accent3: #f7ca18; /* Bright Yellow */
+            --color-border: rgba(240, 58, 171, 0.3); /* Faint Magenta border */
+
+            --glow-accent1: 0 0 10px rgba(240, 58, 171, 0.6); /* Magenta glow */
+            --glow-accent2: 0 0 10px rgba(10, 188, 249, 0.6); /* Blue glow */
+            --glow-accent3: 0 0 8px rgba(247, 202, 24, 0.5); /* Yellow glow */
+
+            --base-font-size: 10pt;
+            --line-height: 1.7; /* More spacious line height */
+            --section-spacing: 2.6em;
+            --item-spacing: 1.8em;
+            --border-radius: 5px; /* Soft rounding */
+        }
+
+        @page {
+            size: A4;
+            margin: 0;
+        }
+
+        html {
+             background-color: var(--color-bg);
+             /* Optional: Subtle gradient or pattern */
+             /* background-image: linear-gradient(to bottom right, var(--color-bg), #10101e); */
+        }
+
+        body {
+            font-family: var(--font-primary);
+            font-size: var(--base-font-size);
+            line-height: var(--line-height);
+            color: var(--color-text-light);
+            background-color: var(--color-bg);
+            margin: 0;
+            padding: 1.8cm; /* Generous margins */
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            min-height: calc(29.7cm - 3.6cm);
+            box-sizing: border-box;
+        }
+
+        /* --- Layout --- */
+        .resume-container-t16 {
+            max-width: 17.4cm;
+            margin: 0 auto;
+            /* No separate container background needed */
+        }
+
+        /* --- Header --- */
+        .resume-header-t16 {
+            padding-bottom: 1.8em;
+            margin-bottom: var(--section-spacing);
+            border-bottom: 1px solid var(--color-border);
+            text-align: center; /* Elegant centered alignment */
+            page-break-after: avoid;
+            position: relative;
+        }
+        /* Subtle top/bottom glow effect */
+        .resume-header-t16::before, .resume-header-t16::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 1px;
+            opacity: 0.7;
+        }
+        .resume-header-t16::before {
+            top: -1px;
+            background: linear-gradient(90deg, transparent, var(--color-accent1), transparent);
+            filter: blur(3px);
+        }
+        .resume-header-t16::after {
+            bottom: -1px;
+            background: linear-gradient(90deg, transparent, var(--color-accent2), transparent);
+            filter: blur(3px);
+        }
+
+
+        .header-content-t16 h1 {
+            font-family: var(--font-heading);
+            font-size: 3rem; /* Large, prominent name */
+            font-weight: 700;
+            color: #ffffff; /* White name */
+            margin: 0 0 0.1em 0;
+            line-height: 1.1;
+            text-shadow: var(--glow-accent1); /* Subtle magenta glow */
+        }
+        .header-content-t16 .headline {
+            font-family: var(--font-primary);
+            font-size: 1.15rem;
+            font-weight: 500; /* Medium weight */
+            font-style: italic; /* Italic headline */
+            color: var(--color-accent2); /* Electric blue headline */
+            margin: 0 0 1.5em 0;
+            letter-spacing: 0.5px;
+            text-shadow: var(--glow-accent2);
+        }
+        .contact-info-header-t16 {
+            list-style: none;
+            padding: 0;
+            margin: 0 auto;
+            max-width: 95%;
+            font-size: 0.9rem;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.7em 2em;
+        }
+        .contact-info-header-t16 li {
+            display: flex;
+            align-items: center;
+            color: var(--color-text-medium);
+        }
+        .contact-info-header-t16 i.icon {
+            width: 14px;
+            margin-right: 9px;
+            text-align: center;
+            color: var(--color-accent3); /* Yellow icon */
+            opacity: 0.9;
+            flex-shrink: 0;
+            text-shadow: var(--glow-accent3);
+        }
+        .contact-info-header-t16 a {
+            color: var(--color-text-medium);
+            text-decoration: none;
+            word-break: break-word;
+            transition: color 0.2s ease, text-shadow 0.2s ease;
+        }
+        .contact-info-header-t16 a:hover {
+            color: var(--color-accent2);
+            text-shadow: var(--glow-accent2);
+        }
+
+        /* --- Main Content (Shared Styles) --- */
+        .main-section {
+            margin-bottom: var(--section-spacing);
+        }
+         .main-section:last-of-type {
+             margin-bottom: 0;
+         }
+
+        .main-section h2 {
+            font-family: var(--font-heading);
+            font-size: 1.7rem;
+            font-weight: 700;
+            color: var(--color-accent1); /* Magenta heading */
+            margin: 0 0 1.2em 0;
+            padding-bottom: 0.4em;
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Center align section headings */
+            text-align: center;
+            gap: 0.6em;
+            text-shadow: var(--glow-accent1);
+            page-break-after: avoid;
+        }
+        .main-section h2 i.icon {
+            font-size: 1.3rem;
+            opacity: 0.8;
+            color: var(--color-accent1); /* Match heading color */
+        }
+
+        .summary-section {
+            text-align: center; /* Center summary text */
+            margin-bottom: var(--section-spacing);
+        }
+        .summary-section h2 {
+            margin-bottom: 0.8em; /* Less space after centered summary heading */
+        }
+        .summary-section p {
+            font-size: 1.05rem;
+            color: var(--color-text-light);
+            line-height: 1.8;
+            max-width: 80%; /* Constrain width */
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        p {
+            margin: 0 0 0.8em 0;
+            color: var(--color-text-light);
+        }
+        ul {
+            padding-left: 25px;
+            margin: 0.5em 0 1em 0;
+            list-style: none;
+        }
+        ul li {
+            margin-bottom: 0.6em;
+            position: relative;
+            padding-left: 1.6em;
+            color: var(--color-text-medium);
+            font-size: 0.95rem;
+        }
+        /* Glowing dot bullet */
+        ul li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0.5em; /* Adjust vertical alignment */
+            width: 7px;
+            height: 7px;
+            background-color: var(--color-accent2); /* Blue bullet */
+            border-radius: 50%;
+            box-shadow: var(--glow-accent2);
+            opacity: 0.9;
+        }
+
+        /* --- Item Styling (Experience, Education, Projects) --- */
+        .item {
+            margin-bottom: var(--item-spacing);
+            padding: 1.2em;
+            border-radius: var(--border-radius);
+            background-color: var(--color-bg-medium); /* Slightly lighter background */
+            border: 1px solid var(--color-border);
+            position: relative;
+            page-break-inside: avoid;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .item:hover {
+            border-color: var(--color-accent1);
+            box-shadow: 0 0 15px rgba(240, 58, 171, 0.2);
+        }
+        .main-section article:last-of-type {
+             margin-bottom: 0;
+        }
+
+        .item-header {
+            margin-bottom: 0.6em;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 0.3em 1em;
+            padding-bottom: 0.6em;
+            border-bottom: 1px dashed var(--color-border); /* Dashed separator */
+        }
+        .item-title-subtitle {
+             flex-grow: 1;
+        }
+        .item-title {
+            font-family: var(--font-heading); /* Use heading font for titles */
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--color-text-light); /* Light title */
+            display: block;
+            margin-bottom: 0.1em;
+        }
+        .item-subtitle {
+            font-family: var(--font-primary);
+            font-size: 1rem;
+            font-weight: 500; /* Medium weight */
+            font-style: italic;
+            color: var(--color-accent3); /* Yellow subtitle */
+            display: block;
+            margin-bottom: 0.1em;
+            text-shadow: var(--glow-accent3);
+        }
+        .item-date-location {
+            font-size: 0.85rem;
+            color: var(--color-text-darker); /* Darker subtle color */
+            text-align: right;
+            flex-shrink: 0;
+            padding-left: 1em;
+            line-height: 1.5;
+            font-style: normal;
+        }
+        .item-date-location .date, .item-date-location .location {
+            display: block;
+        }
+        .item-date-location i.icon {
+             margin-right: 5px;
+             font-size: 0.8em;
+             opacity: 0.7;
+             color: var(--color-text-darker);
+        }
+        .item .description {
+            font-size: 0.95rem;
+            color: var(--color-text-medium);
+            padding-top: 0.6em;
+        }
+        .item .description p {
+             margin-bottom: 0.6em;
+             color: var(--color-text-medium);
+        }
+        .item .description ul {
+            margin-top: 0.5em;
+            margin-bottom: 0.6em;
+        }
+        .item .description ul li {
+            margin-bottom: 0.5em;
+            color: var(--color-text-medium);
+        }
+         .item .description ul li::before {
+             background-color: var(--color-accent1); /* Magenta bullets in description */
+             box-shadow: var(--glow-accent1);
+             opacity: 0.8;
+             top: 0.55em;
+             width: 6px; height: 6px; /* Smaller bullets */
+         }
+
+        /* --- Skills Styling --- */
+        .skills-section .skill-group-item {
+            margin-bottom: 1.5em;
+            text-align: center; /* Center skill groups */
+        }
+        .skills-section .skill-category-title {
+            font-family: var(--font-heading);
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--color-accent3); /* Yellow category title */
+            margin-bottom: 0.8em;
+            display: inline-block; /* Allow centering */
+            text-shadow: var(--glow-accent3);
+        }
+        .skills-section .skill-keywords-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center; /* Center tags */
+            gap: 8px 12px;
+        }
+        .skills-section .skill-keywords-list li {
+            display: inline-block;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--color-text-light);
+            background-color: transparent;
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            padding: 5px 12px;
+            margin: 0;
+            line-height: 1.4;
+            transition: color 0.2s ease, border-color 0.2s ease, text-shadow 0.2s ease, box-shadow 0.2s ease;
+        }
+        .skills-section .skill-keywords-list li:hover {
+             color: var(--color-accent2);
+             border-color: var(--color-accent2);
+             text-shadow: var(--glow-accent2);
+             box-shadow: 0 0 8px rgba(10, 188, 249, 0.3);
+        }
+         .skills-section .skill-keywords-list li::before {
+             display: none;
+         }
+
+        /* --- Project Styling --- */
+        .project-tech, .project-link {
+            font-size: 0.9rem;
+            margin-top: 0.8em;
+            color: var(--color-text-medium);
+        }
+        .project-tech strong { font-weight: 600; color: var(--color-text-light); }
+        .project-tech span {
+             color: var(--color-text-medium);
+             margin-left: 5px;
+             border: 1px solid var(--color-border);
+             padding: 2px 6px;
+             border-radius: 3px;
+             font-size: 0.85rem;
+             background-color: rgba(255,255,255, 0.05); /* Subtle highlight */
+        }
+        .project-link i { color: var(--color-accent1); margin-right: 6px; }
+        .project-link a {
+            color: var(--color-accent1);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s ease, text-shadow 0.2s ease;
+        }
+        .project-link a:hover {
+            color: #ffffff;
+            text-shadow: var(--glow-accent1);
+        }
+
+        /* --- Language Styling --- */
+        .languages-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            column-count: 2;
+            column-gap: 2.5em;
+            text-align: center; /* Center language list items */
+        }
+        .languages-list li {
+            margin-bottom: 0.6em;
+            padding-left: 0;
+            font-size: 0.95rem;
+            color: var(--color-text-medium);
+        }
+         .languages-list li::before { display: none; }
+        .languages-list .lang-proficiency {
+            color: var(--color-text-darker);
+            font-size: 0.9rem;
+            margin-left: 0.6em;
+            font-style: italic;
+        }
+
+        /* --- RTL Support --- */
+        html[lang="ar"] body { direction: rtl; text-align: right; }
+        html[lang="ar"] .contact-info-header-t16 i.icon { margin-right: 0; margin-left: 9px; }
+        html[lang="ar"] .main-section h2 { flex-direction: row-reverse; }
+        html[lang="ar"] .main-section h2 i.icon { margin-right: 0; margin-left: 0.6em; }
+        html[lang="ar"] ul { padding-left: 0; padding-right: 25px; }
+        html[lang="ar"] ul li { padding-left: 0; padding-right: 1.6em; }
+        html[lang="ar"] ul li::before { left: auto; right: 0; }
+        html[lang="ar"] .item-header { flex-direction: row-reverse; }
+        html[lang="ar"] .item-date-location { text-align: left; padding-left: 0; padding-right: 1em; }
+        html[lang="ar"] .project-tech span { margin-left: 0; margin-right: 5px; }
+        html[lang="ar"] .project-link i { margin-right: 0; margin-left: 6px; }
+        html[lang="ar"] .languages-list .lang-proficiency { margin-left: 0; margin-right: 0.6em; }
+
+    </style>
+</head>
+<body>
+
+<div class="resume-container-t16">
+
+    <!-- === Header === -->
+    <header class="resume-header-t16">
+        <div class="header-content-t16">
+            {% if personal_information.name %}<h1>{{ personal_information.name }}</h1>{% endif %}
+            {% if personal_information.headline %}<p class="headline">{{ personal_information.headline }}</p>{% endif %}
+            {% if personal_information %}
+            <ul class="contact-info-header-t16">
+                {% if personal_information.phone %}<li><i class="fas fa-mobile-alt icon"></i>{{ personal_information.phone }}</li>{% endif %}
+                {% if personal_information.email %}<li><i class="fas fa-envelope icon"></i><a href="mailto:{{ personal_information.email }}">{{ personal_information.email }}</a></li>{% endif %}
+                {% if personal_information.location and (personal_information.location.address or personal_information.location.city) %}
+                <li><i class="fas fa-map-marker-alt icon"></i>
+                    {% if personal_information.location.address %}{{ personal_information.location.address }}, {% endif %}
+                    {{ personal_information.location.postalCode | default('') }} {{ personal_information.location.city | default('') }}{% if personal_information.location.countryCode %}, {{ personal_information.location.countryCode }}{% endif %}
+                </li>
+                {% endif %}
+                {% if personal_information.profiles.website %}<li><i class="fas fa-globe icon"></i><a href="{{ personal_information.profiles.website }}" target="_blank">{{ personal_information.profiles.website | replace("https://","") | replace("http://","") }}</a></li>{% endif %}
+                {% if personal_information.profiles.linkedin %}<li><i class="fab fa-linkedin icon"></i><a href="{{ personal_information.profiles.linkedin }}" target="_blank">LinkedIn</a></li>{% endif %}
+                {% if personal_information.profiles.github %}<li><i class="fab fa-github icon"></i><a href="{{ personal_information.profiles.github }}" target="_blank">GitHub</a></li>{% endif %}
+                {# Add other relevant profiles #}
+            </ul>
+            {% endif %}
+        </div>
+    </header>
+
+    <!-- === Main Content === -->
+    <main>
+
+        {% if summary %}
+        <section class="main-section summary-section">
+            <h2><i class="fas fa-feather-alt icon"></i> Profile</h2>
+            <p>{{ summary }}</p>
+        </section>
+        {% endif %}
+
+        {% if experience %}
+        <section class="main-section experience-section">
+            <h2><i class="fas fa-history icon"></i> Experience</h2>
+            {% for job in experience %}
+            <article class="item">
+                <div class="item-header">
+                    <div class="item-title-subtitle">
+                        {% if job.title %}<span class="item-title">{{ job.title }}</span>{% endif %}
+                        {% if job.company %}<span class="item-subtitle">{{ job.company }}</span>{% endif %}
+                    </div>
+                    <div class="item-date-location">
+                        {% if job.start_date or job.end_date %}
+                        <span class="date"><i class="fas fa-calendar-alt icon"></i> {{ job.start_date }}{% if job.start_date and job.end_date %} – {% endif %}{{ job.end_date | default('Present') }}</span>
+                        {% endif %}
+                        {% if job.location %}<span class="location"><i class="fas fa-map-pin icon"></i> {{ job.location }}</span>{% endif %}
+                    </div>
+                </div>
+                 {% if job.description %}
+                    <div class="description">
+                        {% if '\n' in job.description %}
+                            <ul>
+                            {% for point in job.description.split('\n') if point.strip() %}
+                                <li>{{ point.strip() }}</li>
+                            {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>{{ job.description }}</p>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </article>
+            {% endfor %}
+        </section>
+        {% endif %}
+
+        {% if education %}
+        <section class="main-section education-section">
+             <h2><i class="fas fa-university icon"></i> Education</h2>
+              {% for edu in education %}
+             <article class="item">
+                 <div class="item-header">
+                     <div class="item-title-subtitle">
+                         {% if edu.degree or edu.major %}<span class="item-title">{{ edu.degree | default('') }}{% if edu.degree and edu.major %}: {% endif %}{{ edu.major | default('') }}</span>{% endif %}
+                         {% if edu.institution %}<span class="item-subtitle">{{ edu.institution }}</span>{% endif %}
+                     </div>
+                     <div class="item-date-location">
+                          {% if edu.graduation_date %}
+                          <span class="date"><i class="fas fa-calendar-check icon"></i> {{ edu.graduation_date }}</span>
+                          {% elif edu.start_date or edu.end_date %}
+                           <span class="date"><i class="fas fa-calendar-alt icon"></i> {{ edu.start_date }}{% if edu.start_date and edu.end_date %} – {% endif %}{{ edu.end_date | default('Ongoing') }}</span>
+                          {% endif %}
+                          {% if edu.location %}<span class="location"><i class="fas fa-map-pin icon"></i> {{ edu.location }}</span>{% endif %}
+                     </div>
+                 </div>
+                  {% if edu.minor or edu.gpa or edu.description %}
+                     <div class="description">
+                         {% if edu.minor %} <p><em>Minor:</em> {{ edu.minor }}</p> {% endif %}
+                         {% if edu.gpa %} <p><em>GPA:</em> {{ edu.gpa }}</p> {% endif %}
+                         {% if edu.description %} <p>{{ edu.description }}</p> {% endif %}
+                     </div>
+                   {% endif %}
+             </article>
+             {% endfor %}
+        </section>
+        {% endif %}
+
+         {% if projects %}
+        <section class="main-section projects-section">
+             <h2><i class="fas fa-lightbulb icon"></i> Projects</h2>
+             {% for project in projects %}
+             <article class="item">
+                 <div class="item-header">
+                     <div class="item-title-subtitle">
+                         {% if project.name %}<span class="item-title">{{ project.name }}</span>{% endif %}
+                     </div>
+                 </div>
+                 {% if project.description %}
+                     <div class="description">
+                        {% if '\n' in project.description %}
+                            <ul>
+                            {% for point in project.description.split('\n') if point.strip() %}
+                                <li>{{ point.strip() }}</li>
+                            {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>{{ project.description }}</p>
+                        {% endif %}
+                     </div>
+                 {% endif %}
+                 {% if project.technologies %}
+                      <p class="project-tech"><strong>Tech Stack:</strong>
+                         {% for tech in project.technologies %}<span>{{ tech }}</span>{% endfor %}
+                      </p>
+                 {% endif %}
+                 {% if project.link %}
+                     <p class="project-link"><i class="fas fa-link icon"></i> <a href="{{ project.link }}" target="_blank">View Project</a></p>
+                 {% endif %}
+             </article>
+             {% endfor %}
+         </section>
+         {% endif %}
+
+        {% if skills %}
+        <section class="main-section skills-section">
+             <h2><i class="fas fa-sparkles icon"></i> Skills</h2> {# Changed icon #}
+             <div class="skills-container">
+                {% for skill_group in skills %}
+                    <div class="skill-group-item">
+                        {% if skill_group.category %}
+                            <h3 class="skill-category-title">{{ skill_group.category }}</h3>
+                        {% endif %}
+                        {% if skill_group.keywords %}
+                            <ul class="skill-keywords-list">
+                            {% for keyword in skill_group.keywords %}<li>{{ keyword }}</li>{% endfor %}
+                            </ul>
+                        {% elif skill_group.name %}
+                             <ul class="skill-keywords-list"><li>{{ skill_group.name }}</li></ul>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+             </div>
+        </section>
+        {% endif %}
+
+        {% if languages %}
+        <section class="main-section languages-section">
+            <h2><i class="fas fa-comments icon"></i> Languages</h2>
+            <ul class="languages-list">
+                 {% for lang in languages %}
+                 <li>{{ lang.language }}{% if lang.proficiency %}<span class="lang-proficiency">({{ lang.proficiency }})</span>{% endif %}</li>
+                 {% endfor %}
+            </ul>
+        </section>
+        {% endif %}
+
+         {% if volunteer_and_social_activities %}
+         <section class="main-section volunteer-section">
+              <h2><i class="fas fa-hands-helping icon"></i> Activities</h2>
+              {% for vol in volunteer_and_social_activities %}
+              <article class="item">
+                  <div class="item-header">
+                      <div class="item-title-subtitle">
+                           {% if vol.position %}<span class="item-title">{{ vol.position }}</span>{% endif %}
+                           {% if vol.organization %}<span class="item-subtitle">{{ vol.organization }}</span>{% endif %}
+                      </div>
+                      <div class="item-date-location">
+                          {% if vol.start_date or vol.end_date %}
+                          <span class="date"><i class="fas fa-calendar-alt icon"></i> {{ vol.start_date }}{% if vol.start_date and vol.end_date %} – {% endif %}{{ vol.end_date | default('Present') }}</span>
+                          {% endif %}
+                           {% if vol.location %}<span class="location"><i class="fas fa-map-pin icon"></i> {{ vol.location }}</span>{% endif %}
+                      </div>
+                  </div>
+                  {% if vol.description %}
+                       <div class="description"><p>{{ vol.description }}</p></div>
+                  {% endif %}
+              </article>
+              {% endfor %}
+          </section>
+          {% endif %}
+
+    </main>
+
+</div>
+
+</body>
+</html>

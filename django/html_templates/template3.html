@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ personal_information.name | default('Resume') }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --font-serif: 'EB Garamond', Georgia, Times, serif;
+            --font-sans: 'Lato', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            --text-color: #333333;
+            --heading-color: #111111;
+            --subtle-color: #555555;
+            --border-color: #cccccc;
+            --accent-color: #003366; /* A classic dark blue accent */
+            --base-font-size: 10.5pt;
+            --line-height: 1.5;
+        }
+
+        /* --- Theme Variations (Subtle) --- */
+        body.theme-grey {
+            --accent-color: #505050;
+            --heading-color: #222222;
+        }
+        body.theme-maroon {
+            --accent-color: #800000; /* Classic maroon */
+            --heading-color: #400000;
+        }
+        body.theme-darkgreen {
+             --accent-color: #006400; /* Dark green */
+             --heading-color: #004d00;
+        }
+        /* --- End Theme Variations --- */
+
+        @page {
+            size: A4;
+            margin: 1.8cm 1.5cm; /* Generous margins typical of LaTeX */
+            orphans: 3;
+            widows: 3;
+        }
+
+        body {
+            font-family: var(--font-serif);
+            font-size: var(--base-font-size);
+            line-height: var(--line-height);
+            color: var(--text-color);
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        /* --- Layout & Structure --- */
+        .resume-container {
+            max-width: 18cm; /* A4 width minus margins */
+            margin: 0 auto;
+        }
+
+        /* --- Header --- */
+        .resume-header {
+            text-align: center;
+            margin-bottom: 1.5em;
+            padding-bottom: 1em;
+            border-bottom: 1px solid var(--border-color);
+            page-break-after: avoid;
+        }
+
+        .resume-header h1 {
+            font-family: var(--font-serif);
+            font-size: 2.2rem; /* Prominent name */
+            color: var(--heading-color);
+            margin: 0 0 0.15em 0;
+            font-weight: 700;
+            letter-spacing: 1px; /* Slight spacing */
+        }
+
+        .resume-header .headline {
+            font-family: var(--font-sans);
+            font-size: 1.1rem;
+            color: var(--subtle-color);
+            margin: 0 0 0.8em 0;
+            font-weight: 400;
+            font-style: italic;
+        }
+
+        .contact-info-header {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            font-family: var(--font-sans);
+            color: var(--subtle-color);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5em 1.5em; /* Row and column gap */
+        }
+        .contact-info-header li {
+            display: inline-flex; /* Use inline-flex for alignment */
+            align-items: center;
+            white-space: nowrap; /* Prevent wrapping within an item */
+        }
+        .contact-info-header i.icon {
+            color: var(--accent-color);
+            margin-right: 6px;
+            font-size: 0.95em; /* Keep icons subtle */
+        }
+        .contact-info-header a {
+            color: var(--accent-color);
+            text-decoration: none;
+            border-bottom: 1px dotted var(--accent-color); /* Subtle link indication */
+        }
+        .contact-info-header a:hover {
+            color: var(--heading-color);
+            border-bottom-style: solid;
+        }
+
+        /* --- RTL Support --- */
+        html[lang="ar"] body { direction: rtl; text-align: right; font-family: /* Choose appropriate Arabic font */; }
+        html[lang="ar"] .contact-info-header i.icon { margin-right: 0; margin-left: 6px; }
+        html[lang="ar"] h2 { text-align: right; }
+        html[lang="ar"] .item .item-meta { text-align: left; padding-left: 0; padding-right: 1.5em; }
+        html[lang="ar"] .item .item-content { border-left: none; border-right: 1px solid var(--border-color); padding-left: 0; padding-right: 1.5em; }
+        html[lang="ar"] ul { padding-left: 0; padding-right: 25px; }
+
+
+        /* --- Section Styling --- */
+        section {
+            margin-bottom: 1.8em;
+            page-break-inside: avoid;
+        }
+        section:last-child {
+            margin-bottom: 0;
+        }
+
+        h2 {
+            font-family: var(--font-sans); /* Sans-serif for section headers */
+            font-size: 1.1rem;
+            color: var(--heading-color);
+            margin: 0 0 1em 0;
+            padding-bottom: 0.2em;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 700;
+            text-transform: uppercase; /* Classic LaTeX style */
+            letter-spacing: 1px;
+            page-break-after: avoid;
+        }
+
+        p {
+            margin: 0 0 0.7em 0;
+        }
+        ul {
+            padding-left: 25px; /* Standard indent */
+            margin-top: 0.4em;
+            margin-bottom: 0.8em;
+            list-style: square; /* Classic list style */
+        }
+        li {
+            margin-bottom: 0.4em;
+        }
+
+        /* --- Item Styling (Experience, Education, etc.) --- */
+        .item {
+            margin-bottom: 1.5em;
+            page-break-inside: avoid;
+            display: flex; /* Use flexbox for side-by-side layout */
+            gap: 1em;
+        }
+        .item:last-child {
+            margin-bottom: 0;
+        }
+
+        .item-meta { /* For dates/location */
+            flex: 0 0 3.5cm; /* Fixed width for the meta column */
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+            color: var(--subtle-color);
+            text-align: right;
+            padding-right: 1.5em;
+            line-height: 1.4; /* Adjust line height for meta */
+        }
+        .item-meta .date { display: block; margin-bottom: 0.2em; font-weight: 400; }
+        .item-meta .location { display: block; font-style: italic; }
+
+        .item-content {
+            flex: 1; /* Takes remaining space */
+            border-left: 1px solid var(--border-color);
+            padding-left: 1.5em;
+        }
+
+        .item-title {
+            font-size: 1.1rem;
+            font-weight: 700; /* Bold title */
+            color: var(--heading-color);
+            display: block;
+            margin-bottom: 0.1em;
+        }
+        .item-subtitle { /* For company/institution */
+            font-size: 1rem;
+            font-weight: 500; /* Medium weight */
+            color: var(--text-color);
+            display: block;
+            margin-bottom: 0.4em;
+            font-style: italic;
+        }
+
+        .item .description {
+            font-size: 0.95rem; /* Slightly smaller description text */
+            color: var(--text-color);
+        }
+        .item .description ul {
+            margin-top: 0.3em;
+            margin-bottom: 0.5em;
+            padding-left: 20px; /* Slightly less indent for nested lists */
+        }
+        .item .description ul li {
+            margin-bottom: 0.25em; /* Tighter list items */
+        }
+
+        /* --- Skills Styling --- */
+        .skills-section ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            column-count: 2; /* Use columns for skills */
+            column-gap: 2.5em;
+        }
+        .skills-section li {
+            margin-bottom: 0.5em;
+            page-break-inside: avoid;
+        }
+        .skills-section .skill-category {
+            font-family: var(--font-sans);
+            font-weight: 700;
+            color: var(--heading-color);
+            font-size: 0.95rem;
+            margin-bottom: 0.3em;
+            display: block; /* Ensure category is on its own line */
+        }
+        .skills-section .skill-keywords {
+            font-size: 0.9rem;
+            color: var(--subtle-color);
+            display: block; /* Keywords below category */
+            line-height: 1.4;
+        }
+
+        /* --- Project Styling --- */
+        .project-link, .project-tech {
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+            margin-top: 0.5em;
+            color: var(--subtle-color);
+        }
+        .project-link i { color: var(--accent-color); margin-right: 4px; }
+        .project-link a {
+            color: var(--accent-color);
+            text-decoration: none;
+            border-bottom: 1px dotted var(--accent-color);
+        }
+        .project-link a:hover {
+            color: var(--heading-color);
+            border-bottom-style: solid;
+        }
+        .project-tech strong { font-weight: 700; color: var(--text-color); }
+
+        /* --- Language Styling --- */
+        .languages-section ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            column-count: 2;
+            column-gap: 2.5em;
+        }
+        .languages-section li {
+            margin-bottom: 0.4em;
+            page-break-inside: avoid;
+        }
+        .languages-section .lang-proficiency {
+            font-family: var(--font-sans);
+            color: var(--subtle-color);
+            font-size: 0.9rem;
+            margin-left: 0.5em;
+        }
+        html[lang="ar"] .languages-section .lang-proficiency { margin-left: 0; margin-right: 0.5em; }
+
+    </style>
+</head>
+<body class="{{ theme_class | default('') }}">
+
+<div class="resume-container">
+
+    <!-- === Header === -->
+    <header class="resume-header">
+        {% if personal_information.name %}<h1>{{ personal_information.name }}</h1>{% endif %}
+        {% if personal_information.headline %}<p class="headline">{{ personal_information.headline }}</p>{% endif %}
+
+        {% if personal_information %}
+        <ul class="contact-info-header">
+            {% if personal_information.phone %}<li><i class="fas fa-phone icon"></i>{{ personal_information.phone }}</li>{% endif %}
+            {% if personal_information.email %}<li><i class="fas fa-envelope icon"></i><a href="mailto:{{ personal_information.email }}">{{ personal_information.email }}</a></li>{% endif %}
+            {% if personal_information.location and (personal_information.location.address or personal_information.location.city) %}
+            <li><i class="fas fa-map-marker-alt icon"></i>
+                {% if personal_information.location.address %}{{ personal_information.location.address }}, {% endif %}
+                {{ personal_information.location.postalCode | default('') }} {{ personal_information.location.city | default('') }}{% if personal_information.location.countryCode %}, {{ personal_information.location.countryCode }}{% endif %}
+            </li>
+            {% endif %}
+            {% if personal_information.profiles.website %}<li><i class="fas fa-globe icon"></i><a href="{{ personal_information.profiles.website }}" target="_blank">{{ personal_information.profiles.website | replace("https://","") | replace("http://","") }}</a></li>{% endif %}
+            {% if personal_information.profiles.linkedin %}<li><i class="fab fa-linkedin icon"></i><a href="{{ personal_information.profiles.linkedin }}" target="_blank">LinkedIn</a></li>{% endif %}
+            {% if personal_information.profiles.github %}<li><i class="fab fa-github icon"></i><a href="{{ personal_information.profiles.github }}" target="_blank">GitHub</a></li>{% endif %}
+            {# Add other profiles compactly #}
+        </ul>
+        {% endif %}
+    </header>
+
+    <!-- === Main Content === -->
+    <main>
+
+        {% if summary %}
+        <section class="summary-section">
+            <h2>Summary</h2>
+            <p>{{ summary }}</p>
+        </section>
+        {% endif %}
+
+        {% if experience %}
+        <section class="experience-section">
+            <h2>Work Experience</h2>
+            {% for job in experience %}
+            <article class="item">
+                <div class="item-meta">
+                    {% if job.start_date or job.end_date %}
+                    <span class="date">{{ job.start_date }}{% if job.start_date and job.end_date %} – {% endif %}{{ job.end_date | default('Present') }}</span>
+                    {% endif %}
+                    {% if job.location %}<span class="location">{{ job.location }}</span>{% endif %}
+                </div>
+                <div class="item-content">
+                    {% if job.title %}<span class="item-title">{{ job.title }}</span>{% endif %}
+                    {% if job.company %}<span class="item-subtitle">{{ job.company }}</span>{% endif %}
+                    {% if job.description %}
+                        <div class="description">
+                            {% if '\n' in job.description %}
+                                <ul>
+                                {% for point in job.description.split('\n') if point.strip() %}
+                                    <li>{{ point.strip() }}</li>
+                                {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p>{{ job.description }}</p>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </article>
+            {% endfor %}
+        </section>
+        {% endif %}
+
+        {% if education %}
+        <section class="education-section">
+             <h2>Education</h2>
+              {% for edu in education %}
+             <article class="item">
+                 <div class="item-meta">
+                      {% if edu.graduation_date %}
+                      <span class="date">{{ edu.graduation_date }}</span>
+                      {% elif edu.start_date or edu.end_date %}
+                       <span class="date">{{ edu.start_date }}{% if edu.start_date and edu.end_date %} – {% endif %}{{ edu.end_date | default('Ongoing') }}</span>
+                      {% endif %}
+                      {% if edu.location %}<span class="location">{{ edu.location }}</span>{% endif %}
+                 </div>
+                 <div class="item-content">
+                     {% if edu.degree or edu.major %}<span class="item-title">{{ edu.degree | default('') }}{% if edu.degree and edu.major %}: {% endif %}{{ edu.major | default('') }}</span>{% endif %}
+                     {% if edu.institution %}<span class="item-subtitle">{{ edu.institution }}</span>{% endif %}
+                      {% if edu.minor or edu.gpa or edu.description %}
+                         <div class="description">
+                             {% if edu.minor %} <p><em>Minor:</em> {{ edu.minor }}</p> {% endif %}
+                             {% if edu.gpa %} <p><em>GPA:</em> {{ edu.gpa }}</p> {% endif %}
+                             {% if edu.description %} <p>{{ edu.description }}</p> {% endif %}
+                         </div>
+                       {% endif %}
+                 </div>
+             </article>
+             {% endfor %}
+        </section>
+        {% endif %}
+
+        {% if skills %}
+        <section class="skills-section">
+             <h2>Skills</h2>
+              <ul>
+                {% for skill_group in skills %}
+                    <li>
+                     {% if skill_group.category %}
+                         <span class="skill-category">{{ skill_group.category }}:</span>
+                     {% endif %}
+                     {% if skill_group.keywords %}
+                         <span class="skill-keywords">{{ skill_group.keywords | join(', ') }}</span>
+                     {% elif skill_group.name %}
+                          <span class="skill-keywords">{{ skill_group.name }}</span> {# Treat single skill as keyword #}
+                     {% endif %}
+                    </li>
+                {% endfor %}
+             </ul>
+        </section>
+        {% endif %}
+
+         {% if projects %}
+        <section class="projects-section">
+             <h2>Projects</h2>
+             {% for project in projects %}
+             <article class="item">
+                 <div class="item-meta">
+                     {# Optionally add project date range here if available #}
+                     {% if project.technologies %}
+                        <span class="location"> <!-- Reusing location style for tech stack -->
+                            {{ project.technologies | join(', ') }}
+                        </span>
+                     {% endif %}
+                 </div>
+                 <div class="item-content">
+                     {% if project.name %}<span class="item-title">{{ project.name }}</span>{% endif %}
+                     {% if project.description %}
+                         <div class="description">
+                            {% if '\n' in project.description %}
+                                <ul>
+                                {% for point in project.description.split('\n') if point.strip() %}
+                                    <li>{{ point.strip() }}</li>
+                                {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p>{{ project.description }}</p>
+                            {% endif %}
+                         </div>
+                     {% endif %}
+                     {% if project.link %}
+                         <p class="project-link"><i class="fas fa-link"></i> <a href="{{ project.link }}" target="_blank">Link/Repository</a></p>
+                     {% endif %}
+                 </div>
+             </article>
+             {% endfor %}
+         </section>
+         {% endif %}
+
+        {% if languages %}
+        <section class="languages-section">
+            <h2>Languages</h2>
+            <ul>
+                {% for lang in languages %}
+                <li>{{ lang.language }}{% if lang.proficiency %}<span class="lang-proficiency">({{ lang.proficiency }})</span>{% endif %}</li>
+                {% endfor %}
+            </ul>
+        </section>
+        {% endif %}
+
+         {% if volunteer_and_social_activities %}
+         <section class="volunteer-section">
+              <h2>Volunteer & Activities</h2>
+              {% for vol in volunteer_and_social_activities %}
+              <article class="item">
+                  <div class="item-meta">
+                      {% if vol.start_date or vol.end_date %}
+                      <span class="date">{{ vol.start_date }}{% if vol.start_date and vol.end_date %} – {% endif %}{{ vol.end_date | default('Present') }}</span>
+                      {% endif %}
+                       {% if vol.location %}<span class="location">{{ vol.location }}</span>{% endif %}
+                  </div>
+                  <div class="item-content">
+                       {% if vol.position %}<span class="item-title">{{ vol.position }}</span>{% endif %}
+                       {% if vol.organization %}<span class="item-subtitle">{{ vol.organization }}</span>{% endif %}
+                      {% if vol.description %}
+                           <div class="description"><p>{{ vol.description }}</p></div>
+                      {% endif %}
+                  </div>
+              </article>
+              {% endfor %}
+          </section>
+          {% endif %}
+
+    </main>
+
+</div>
+
+</body>
+</html>
