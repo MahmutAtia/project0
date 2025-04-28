@@ -298,3 +298,19 @@ SOCIALACCOUNT_PROVIDERS = {
 
 # urls related in django in general
 APPEND_SLASH = True
+
+
+# Celery Configuration Options
+# Make sure this URL points to your running broker service
+# Example for Redis (if running in Docker with service name 'redis'):
+CELERY_BROKER_URL = 'redis://redis:6379/0'
+# Example for RabbitMQ (if running in Docker with service name 'rabbitmq'):
+# CELERY_BROKER_URL = 'amqp://guest:guest@rabbitmq:5672//'
+# Example for Redis running locally on default port:
+# CELERY_BROKER_URL = 'redis://localhost:6379/0'
+
+CELERY_RESULT_BACKEND = 'redis://redis:6379/0' # Optional: Where to store task results (often same as broker)
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE # Use Django's timezone
