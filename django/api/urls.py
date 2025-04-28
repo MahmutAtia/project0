@@ -23,6 +23,9 @@ urlpatterns = [
     # 2. Other prefixes with parameters
     path('website/<uuid:unique_id>/', views.serve_personal_website, name='view-personal-website'),
     path('<uuid:unique_id>/', views.serve_personal_website_yaml, name='view-personal-website-yaml'),
+    
+        #ats checker
+    path('resumes/ats-checker/', views.ats_checker, name='ats-checker'),
 
     # 3. Specific parameterized paths under 'resumes/'
     path('resumes/<str:pk>/generate/', views.generate_resume, name='generate-resume-with-pk'),
@@ -35,5 +38,8 @@ urlpatterns = [
     path('resumes/generate_document/', views.generate_document_bloks, name='generate-document'),
     path('resumes/document/<uuid:document_id>/', views.get_document_pdf, name='view-document'),
     # path('resumes/<str:pk>/document/<uuid:unique_id>/update/', views.update_document, name='update-document'),
+    
+    
+
     
 ]
