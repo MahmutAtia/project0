@@ -37,7 +37,13 @@ Simple, Readable, and Impactful Language: Use clear, concise, and professional l
 
 Use primeicons find the icon that best represents the candidate's profession and include it in the primeicon field.
 
+Output all in the {language} language.
+
+ATS Evaluation Result For Candidate Current Resume:
+{ats_result}
+
 Input Resume Text: {input_text}
+
 Output YAML:"""
 
 create_resume_prompt = (
@@ -91,8 +97,10 @@ Output all in the {language} language.
 
 Tailor the resume to the job description provided below, ensuring that the candidate's skills and experiences are aligned with the job requirements. Use the job description to guide your enhancements and ensure the resume is tailored to the job.
 
+job description:
 {job_description}
 
+ATS Evaluation Result For Candidate Current Resume:
 {ats_result}
 
 Input Resume Text: {input_text}
@@ -305,8 +313,6 @@ ats_checker_template = """ You are an Applicant Tracking System (ATS) Resume Eva
 Evaluate the candidate's resume against the job description below. Return your analysis in the following format:
 
 ---
-[RESULT]
-
 🏆 OVERALL SCORE: [score]/100
 
 🧩 COMPONENT SCORES:
@@ -327,7 +333,14 @@ Evaluate the candidate's resume against the job description below. Return your a
 [Give clear and concise advice on how to improve the resume to better match the job description.]
 
 ---
-[END]
+
+- The output must be maximum 200 words.
+- do not output "#" s in the output. but you can use "•" or "*" or "-" instead.
+- The output should be in markdown formated and do not output any other text, comments or any other explanations.
+- The output should be very short and concise.
+- The output should be in the {language} language.
+
+Target role: "{user_input_role}"
 
 Here is the job description:
 
@@ -335,10 +348,6 @@ Here is the job description:
 
 Here is the resume text:
 {input_text}
-
-The output should be in the {language} language.
-The output should be in markdown formated and do not output any other text or comments.
-The output should be very short and concise.
 
 the evaluation output: """
 
@@ -348,14 +357,11 @@ ats_checker_prompt = PromptTemplate.from_template(ats_checker_template)
 ats_checker_no_job_desc_template = """You are an ATS Resume Evaluator. A user has uploaded a resume and wants to know how well it would perform in a real-world ATS system.
 
 Evaluate the resume based on general job market standards and the target role (if provided). Return your analysis in the following format:
-
 ---
-[RESULT]
-
 🏆 OVERALL SCORE: [score]/100
 
 🧩 COMPONENT SCORES:
-- Skills Relevance: [score]/30
+- Skills Relevance: [score]/30  
 - Experience Quality & Clarity: [score]/20
 - Education & Certifications: [score]/10
 - Formatting & Readability: [score]/20
@@ -371,20 +377,20 @@ Evaluate the resume based on general job market standards and the target role (i
 [List the weakest elements or common red flags.]
 
 💡 ADVICE:
-[Provide actionable, practical advice for improving the resume.]
-
+[Provide actionable, practical advice for improving the resume.] 
 ---
-[END]
 
-Here is the resume:
+- The output must be maximum 200 words.
+- do not output "#" s in the output. but you can use "•" or "*" or "-" instead.
+- The output should be in markdown formated and do not output any other text, comments or any other explanations.
+- The output should be very short and concise.
+- The output should be in the {language} language.
+
+Here is the resume text:
 
 {input_text}
 
-Target role: "{user_input_role}
-
-The output should be in the {language} language.
-The output should be in markdown formated and do not output any other text or comments.
-The output should be very short and concise.
+Target role: "{user_input_role}"
 
 the evaluation output: """
 

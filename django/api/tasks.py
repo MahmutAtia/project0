@@ -7,6 +7,11 @@ from celery import shared_task
 from .models import Resume
 from django.contrib.auth import get_user_model
 from datetime import date
+from .utils import generate_pdf_from_resume_data
+from celery.exceptions import Ignore # Import Ignore for non-retryable errors
+from django.core.files.base import ContentFile # To potentially save file later
+import base64 # To encode PDF bytes for JSON result backend
+
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -105,3 +110,47 @@ def generate_and_save_resume_task(self, user_id, input_text, job_description, la
         except self.MaxRetriesExceededError:
             logger.error(f"Max retries exceeded for task processing user_id {user_id}.")
             return None
+
+
+
+
+
+
+
+@shared_task(bind=True, max_retries=2, default_retry_delay=30) # Adjust retries/delay as needed
+def generate_pdf_task(self, resume_data, template_theme, chosen_theme, task_id_from_view=None):
+    """
+    Celery task to generate a PDF from resume data in the background.
+    Returns base64 encoded PDF data on success.
+    """
+    task_id = self.request.id or task_id_from_view # Use Celery's ID if available
+    logger.info(f"Starting PDF generation task {task_id}...")
+    try:
+        # Generate PDF bytes using the existing utility function
+        pdf_bytes = generate_pdf_from_resume_data(resume_data, template_theme, chosen_theme)
+
+        if pdf_bytes:
+            logger.info(f"PDF generated successfully for task {task_id}. Encoding...")
+            # Encode the PDF bytes as base64 to store in result backend
+            # WARNING: Large PDFs might exceed result backend size limits (e.g., Redis).
+            # Consider saving to a file/database/cloud storage and returning a URL/ID instead for large files.
+            pdf_base64 = base64.b64encode(pdf_bytes).decode('utf-8')
+            logger.info(f"PDF encoded for task {task_id}. Task successful.")
+            return {
+                'status': 'SUCCESS',
+                'pdf_base64': pdf_base64,
+                'filename': f"generated_resume_{task_id}.pdf" # Suggest a filename
+            }
+        else:
+            # Handle case where PDF generation function returned None without an exception
+            logger.error(f"PDF generation failed for task {task_id}: generate_pdf_from_resume_data returned None.")
+            # Use Ignore() to prevent retries for non-exception failures if desired
+            raise Ignore("PDF generation function returned None.")
+            # Or raise a ValueError to allow retries:
+            # raise ValueError("PDF generation function returned None.")
+
+    except Exception as e:
+        logger.exception(f"Error during PDF generation task {task_id}: {e}")
+        # Retry the task based on max_retries, default_retry_delay
+        # Celery's default behavior on unhandled exceptions is to retry if bind=True
+        raise self.retry(exc=e)

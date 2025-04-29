@@ -5,7 +5,9 @@ urlpatterns = [
     # 1. Exact matches first
     path('resumes/', views.ResumeListCreateView.as_view(), name='resume-list-create'),
     path('resumes/generate/', views.generate_resume, name='generate-resume'),
-    path('resumes/generate-pdf/', views.generate_pdf, name='generate-pdf'),
+    path('generate-pdf/', views.generate_pdf, name='generate-pdf'),
+    path('pdf-generation-status/<str:task_id>/', views.get_pdf_generation_status, name='get_pdf_generation_status'),
+
     path('resumes/generate_website/', views.generate_personal_website, name='generate-resume-website'),
     path('resumes/generate_website_yaml/', views.generate_personal_website_bloks, name='generate-resume-website-bloks'),
     path('resumes/generate_from_job_desc/', views.generate_from_job_desc, name='generate-resume-from-job-desc'),
@@ -20,7 +22,7 @@ urlpatterns = [
     path('website-yaml/update/<uuid:unique_id>/', views.update_website_yaml, name='save-updates-to-personal-website'),
     path('website-yaml/edit-block/', views.edit_website_block, name='edit_website_block'), # With trailing slash
 
-    # 2. Other prefixes with parameters
+    # 2. Other prefixes with 
     path('website/<uuid:unique_id>/', views.serve_personal_website, name='view-personal-website'),
     path('<uuid:unique_id>/', views.serve_personal_website_yaml, name='view-personal-website-yaml'),
     

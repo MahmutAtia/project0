@@ -259,67 +259,126 @@ def generate_from_job_desc(request):
 
 
 ################################## genereate_pdf ################################
+# ... other imports ...
+from .tasks import generate_pdf_task # Import the new task
+from celery.result import AsyncResult # To check task status
+import uuid # To generate a unique ID if needed
 
-def file_iterator(file_like, chunk_size=8192):  # 8KB chunk size
-    """Generator to stream file in chunks."""
-    while True:
-        chunk = file_like.read(chunk_size)
-        if not chunk:
-            break
-        yield chunk
-
-
-    
+# ... existing views ...
 
 @api_view(["POST"])
 def generate_pdf(request):
     """
-    API endpoint to generate and serve a PDF resume.
+    API endpoint to trigger background PDF generation.
+    Returns a task ID for status checking.
     """
     resume_id = request.data.get('resumeId')
-    template_theme = request.data.get('templateTheme', 'default.html')  # Default value
+    template_theme = request.data.get('templateTheme', 'default.html')
     chosen_theme = request.data.get('chosenTheme', 'theme-default')
 
     if not resume_id:
         return Response({"error": "resumeId is required"}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
+        # Fetch resume data (keep this part)
         resume = get_object_or_404(Resume, pk=resume_id)
+        # Ensure resume_data is serializable (it should be if it's from a JSONField)
         resume_data = resume.resume
-       
+        if not isinstance(resume_data, (dict, list)): # Basic check
+             logger.error(f"Resume data for ID {resume_id} is not a dict/list: {type(resume_data)}")
+             return Response({"error": "Invalid resume data format."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    except Http404:
+         return Response({"error": f"Resume with ID {resume_id} not found."}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
+        logger.exception(f"Error fetching resume data for PDF generation: {e}")
         return Response(
             {"error": f"Error fetching resume data: {e}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
-    pdf_data = generate_pdf_from_resume_data(resume_data, template_theme, chosen_theme)
+    try:
+        # Generate a unique ID for tracking if needed, though Celery provides one
+        task_tracking_id = str(uuid.uuid4())
+        logger.info(f"Triggering PDF generation task for resume {resume_id}. Tracking ID: {task_tracking_id}")
 
-    if pdf_data:
-        # logger.info("PDF data generated successfully.  Type: %s, Length: %s", type(pdf_data), len(pdf_data))
-        try:
-            # Use the file_iterator with BytesIO
-            import io
-            pdf_buffer = io.BytesIO(pdf_data)
-            response = StreamingHttpResponse(file_iterator(pdf_buffer), # file chuncking is very important, i tried too much to send the whole file at once and it was not working.
-                                            content_type='application/pdf')
-            response['Content-Disposition'] = 'inline; filename="generated_resume.pdf"'
-            #  Set content length (optional, but good practice)
-            response['Content-Length'] = len(pdf_data)
-            return response
-        except Exception as e:
-            # logger.exception("Error creating StreamingHttpResponse:")  # Log this too!
-            return Response(
-                {"error": f"Error creating response: {e}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-    else:
+        # Trigger the Celery task
+        task = generate_pdf_task.delay(
+            resume_data,
+            template_theme,
+            chosen_theme,
+            task_id_from_view=task_tracking_id # Pass our ID if needed for logging/linking
+        )
+
+        logger.info(f"PDF generation task {task.id} queued for resume {resume_id}.")
+
+        # Return the Celery task ID to the client
         return Response(
-            {"error": "Error generating PDF"},
+            {"task_id": task.id, "status": "PENDING", "message": "PDF generation started."},
+            status=status.HTTP_202_ACCEPTED # Use 202 Accepted for background tasks
+        )
+
+    except Exception as e:
+        # Handle potential errors during task queuing (e.g., broker connection issues)
+        logger.exception(f"Error queuing PDF generation task: {e}")
+        return Response(
+            {"error": f"Failed to start PDF generation: {e}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-   
-     )
+        )
+
+
+# --- Add this new view to check task status ---
+@api_view(["GET"])
+def get_pdf_generation_status(request, task_id):
+    """
+    Checks the status of a PDF generation Celery task.
+    If successful, returns base64 encoded PDF data.
+    """
+    logger.debug(f"Checking status for PDF task_id: {task_id}")
+    result = AsyncResult(task_id)
+
+    response_data = {
+        'task_id': task_id,
+        'status': result.status,
+        'result': None
+    }
+
+    if result.successful():
+        task_result = result.get()
+        # Expecting the dict {'status': 'SUCCESS', 'pdf_base64': '...', 'filename': '...'}
+        response_data['result'] = task_result
+        response_data['status'] = task_result.get('status', 'SUCCESS') # Update status just in case
+        logger.info(f"PDF Task {task_id} completed successfully.")
+        # Return 200 OK with the result containing the base64 PDF
+        return Response(response_data, status=status.HTTP_200_OK)
+
+    elif result.failed():
+        logger.warning(f"PDF Task {task_id} failed.")
+        try:
+            # Try to get traceback/exception info
+            failure_info = result.info or result.result # result.info preferred for exceptions
+            error_message = str(failure_info)
+        except Exception:
+            error_message = "Task failed, unable to retrieve specific error."
+
+        response_data['result'] = {
+            "error": "PDF generation failed",
+            "details": error_message
+        }
+        # Return 200 OK, but with status 'FAILURE' and error details in the result
+        return Response(response_data, status=status.HTTP_200_OK)
+
+    elif result.status in [states.PENDING, states.STARTED, states.RETRY]:
+        # Task is still processing or waiting
+        logger.debug(f"PDF Task {task_id} status: {result.status}")
+        response_data['result'] = {"message": f"Task is currently {result.status}"}
+        # Return 200 OK, status indicates it's not ready yet
+        return Response(response_data, status=status.HTTP_200_OK)
+    else:
+        # Unknown state
+        logger.warning(f"PDF Task {task_id} has unknown status: {result.status}")
+        response_data['result'] = {"message": f"Task has an unknown status: {result.status}"}
+        return Response(response_data, status=status.HTTP_200_OK)
         
         
 ############################# generate website resume #############################

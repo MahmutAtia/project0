@@ -1,7 +1,7 @@
 title: Data Analyst Resume Collection # Title of the resume should be idenified by the candidate's experience or job title of interest 
 dicription: # very brief description of the resume few words
 primeicon: # icon name from primeicons library. an icon that represents the resume for example: pi pi-code ,pi pi-chart-line etc
-about_candidate: "" # At least 100 words maximum 120 words. A very personalized overview of the candidate and its resume and should contain personal information, career goals, and a brief summary of the resume.
+about_candidate: "" # maximum 100 words. A very personalized overview of the candidate and its resume and should contain personal information, career goals, and a brief summary of the resume.
 resume:
   personal_information:
     name: ""
