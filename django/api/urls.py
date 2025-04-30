@@ -5,7 +5,7 @@ urlpatterns = [
     # 1. Exact matches first
     path('resumes/', views.ResumeListCreateView.as_view(), name='resume-list-create'),
     path('resumes/generate/', views.generate_resume, name='generate-resume'),
-    path('generate-pdf/', views.generate_pdf, name='generate-pdf'),
+    path('resumes/generate-pdf/', views.generate_pdf, name='generate-pdf'),
     path('pdf-generation-status/<str:task_id>/', views.get_pdf_generation_status, name='get_pdf_generation_status'),
 
     path('resumes/generate_website/', views.generate_personal_website, name='generate-resume-website'),

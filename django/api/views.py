@@ -10,21 +10,28 @@ from rest_framework.decorators import api_view
 from django.core.cache import cache
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
-from django.http import StreamingHttpResponse, FileResponse, HttpResponse, JsonResponse
-import textwrap
+from django.http import StreamingHttpResponse, FileResponse, HttpResponse, JsonResponse,HttpResponseServerError
 from datetime import datetime  # Import datetime class directly
 import json
 import yaml
 import os
 import time
 import uuid
+import io
 
 # clerey
 from celery import states # Import states
 
+def file_iterator(file_handle, chunk_size=8192):
+    """Helper function to iterate over a file-like object in chunks."""
+    while True:
+        chunk = file_handle.read(chunk_size)
+        if not chunk:
+            break
+        yield chunk
 
 FRONTEND_BASE_URL="http://localhost:8000" # settings.FRONTEND_BASE_URL
-
+generate_pdf_from_resume_data
 
 class ResumeListCreateView(generics.ListCreateAPIView):
     serializer_class = ResumeSerializer
@@ -258,13 +265,7 @@ def generate_from_job_desc(request):
         return Response({'error': str(e)}, status=500)    
 
 
-################################## genereate_pdf ################################
-# ... other imports ...
-from .tasks import generate_pdf_task # Import the new task
-from celery.result import AsyncResult # To check task status
-import uuid # To generate a unique ID if needed
-
-# ... existing views ...
+################################## genereate_pdf #######s#########################
 
 @api_view(["POST"])
 def generate_pdf(request):
@@ -273,7 +274,7 @@ def generate_pdf(request):
     Returns a task ID for status checking.
     """
     resume_id = request.data.get('resumeId')
-    template_theme = request.data.get('templateTheme', 'default.html')
+    template = request.data.get('templateTheme', 'default.html')
     chosen_theme = request.data.get('chosenTheme', 'theme-default')
 
     if not resume_id:
@@ -296,35 +297,34 @@ def generate_pdf(request):
             {"error": f"Error fetching resume data: {e}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+        
+    # Specify the correct template for documents if different from resumes
+    pdf_data = generate_pdf_from_resume_data(
+        resume_data=resume_data,
+        template_theme= template,
+        chosen_theme= chosen_theme
+    )
 
-    try:
-        # Generate a unique ID for tracking if needed, though Celery provides one
-        task_tracking_id = str(uuid.uuid4())
-        logger.info(f"Triggering PDF generation task for resume {resume_id}. Tracking ID: {task_tracking_id}")
+    # 3. Handle PDF generation result
+    if pdf_data:
+        # Prepare response
+        pdf_buffer = io.BytesIO(pdf_data)
+        filename = f"generated_document_{resume_id}"
 
-        # Trigger the Celery task
-        task = generate_pdf_task.delay(
-            resume_data,
-            template_theme,
-            chosen_theme,
-            task_id_from_view=task_tracking_id # Pass our ID if needed for logging/linking
+        # Use StreamingHttpResponse for potentially large files, even if generated sync
+        response = StreamingHttpResponse(
+            file_iterator(pdf_buffer), # Use the helper to stream from BytesIO
+            content_type='application/pdf'
         )
+        response['Content-Disposition'] = f'inline; filename="{filename}"' # Use inline or attachment
+        response['Content-Length'] = len(pdf_data) # Set Content-Length
+        return response
+    else:
+        return HttpResponseServerError("Error generating PDF document.")
 
-        logger.info(f"PDF generation task {task.id} queued for resume {resume_id}.")
 
-        # Return the Celery task ID to the client
-        return Response(
-            {"task_id": task.id, "status": "PENDING", "message": "PDF generation started."},
-            status=status.HTTP_202_ACCEPTED # Use 202 Accepted for background tasks
-        )
 
-    except Exception as e:
-        # Handle potential errors during task queuing (e.g., broker connection issues)
-        logger.exception(f"Error queuing PDF generation task: {e}")
-        return Response(
-            {"error": f"Failed to start PDF generation: {e}"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
+  
 
 
 # --- Add this new view to check task status ---
