@@ -89,7 +89,8 @@ def generate_and_save_resume_task(self, user_id, input_text, job_description, la
                 description=description
             )
         logger.info(f"Celery task: Successfully saved resume with id {new_resume.id} for user_id: {user_id}")
-        return new_resume.id
+        return {"status": "SUCCESS", "resume_id": new_resume.id}
+
 
     except requests.exceptions.Timeout as exc:
         logger.warning(f"Celery task timeout calling AI service for user_id {user_id}: {exc}")

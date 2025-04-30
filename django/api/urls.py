@@ -6,7 +6,7 @@ urlpatterns = [
     path('resumes/', views.ResumeListCreateView.as_view(), name='resume-list-create'),
     path('resumes/generate/', views.generate_resume, name='generate-resume'),
     path('resumes/generate-pdf/', views.generate_pdf, name='generate-pdf'),
-    path('pdf-generation-status/<str:task_id>/', views.get_pdf_generation_status, name='get_pdf_generation_status'),
+    path('resumes/pdf-generation-status/<str:task_id>/', views.get_pdf_generation_status, name='get_pdf_generation_status'),
 
     path('resumes/generate_website/', views.generate_personal_website, name='generate-resume-website'),
     path('resumes/generate_website_yaml/', views.generate_personal_website_bloks, name='generate-resume-website-bloks'),

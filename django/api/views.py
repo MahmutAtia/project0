@@ -19,8 +19,11 @@ import time
 import uuid
 import io
 
+
 # clerey
 from celery import states # Import states
+from celery.result import AsyncResult 
+
 
 def file_iterator(file_handle, chunk_size=8192):
     """Helper function to iterate over a file-like object in chunks."""
@@ -345,28 +348,26 @@ def get_pdf_generation_status(request, task_id):
 
     if result.successful():
         task_result = result.get()
-        # Expecting the dict {'status': 'SUCCESS', 'pdf_base64': '...', 'filename': '...'}
-        response_data['result'] = task_result
-        response_data['status'] = task_result.get('status', 'SUCCESS') # Update status just in case
-        logger.info(f"PDF Task {task_id} completed successfully.")
-        # Return 200 OK with the result containing the base64 PDF
+        response_data['result'] = task_result # Store the result (which might be None)
+
+        # Check if task_result is not None before trying to access it
+        if task_result is not None and isinstance(task_result, dict):
+            # Task completed successfully and returned a dictionary as expected
+            response_data['status'] = task_result.get('status', 'SUCCESS') # Update status from task result if available
+            logger.info(f"PDF Task {task_id} completed successfully with result.")
+        elif task_result is None:
+             # Task completed successfully but returned None
+             logger.warning(f"PDF Task {task_id} completed successfully but returned None.")
+             # Keep status as SUCCESS, but result is None
+             response_data['status'] = 'SUCCESS' # Explicitly set status
+        else:
+             # Task completed successfully but returned an unexpected type
+             logger.warning(f"PDF Task {task_id} completed successfully but returned unexpected type: {type(task_result)}")
+             response_data['status'] = 'SUCCESS' # Explicitly set status
+
+        # Return 200 OK with the result (which might be None or the expected dict)
         return Response(response_data, status=status.HTTP_200_OK)
 
-    elif result.failed():
-        logger.warning(f"PDF Task {task_id} failed.")
-        try:
-            # Try to get traceback/exception info
-            failure_info = result.info or result.result # result.info preferred for exceptions
-            error_message = str(failure_info)
-        except Exception:
-            error_message = "Task failed, unable to retrieve specific error."
-
-        response_data['result'] = {
-            "error": "PDF generation failed",
-            "details": error_message
-        }
-        # Return 200 OK, but with status 'FAILURE' and error details in the result
-        return Response(response_data, status=status.HTTP_200_OK)
 
     elif result.status in [states.PENDING, states.STARTED, states.RETRY]:
         # Task is still processing or waiting
@@ -753,14 +754,12 @@ import logging # Import logging
 
 logger = logging.getLogger(__name__) # Setup logger for the view
 
-# ... other views ...
-
 @api_view(["POST"])
 def ats_checker(request):
     """
     Checks resume against a job description using an ATS service
     and triggers background generation of a tailored resume via Celery.
-    Returns the ATS checker result immediately.
+    Returns the ATS checker result and the task ID for the background generation.
     """
     try:
         uploaded_file = request.FILES.get('resume')
@@ -770,12 +769,10 @@ def ats_checker(request):
         # Extract text and form data
         text = extract_text_from_file(uploaded_file)
         form_data = json.loads(request.POST.get('formData', '{}'))
-        print(f"DEBUG: form_data: {form_data}", flush=True)
+        logger.debug(f"DEBUG: form_data: {form_data}", flush=True) # Use logger
         job_description = form_data.get('description') or ''
         language = form_data.get('targetLanguage') or 'en'
         target_role = form_data.get('targetRole') or ''
-        
-
 
         # --- 1. Call ATS Checker Service (Synchronous) ---
         input_data_ats = {
@@ -786,19 +783,17 @@ def ats_checker(request):
                 'user_input_role': target_role
             }
         }
-        
+
         if job_description:
             ai_service_url_ats = os.environ.get("AI_SERVICE_URL") + "ats_checker/invoke"
         else:
             ai_service_url_ats = os.environ.get("AI_SERVICE_URL") + "ats_checker_no_job_desc/invoke"
 
-
         ats_result = None
         try:
             logger.info("Calling ATS checker service...")
-            # Use the variable name ai_service_url_ats here
             response_ats = requests.post(ai_service_url_ats, json=input_data_ats, timeout=60)
-            response_ats.raise_for_status() # Check for HTTP errors
+            response_ats.raise_for_status()
             ats_result = response_ats.json().get("output")
             logger.info("ATS checker service call successful.")
         except requests.exceptions.Timeout:
@@ -806,39 +801,45 @@ def ats_checker(request):
             return Response({'error': 'ATS checker service timed out.'}, status=status.HTTP_504_GATEWAY_TIMEOUT)
         except requests.exceptions.RequestException as e:
             logger.error(f"Error calling ATS checker service: {e}")
-            # Log the response content if available for debugging
             error_detail = f"Failed to get ATS score: {e}"
             if e.response is not None:
-                 error_detail += f" - Status: {e.response.status_code}, Response: {e.response.text[:500]}" # Limit response length
+                 error_detail += f" - Status: {e.response.status_code}, Response: {e.response.text[:500]}"
             return Response({'error': error_detail}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
         except json.JSONDecodeError:
             logger.error(f"Error decoding ATS checker response: {response_ats.text}")
             return Response({'error': 'Invalid response from ATS checker service'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # --- 2. Trigger Resume Generation via Celery Task ---
-        user_id = request.user.id if request.user.is_authenticated else None
-        print(f"DEBUG: user_id: {user_id}", flush=True)
-        logger.info(f"Triggering Celery task 'generate_and_save_resume_task' for user_id: {user_id}")
-        generate_and_save_resume_task.delay(user_id, text, job_description, language, ats_result)
-
-        # # --- 3. Return ATS Checker Response Immediately ---
-        logger.info("Returning ATS result to client.")
-        # # Ensure ats_result is not None before returning
+        # Ensure ats_result is not None before proceeding
         if ats_result is None:
              logger.error("ATS result is None after supposed successful call.")
-             return Response({'error': 'Failed to retrieve ATS score, but no specific error reported.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+             # Decide if you still want to trigger the task or return an error
+             return Response({'error': 'Failed to retrieve ATS score, cannot proceed.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        return Response(ats_result, status=status.HTTP_200_OK) # Return the JSON result from the ATS service
+
+        # --- 2. Trigger Resume Generation via Celery Task ---
+        user_id = request.user.id if request.user.is_authenticated else None
+        logger.debug(f"DEBUG: user_id: {user_id}", flush=True) # Use logger
+        logger.info(f"Triggering Celery task 'generate_and_save_resume_task' for user_id: {user_id}")
+        # Capture the AsyncResult object which contains the task_id
+        task_result_object = generate_and_save_resume_task.delay(user_id, text, job_description, language, ats_result)
+        generation_task_id = task_result_object.id # Get the task ID
+        logger.info(f"Celery task triggered with ID: {generation_task_id}")
+
+
+        # --- 3. Return ATS Checker Response AND Task ID Immediately ---
+        logger.info("Returning ATS result and generation task ID to client.")
+        response_payload = {
+            "ats_result": ats_result,
+            "generation_task_id": generation_task_id
+        }
+        return Response(response_payload, status=status.HTTP_200_OK) # Return combined payload
 
     except json.JSONDecodeError:
         logger.warning("Invalid formData provided in request.")
         return Response({'error': 'Invalid formData provided'}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
-        # Log the error for debugging
-        logger.exception(f"Unexpected error in ats_checker view: {e}") # Use logger.exception to include traceback
+        logger.exception(f"Unexpected error in ats_checker view: {e}")
         return Response({'error': 'An unexpected server error occurred.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
 
 
 @api_view(["GET"])
