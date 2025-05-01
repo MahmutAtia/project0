@@ -28,6 +28,7 @@ urlpatterns = [
     
         #ats checker
     path('resumes/ats-checker/', views.ats_checker, name='ats-checker'),
+    path('resumes/save_generated_resume/', views.save_generated_resume, name='save-generated-resume'),
 
     # 3. Specific parameterized paths under 'resumes/'
     path('resumes/<str:pk>/generate/', views.generate_resume, name='generate-resume-with-pk'),
