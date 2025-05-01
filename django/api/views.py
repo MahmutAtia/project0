@@ -6,8 +6,7 @@ from .utils import cleanup_old_sessions, extract_text_from_file,generate_pdf_fro
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 import requests # For calling the AI service
-from rest_framework.decorators import api_view
-from django.core.cache import cache
+from rest_framework.decorators import api_view, permission_classes #from django.core.cache import cache
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django.http import StreamingHttpResponse, FileResponse, HttpResponse, JsonResponse,HttpResponseServerError
@@ -19,6 +18,7 @@ import time
 import uuid
 import io
 
+from .tasks import generate_resume_data_task # Import the Celery task
 
 # clerey
 from celery import states # Import states
@@ -753,14 +753,16 @@ from .tasks import generate_and_save_resume_task # Import the Celery task
 import logging # Import logging
 
 logger = logging.getLogger(__name__) # Setup logger for the view
-
 @api_view(["POST"])
 def ats_checker(request):
     """
-    Checks resume against a job description using an ATS service
-    and triggers background generation of a tailored resume via Celery.
-    Returns the ATS checker result and the task ID for the background generation.
+    Checks resume against a job description using an ATS service.
+    Conditionally triggers background generation of resume data (cache)
+    or a full resume save (DB) based on authentication and user preference.
+    Returns the ATS checker result and the task ID (if generation was triggered).
     """
+    generation_task_id = None # Initialize task ID as None
+
     try:
         uploaded_file = request.FILES.get('resume')
         if not uploaded_file:
@@ -769,12 +771,15 @@ def ats_checker(request):
         # Extract text and form data
         text = extract_text_from_file(uploaded_file)
         form_data = json.loads(request.POST.get('formData', '{}'))
-        logger.debug(f"DEBUG: form_data: {form_data}", flush=True) # Use logger
+        logger.debug(f"DEBUG: form_data: {form_data}", flush=True)
         job_description = form_data.get('description') or ''
         language = form_data.get('targetLanguage') or 'en'
         target_role = form_data.get('targetRole') or ''
+        # Get the new flag, default to True if not provided
+        generate_new_resume_flag = form_data.get('generate_new_resume', True)
 
         # --- 1. Call ATS Checker Service (Synchronous) ---
+        # ... (Keep existing ATS call logic - ensure ats_result is populated) ...
         input_data_ats = {
             "input": {
                 'input_text': text,
@@ -783,7 +788,6 @@ def ats_checker(request):
                 'user_input_role': target_role
             }
         }
-
         if job_description:
             ai_service_url_ats = os.environ.get("AI_SERVICE_URL") + "ats_checker/invoke"
         else:
@@ -809,30 +813,48 @@ def ats_checker(request):
             logger.error(f"Error decoding ATS checker response: {response_ats.text}")
             return Response({'error': 'Invalid response from ATS checker service'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # Ensure ats_result is not None before proceeding
         if ats_result is None:
              logger.error("ATS result is None after supposed successful call.")
-             # Decide if you still want to trigger the task or return an error
              return Response({'error': 'Failed to retrieve ATS score, cannot proceed.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-        # --- 2. Trigger Resume Generation via Celery Task ---
-        user_id = request.user.id if request.user.is_authenticated else None
-        logger.debug(f"DEBUG: user_id: {user_id}", flush=True) # Use logger
-        logger.info(f"Triggering Celery task 'generate_and_save_resume_task' for user_id: {user_id}")
-        # Capture the AsyncResult object which contains the task_id
-        task_result_object = generate_and_save_resume_task.delay(user_id, text, job_description, language, ats_result)
-        generation_task_id = task_result_object.id # Get the task ID
-        logger.info(f"Celery task triggered with ID: {generation_task_id}")
+        # --- 2. Conditionally Trigger Resume Generation Task ---
+        if request.user.is_authenticated:
+            logger.info(f"User {request.user.id} is authenticated.")
+            if generate_new_resume_flag:
+                logger.info("generate_new_resume flag is True. Triggering 'generate_and_save_resume_task'.")
+                user_id = request.user.id
+                task_result_object = generate_and_save_resume_task.delay(
+                    user_id=user_id,
+                    input_text=text,
+                    job_description=job_description,
+                    language=language,
+                    ats_result=ats_result
+                )
+                generation_task_id = task_result_object.id
+                logger.info(f"DB Save Task triggered with ID: {generation_task_id} for user {user_id}")
+            else:
+                logger.info("generate_new_resume flag is False. Skipping resume generation task.")
+                # generation_task_id remains None
+        else:
+            logger.info("User is not authenticated. Triggering 'generate_resume_data_task' (cache).")
+            task_result_object = generate_resume_data_task.delay(
+                input_text=text,
+                job_description=job_description,
+                language=language,
+                ats_result=ats_result
+            )
+            generation_task_id = task_result_object.id
+            logger.info(f"Cache Task triggered with ID: {generation_task_id}")
 
 
-        # --- 3. Return ATS Checker Response AND Task ID Immediately ---
-        logger.info("Returning ATS result and generation task ID to client.")
+        # --- 3. Return ATS Checker Response AND Task ID (if any) ---
+        logger.info("Returning ATS result and generation task ID (if applicable) to client.")
         response_payload = {
             "ats_result": ats_result,
-            "generation_task_id": generation_task_id
+            "generation_task_id": generation_task_id # Will be None if generation was skipped
         }
-        return Response(response_payload, status=status.HTTP_200_OK) # Return combined payload
+        return Response(response_payload, status=status.HTTP_200_OK)
 
     except json.JSONDecodeError:
         logger.warning("Invalid formData provided in request.")
@@ -841,66 +863,86 @@ def ats_checker(request):
         logger.exception(f"Unexpected error in ats_checker view: {e}")
         return Response({'error': 'An unexpected server error occurred.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+###### Saving Resume After AUTH ########
+# ... imports ...
+from rest_framework import permissions # Import permissions
+from django.core.cache import cache # Import cache
 
-@api_view(["GET"])
-def get_resume_generation_status(request, task_id):
+# ... other views ...
+
+@api_view(["POST"])
+@permission_classes([permissions.IsAuthenticated]) # Ensure user is logged in
+def save_generated_resume(request):
     """
-    Checks the status of a Celery task using its ID.
-    Includes backup arguments if the task failed permanently.
+    Retrieves generated resume data from cache using a task_id
+    and saves it as a Resume object for the authenticated user.
     """
-    logger.debug(f"Checking status for task_id: {task_id}")
-    result = AsyncResult(task_id)
+    task_id = request.data.get('generation_task_id')
+    if not task_id:
+        return Response({"error": "generation_task_id is required."}, status=status.HTTP_400_BAD_REQUEST)
 
-    response_data = {
-        'task_id': task_id,
-        'status': result.status,
-        'result': None,
-        'backup_args': None # Add field for backup args
-    }
+    user = request.user
+    cache_key = f"generated_resume_data_{task_id}"
 
-    if result.successful():
-        # Task completed successfully
-        task_result = result.get()
-        response_data['result'] = task_result
-        logger.info(f"Task {task_id} completed successfully. Result: {task_result}")
-    elif result.failed():
-        # Task failed
-        logger.warning(f"Task {task_id} failed.")
-        # result.info or result.result often contains the exception or the meta data
-        failure_info = result.result if result.result is not None else result.info
-        response_data['result'] = {
-            "error": "Task failed",
-            "details": str(failure_info) # Basic failure info
-        }
-        # Check if our custom meta data with task_args exists
-        if isinstance(failure_info, dict) and 'task_args' in failure_info:
-            response_data['backup_args'] = failure_info.get('task_args')
-            # Optionally refine the error message using custom meta
-            response_data['result']['details'] = {
-                'exception_type': failure_info.get('exc_type'),
-                'message': failure_info.get('exc_message')
-            }
-            logger.info(f"Task {task_id} failed, backup args found.")
-        else:
-             logger.warning(f"Task {task_id} failed, but no backup args found in result info: {failure_info}")
+    try:
+        # 1. Retrieve data from cache
+        generated_data = cache.get(cache_key)
 
-    elif result.status == states.RETRY:
-        # Task is waiting for retry
-        logger.debug(f"Task {task_id} status: {result.status}")
-        retry_info = result.result if result.result is not None else result.info
-        response_data['result'] = {
-            "message": f"Task is currently {result.status}",
-            "retry_details": str(retry_info) # Show exception causing retry
-        }
-    else:
-        # Task is PENDING, STARTED, or other intermediate state
-        logger.debug(f"Task {task_id} status: {result.status}")
-        response_data['result'] = {"message": f"Task is currently {result.status}"}
+        if generated_data is None:
+            logger.warning(f"No cached data found for key {cache_key} for user {user.id}. Task might have expired, failed, or ID is wrong.")
+            # Optionally check AsyncResult status here for more context
+            task_status_result = AsyncResult(task_id)
+            status_info = task_status_result.status
+            if status_info == states.FAILURE:
+                 return Response({"error": "Resume generation task failed previously. Cannot save."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Generated resume data not found or expired. Please generate again."}, status=status.HTTP_404_NOT_FOUND)
 
-    return Response(response_data, status=status.HTTP_200_OK)
+        # 2. Check if resume already created from this task (optional but recommended)
+        # Add a field to Resume model, e.g., `generation_task_id = models.CharField(max_length=50, null=True, blank=True, unique=True)`
+        # if Resume.objects.filter(generation_task_id=task_id).exists():
+        #     logger.warning(f"Resume already created from task {task_id} for user {user.id}.")
+        #     existing_resume = Resume.objects.get(generation_task_id=task_id)
+        #     return Response({"resume_id": existing_resume.id, "message": "Resume already exists."}, status=status.HTTP_200_OK)
 
 
-                
+        # 3. Extract data (ensure keys match what's stored in cache)
+        title = generated_data.get("title", "Generated Resume")
+        description = generated_data.get("description", "")
+        icon = generated_data.get("primeicon", "")
+        resume_data = generated_data.get("resume") # Main resume content
+        about = generated_data.get("about_candidate", "") # Or "about" depending on task output
+        other_docs = generated_data.get("other_docs", {}) # If generated
+
+        if not resume_data:
+             logger.error(f"Cached data for task {task_id} is missing 'resume' content for user {user.id}.")
+             return Response({"error": "Invalid cached resume data."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # 4. Save the Resume object
+        is_default = not Resume.objects.filter(user=user).exists()
+        new_resume = Resume.objects.create(
+            user=user,
+            resume=resume_data,
+            other_docs=other_docs, # Add if generated
+            is_default=is_default,
+            title=title,
+            about=about,
+            icon=icon,
+            description=description,
+            # generation_task_id=task_id # Store task_id if using the check in step 2
+        )
+        logger.info(f"Successfully saved resume with ID {new_resume.id} for user {user.id} from task {task_id}.")
+
+        # 5. Optionally delete the cache entry now that it's saved
+        cache.delete(cache_key)
+        logger.info(f"Deleted cache entry {cache_key}.")
+
+        # 6. Return the new resume ID
+        return Response({"resume_id": new_resume.id, "message": "Resume saved successfully."}, status=status.HTTP_201_CREATED)
+
+    except Exception as e:
+        logger.exception(f"Error saving generated resume for user {user.id} from task {task_id}: {e}")
+        return Response({"error": "An unexpected error occurred while saving the resume."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 # @api_view(["POST"])
