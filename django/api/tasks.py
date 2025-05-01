@@ -11,6 +11,7 @@ from .utils import generate_pdf_from_resume_data
 from celery.exceptions import Ignore # Import Ignore for non-retryable errors
 from django.core.files.base import ContentFile # To potentially save file later
 import base64 # To encode PDF bytes for JSON result backend
+from django.core.cache import cache # <-- ADD THIS LINE
 
 
 logger = logging.getLogger(__name__)
@@ -49,7 +50,7 @@ def generate_and_save_resume_task(self, user_id, input_text, job_description, la
 
         # Call the generation service
         logger.info(f"Celery task: Calling AI service for resume generation for user_id: {user_id}")
-        response_generate = requests.post(ai_service_url_generate, json=input_data_generate, timeout=180)
+        response_generate = requests.post(ai_service_url_generate, json=input_data_generate, timeout=300)
         response_generate.raise_for_status()
 
         # Process the response
@@ -114,6 +115,84 @@ def generate_and_save_resume_task(self, user_id, input_text, job_description, la
 
 
 
+@shared_task(bind=True, max_retries=3, default_retry_delay=60)
+def generate_resume_data_task(self, input_text, job_description, language, ats_result=None):
+    """
+    Celery task to generate resume data using an AI service.
+    Stores the result temporarily in cache.
+    """
+    task_id = self.request.id
+    try:
+        logger.info(f"Starting resume data generation task {task_id}")
+        # Prepare input for the generation service
+        input_data_generate = {
+            "input": {
+                'input_text': input_text,
+                'job_description': job_description,
+                'language': language,
+                'ats_result': ats_result, # Pass ATS result if available
+            }
+        }
+        # Determine AI service URL based on job description presence
+        if not job_description:
+            ai_service_url_generate = os.environ.get("AI_SERVICE_URL") + "genereate_from_input/invoke"
+        else:
+            ai_service_url_generate = os.environ.get("AI_SERVICE_URL") + "genereate_from_job_desc/invoke"
+
+        # Call the generation service
+        logger.info(f"Task {task_id}: Calling AI service for resume generation at {ai_service_url_generate}")
+        response_generate = requests.post(ai_service_url_generate, json=input_data_generate, timeout=300) # Adjust timeout as needed
+        response_generate.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
+
+        # Process the response
+        generated_resume_yaml_str = response_generate.json().get("output")
+        if not generated_resume_yaml_str:
+            logger.error(f"Task {task_id}: AI service did not return generated resume YAML.")
+            raise ValueError("AI service did not return generated resume YAML.")
+
+        # Parse the YAML
+        generated_resume_data = yaml.safe_load(generated_resume_yaml_str)
+        if not generated_resume_data:
+            logger.error(f"Task {task_id}: Failed to parse generated resume YAML.")
+            raise ValueError("Failed to parse generated resume YAML.")
+
+        # Convert date objects for JSON serialization compatibility
+        generated_resume_data_serializable = convert_dates_to_strings(generated_resume_data)
+
+        # Store the generated data in cache with the task_id as key
+        # Set a reasonable timeout (e.g., 1 hour = 3600 seconds)
+        cache_key = f"generated_resume_data_{task_id}"
+        cache.set(cache_key, generated_resume_data_serializable, timeout=3600)
+        logger.info(f"Task {task_id}: Successfully generated and cached resume data under key {cache_key}")
+
+        # Return success status and indicate data is in cache
+        return {"status": "SUCCESS", "data_location": "cache", "cache_key": cache_key}
+
+    # --- Keep existing exception handling, but modify return values/logging ---
+    except requests.exceptions.Timeout as exc:
+        logger.warning(f"Task {task_id} timeout calling AI service: {exc}")
+        raise self.retry(exc=exc) # Retry on timeout
+    except requests.exceptions.RequestException as exc:
+        logger.error(f"Task {task_id} error calling AI service: {exc}")
+        # Don't retry client errors (4xx), fail the task
+        if exc.response is not None and 400 <= exc.response.status_code < 500:
+            logger.error(f"Task {task_id}: Non-retryable client error from AI service: {exc.response.status_code}")
+            # Return None or raise specific exception to mark failure clearly
+            raise ValueError(f"AI Service Client Error: {exc.response.status_code}")
+        raise self.retry(exc=exc) # Retry on other request exceptions (e.g., connection errors)
+    except (yaml.YAMLError, ValueError, KeyError) as e: # Added KeyError
+        logger.error(f"Task {task_id} error processing YAML/data: {e}")
+        # Do not retry data processing errors, fail the task
+        raise ValueError(f"Data Processing Error: {e}")
+    except Exception as e:
+        logger.exception(f"Task {task_id} unexpected error: {e}")
+        try:
+            # Retry on unknown errors, up to max_retries
+            raise self.retry(exc=e)
+        except self.MaxRetriesExceededError:
+            logger.error(f"Task {task_id}: Max retries exceeded.")
+            # Fail the task after max retries
+            raise e # Re-raise the original exception
 
 
 
