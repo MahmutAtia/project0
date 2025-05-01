@@ -26,6 +26,9 @@ Use engaging and professional language.
 Synthesize information from the entire resume but avoid simply repeating it. Focus on the "why" behind their choices and experiences.
 Imagine this is a brief personal introduction the candidate would give in a networking setting.
 Data Mapping, Cleaning, and YAML Output: Map extracted and enhanced information to the YAML template. Perform data cleaning (standardizing dates, handling missing data). Output valid YAML.
+PAY ATTENTION, Quote all strings in the yaml output with double quotes. Use | for multiline strings and escape ':' s in the yaml output.
+PAY ATTENTION to all yaml parsing rules and indentation.
+Do not output any yaml comments in the output.
 
 Summarization and Objective: Provide a concise, impactful summary and rewrite the objective to be more compelling if needed.
 
@@ -80,6 +83,9 @@ Highlight their unique strengths and what drives them.
 Synthesize information from the entire resume but avoid simply repeating it. Focus on the "why" behind their choices and experiences.
 Imagine this is a brief personal introduction the candidate would give in a networking setting.
 Data Mapping, Cleaning, and YAML Output: Map extracted and enhanced information to the YAML template. Perform data cleaning (standardizing dates, handling missing data). Output valid YAML.
+PAY ATTENTION, Quote all strings in the yaml output with double quotes. Use | for multiline strings and escape ':' s in the yaml output.
+PAY ATTENTION to all yaml parsing rules and indentation.
+Do not output any yaml comments in the output.
 
 Summarization and Objective: Provide a concise, impactful summary and rewrite the objective to be more compelling if needed.
 
@@ -125,6 +131,9 @@ edit_resume_section_template = """  You are a Human Resources professional taske
 Understand Candidate's Prompt: Read the candidate's prompt to understand the context and requirements for the section you will edit. the candidate's prompt is provided to guide your editing of filling information in the {section_title} section according to the candidate's requirements.
 Output only the section you are editing in the YAML file. Do not output anything else. no comments or explanations.
 If the prompt is very irrelevant or not clear, you can output an example of the section you are editing in the YAML file.
+PAY ATTENTION, Quote all strings in the yaml output with double quotes. Use | for multiline strings and escape ':' s in the yaml output.
+PAY ATTENTION to all yaml parsing rules and indentation.
+Do not output any yaml comments in the output.
 
 Provided Section yaml to edit:
 ```yaml
@@ -170,6 +179,12 @@ Instructions:
 - You may not use all the information in the resume yaml file, but use the most relevant and important information to create a visually appealing and creative website.
 - You may summarize or omit some information to make it more visually appealing and creative.
 - Ensure that all card and visual elements have a consistent design and style. Also add effects, animate and hover effects to the cards and visual elements.
+
+PAY ATTENTION, Quote all strings in the yaml output with double quotes. Use | for multiline strings and escape ':' s in the yaml output.
+PAY ATTENTION to all yaml parsing rules and indentation.
+Do not output any yaml comments in the output.
+
+
 Client Preferences:
 {preferences}
 
@@ -181,7 +196,9 @@ Just output the yaml file with the html, css and js code for the personal portfo
 Do not add any comments in the code. do not use unnecessary tokens in the code.
 Ensure initial content visibility in CSS and use JavaScript to dynamically add hiding/animation classes for progressive enhancement.
 Pay attention to the yaml output indentation and format.
-
+PAY ATTENTION, Quote all strings in the yaml output with double quotes. Use | for multiline strings and escape ':' s in the yaml output.
+PAY ATTENTION to all yaml parsing rules and indentation.
+Do not output any yaml comments in the output.
 
 yaml output example format:
 ```yaml
@@ -252,6 +269,9 @@ edit_resume_website_block_template = """ You are a professional designer and fro
 You must output just the updated yaml file with the html, css and js code for the personal portfolio website. Do not output anything else. no comments or explanations.
 Do not add any comments in the code. do not use unnecessary tokens in the code.
 Pay attention to the yaml output indentation and format.
+PAY ATTENTION, Quote all strings in the yaml output with double quotes. Use | for multiline strings and escape ':' s in the yaml output.
+PAY ATTENTION to all yaml parsing rules and indentation.
+Do not output any yaml comments in the output.
 
 the yaml to edit:
 ```yaml
