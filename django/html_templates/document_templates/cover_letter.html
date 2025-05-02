@@ -7,27 +7,28 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
-    <!-- Optional: Add Font Awesome for icons -->
-    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"> -->
     <style>
         :root {
+            /* Updated values from React coverLetterCSS */
             --font-family-body: 'Lato', sans-serif;
             --font-family-heading: 'Merriweather', serif;
-            --base-font-size: 10.5pt; /* Slightly smaller base font */
-            --line-height: 1.45; /* Tighter line height */
-            /* Default Theme (Classic) */
+            --font-size-base: 10.5pt;
+            --line-height-base: 1.5;
+            /* Default Theme (Classic) - Kept structure, updated values */
             --primary-color: #333;
             --secondary-color: #555;
-            --accent-color: #000;
-            --link-color: #0066cc;
+            --accent-color: #0056b3; /* Updated accent */
+            --link-color: #0056b3;   /* Updated link */
+            --bg-color: #ffffff;     /* Added from React */
         }
 
-        /* --- Theme Variations --- */
+        /* --- Theme Variations (Kept structure from Jinja) --- */
         body.theme-modern {
             --primary-color: #2c3e50;
             --secondary-color: #7f8c8d;
             --accent-color: #2980b9;
             --link-color: #3498db;
+            --bg-color: #ffffff; /* Ensure bg is defined */
         }
 
         body.theme-elegant {
@@ -35,152 +36,79 @@
             --secondary-color: #666;
             --accent-color: #16a085;
             --link-color: #1abc9c;
+            --bg-color: #ffffff; /* Ensure bg is defined */
         }
         /* --- End Themes --- */
 
 
-        @page {
+        @page { /* Kept from Jinja */
             size: A4;
-            margin: 1.5cm 1.5cm; /* Reduced margins */
-            orphans: 3; /* Try to prevent single lines at bottom of page */
-            widows: 3;  /* Try to prevent single lines at top of new page */
+            margin: 1.5cm 1.5cm;
+            orphans: 3;
+            widows: 3;
         }
 
         body {
+            /* Combined styles from React & Jinja */
             font-family: var(--font-family-body);
-            font-size: var(--base-font-size);
-            line-height: var(--line-height);
+            font-size: var(--font-size-base);
+            line-height: var(--line-height-base);
             color: var(--primary-color);
+            background-color: var(--bg-color); /* Use variable */
             margin: 0;
-            padding: 0;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
+            padding: 0; /* Ensure padding is 0 */
+            height: 100%; /* Added from React */
+            overflow: hidden; /* Added from React (might not be needed for print) */
+            -webkit-font-smoothing: antialiased; /* Kept from Jinja */
+            -moz-osx-font-smoothing: grayscale; /* Kept from Jinja */
         }
 
-        .cover-letter-container {
-            max-width: 18cm; /* A4 width minus reduced margins */
+        .cover-letter-container { /* Kept from Jinja */
+            max-width: 18cm;
             margin: 0 auto;
         }
 
-        /* --- Header Section --- */
-        .header-section {
-            margin-bottom: 20px; /* Reduced space after header */
-            position: relative;
-        }
+        /* --- Generic Styles from React coverLetterCSS --- */
+        p { margin: 0 0 0.8em 0; } /* From React */
+        a { color: var(--link-color); text-decoration: none; } /* From React */
+        a:hover { text-decoration: underline; } /* From React */
 
-        .sender-info {
-            text-align: left;
-            margin-bottom: 10px; /* Reduced space */
-            font-size: 9.5pt; /* Smaller sender info */
-            color: var(--secondary-color);
-            line-height: 1.3; /* Tighter line height for sender */
-        }
-        .sender-info p {
-            margin: 0; /* Minimal margin */
-        }
-        .sender-info .sender-name {
-            font-family: var(--font-family-heading);
-            font-weight: 700;
-            font-size: 13pt; /* Slightly smaller name */
-            color: var(--accent-color);
-            margin-bottom: 4px; /* Reduced space */
-        }
-        .sender-info a { color: var(--link-color); text-decoration: none; }
-        .sender-info a:hover { text-decoration: underline; }
-
-        .date {
-            text-align: right;
-            font-size: 10pt; /* Smaller date */
-            color: var(--secondary-color);
-            margin-top: -10px; /* Pull up slightly more */
-            margin-bottom: 20px; /* Reduced space before recipient */
-        }
-
-        .recipient-info {
-            text-align: left;
-            margin-bottom: 20px; /* Reduced space */
-            font-size: 10.5pt; /* Slightly smaller recipient */
-            line-height: 1.4;
-        }
-        .recipient-info p {
-            margin: 1px 0; /* Tighter */
-        }
-        .recipient-info .recipient-name,
-        .recipient-info .recipient-title {
-             font-weight: 700;
-             color: var(--primary-color);
-        }
-
-        /* --- Main Content --- */
-        .subject {
-            font-family: var(--font-family-heading);
-            font-weight: 700;
-            margin-top: 25px; /* Reduced space */
-            margin-bottom: 15px; /* Reduced space */
-            font-size: 11.5pt; /* Slightly smaller subject */
-            color: var(--accent-color);
-        }
+        /* --- Section Styles from React coverLetterCSS --- */
+        .header-section { margin-bottom: 15px; position: relative; }
+        .sender-info { text-align: left; margin-bottom: 8px; font-size: 9.5pt; color: var(--secondary-color); line-height: 1.3; }
+        .sender-info p { margin: 0; }
+        .sender-info .sender-name { font-family: var(--font-family-heading); font-weight: 700; font-size: 13pt; color: var(--accent-color); margin-bottom: 4px; }
+        .date { text-align: right; font-size: 10pt; color: var(--secondary-color); margin-top: -15px; margin-bottom: 15px; }
+        .recipient-info { text-align: left; margin-bottom: 15px; font-size: 10.5pt; line-height: 1.4; }
+        .recipient-info p { margin: 1px 0; }
+        .recipient-info .recipient-name, .recipient-info .recipient-title { font-weight: 700; color: var(--primary-color); }
+        .subject { font-family: var(--font-family-heading); font-weight: 700; margin-top: 20px; margin-bottom: 15px; font-size: 11.5pt; color: var(--accent-color); }
         .subject p { margin: 0; }
-
-
-        .salutation {
-            font-weight: 700;
-            margin-bottom: 15px; /* Reduced space */
-            font-size: 10.5pt;
-        }
+        .salutation { font-weight: 700; margin-bottom: 15px; font-size: 10.5pt; }
         .salutation p { margin: 0; }
 
-
-        .body p {
-            margin-bottom: 0.9em; /* Reduced space between paragraphs */
-            text-align: justify;
+        /* --- Body Paragraph Styles from React coverLetterCSS --- */
+        .body p { margin-bottom: 1em; text-align: justify; }
+        /* Added override from React */
+        body > .body > p {
+            margin-bottom: 0 !important; /* Force removal of bottom margin */
         }
 
-        /* --- Footer Section --- */
-        .closing {
-            margin-top: 20px; /* Reduced space */
-            margin-bottom: 5px; /* Reduced space */
-            font-size: 10.5pt;
-        }
+        /* --- Footer Styles from React coverLetterCSS --- */
+        .footer-section { margin-top: 20px; } /* Added wrapper class rule */
+        .closing { margin-top: 15px; margin-bottom: 8px; font-size: 10.5pt; }
         .closing p { margin: 0; }
-
-
-        .signature {
-            margin-top: 5px; /* Less space for manual signature */
-            margin-bottom: 15px; /* Reduced space */
-            line-height: 1.4;
-        }
-        .signature .signature-name {
-            font-family: var(--font-family-heading);
-            font-weight: 700;
-            font-size: 11pt; /* Slightly smaller */
-            color: var(--primary-color);
-        }
-        .signature .signature-contact {
-            font-size: 9.5pt; /* Smaller contact */
-            color: var(--secondary-color);
-            white-space: pre-line;
-            margin-top: 3px; /* Reduced space */
-        }
-
-        .attachments {
-            margin-top: 15px; /* Reduced space */
-            font-size: 9pt; /* Smaller attachments text */
-            color: #888;
-            border-top: 1px solid #eee;
-            padding-top: 8px; /* Reduced padding */
-        }
-         .attachments p {
-            margin: 0 0 4px 0; /* Reduced margin */
-            font-weight: 700;
-            color: var(--secondary-color);
-         }
+        .signature { margin-top: 8px; margin-bottom: 15px; line-height: 1.4; }
+        .signature .signature-name { font-family: var(--font-family-heading); font-weight: 700; font-size: 11pt; color: var(--primary-color); }
+        .signature .signature-contact { font-size: 9.5pt; color: var(--secondary-color); white-space: pre-line; margin-top: 4px; }
+        .attachments { margin-top: 15px; font-size: 9pt; color: #888; border-top: 1px solid #eee; padding-top: 10px; }
+        .attachments p { margin: 0 0 5px 0; font-weight: 700; color: var(--secondary-color); }
         .attachments ul { list-style: none; padding: 0; margin: 0; }
-        .attachments li { margin-bottom: 2px; /* Tighter list */ }
+        .attachments li { margin-bottom: 3px; }
 
     </style>
 </head>
-<body class="{{ theme_class | default('theme-classic') }}"> {# Apply theme class here #}
+<body class="{{ theme_class | default('theme-classic') }}">
     <div class="cover-letter-container">
 
         {% if cover_letter.header %}
@@ -225,31 +153,36 @@
         {% if cover_letter.body_paragraphs %}
         <div class="body">
             {% for paragraph in cover_letter.body_paragraphs %}
+            {# Added trim filter here as in original Jinja #}
             <p>{{ paragraph | trim }}</p>
             {% endfor %}
         </div>
         {% endif %}
 
         {% if cover_letter.footer %}
-        <div class="closing">
-            <p>{{ cover_letter.footer.closing | default('Sincerely,') }}</p>
-        </div>
+        {# Added footer-section wrapper div to match React CSS structure #}
+        <div class="footer-section">
+            <div class="closing">
+                <p>{{ cover_letter.footer.closing | default('Sincerely,') }}</p>
+            </div>
 
-        <div class="signature">
-            {% if cover_letter.footer.signature_name %}<p class="signature-name">{{ cover_letter.footer.signature_name }}</p>{% endif %}
-            {% if cover_letter.footer.signature_contact %}<p class="signature-contact">{{ cover_letter.footer.signature_contact | trim }}</p>{% endif %}
-        </div>
+            <div class="signature">
+                {% if cover_letter.footer.signature_name %}<p class="signature-name">{{ cover_letter.footer.signature_name }}</p>{% endif %}
+                 {# Added trim filter here as in original Jinja #}
+                {% if cover_letter.footer.signature_contact %}<p class="signature-contact">{{ cover_letter.footer.signature_contact | trim }}</p>{% endif %}
+            </div>
 
-        {% if cover_letter.footer.attachments_mentioned %}
-        <div class="attachments">
-            <p>Attachment{% if cover_letter.footer.attachments_mentioned|length > 1 %}s{% endif %}</p>
-            <ul>
-                {% for attachment in cover_letter.footer.attachments_mentioned %}
-                <li>{{ attachment }}</li>
-                {% endfor %}
-            </ul>
-        </div>
-        {% endif %}
+            {% if cover_letter.footer.attachments_mentioned %}
+            <div class="attachments">
+                <p>Attachment{% if cover_letter.footer.attachments_mentioned|length > 1 %}s{% endif %}</p>
+                <ul>
+                    {% for attachment in cover_letter.footer.attachments_mentioned %}
+                    <li>{{ attachment }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div> {# End footer-section #}
         {% endif %} {# End footer check #}
 
     </div>
