@@ -5,6 +5,8 @@ from .prompts import (
                       create_resume_prompt, edit_resume_section_prompt ,job_desc_resume_prompt, create_resume_website_prompt, create_resume_website_bloks_prompt
                       ,edit_website_block_prompt,create_document_prompt,ats_checker_prompt,ats_checker_no_job_desc_prompt
 )
+
+from .docs_prompts import ( cover_letter_prompt, )
 router = APIRouter()
 
 
@@ -159,5 +161,27 @@ add_routes(
         "output_schema",
         "config_schema",
         "token_feedback",
+    ],
+)
+
+
+
+#################### Document Generation #####################
+
+add_routes(
+    router,
+    chain_instance.build_chain(cover_letter_prompt),
+    path="/generate_cover_letter",
+    disabled_endpoints=[
+        "stream_events",
+        "stream_log",
+        "batch",
+        "playground",
+        "config_hashes",
+        "input_schema",
+        "output_schema",
+        "config_schema",
+        "token_feedback",
+        "stream",
     ],
 )
