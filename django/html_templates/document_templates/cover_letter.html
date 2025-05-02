@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cover Letter{% if cover_letter.header.sender_name %} - {{ cover_letter.header.sender_name }}{% endif %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Optional: Add Font Awesome for icons -->
+    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"> -->
+    <style>
+        :root {
+            --font-family-body: 'Lato', sans-serif;
+            --font-family-heading: 'Merriweather', serif;
+            --base-font-size: 10.5pt; /* Slightly smaller base font */
+            --line-height: 1.45; /* Tighter line height */
+            /* Default Theme (Classic) */
+            --primary-color: #333;
+            --secondary-color: #555;
+            --accent-color: #000;
+            --link-color: #0066cc;
+        }
+
+        /* --- Theme Variations --- */
+        body.theme-modern {
+            --primary-color: #2c3e50;
+            --secondary-color: #7f8c8d;
+            --accent-color: #2980b9;
+            --link-color: #3498db;
+        }
+
+        body.theme-elegant {
+            --primary-color: #34495e;
+            --secondary-color: #666;
+            --accent-color: #16a085;
+            --link-color: #1abc9c;
+        }
+        /* --- End Themes --- */
+
+
+        @page {
+            size: A4;
+            margin: 1.5cm 1.5cm; /* Reduced margins */
+            orphans: 3; /* Try to prevent single lines at bottom of page */
+            widows: 3;  /* Try to prevent single lines at top of new page */
+        }
+
+        body {
+            font-family: var(--font-family-body);
+            font-size: var(--base-font-size);
+            line-height: var(--line-height);
+            color: var(--primary-color);
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .cover-letter-container {
+            max-width: 18cm; /* A4 width minus reduced margins */
+            margin: 0 auto;
+        }
+
+        /* --- Header Section --- */
+        .header-section {
+            margin-bottom: 20px; /* Reduced space after header */
+            position: relative;
+        }
+
+        .sender-info {
+            text-align: left;
+            margin-bottom: 10px; /* Reduced space */
+            font-size: 9.5pt; /* Smaller sender info */
+            color: var(--secondary-color);
+            line-height: 1.3; /* Tighter line height for sender */
+        }
+        .sender-info p {
+            margin: 0; /* Minimal margin */
+        }
+        .sender-info .sender-name {
+            font-family: var(--font-family-heading);
+            font-weight: 700;
+            font-size: 13pt; /* Slightly smaller name */
+            color: var(--accent-color);
+            margin-bottom: 4px; /* Reduced space */
+        }
+        .sender-info a { color: var(--link-color); text-decoration: none; }
+        .sender-info a:hover { text-decoration: underline; }
+
+        .date {
+            text-align: right;
+            font-size: 10pt; /* Smaller date */
+            color: var(--secondary-color);
+            margin-top: -10px; /* Pull up slightly more */
+            margin-bottom: 20px; /* Reduced space before recipient */
+        }
+
+        .recipient-info {
+            text-align: left;
+            margin-bottom: 20px; /* Reduced space */
+            font-size: 10.5pt; /* Slightly smaller recipient */
+            line-height: 1.4;
+        }
+        .recipient-info p {
+            margin: 1px 0; /* Tighter */
+        }
+        .recipient-info .recipient-name,
+        .recipient-info .recipient-title {
+             font-weight: 700;
+             color: var(--primary-color);
+        }
+
+        /* --- Main Content --- */
+        .subject {
+            font-family: var(--font-family-heading);
+            font-weight: 700;
+            margin-top: 25px; /* Reduced space */
+            margin-bottom: 15px; /* Reduced space */
+            font-size: 11.5pt; /* Slightly smaller subject */
+            color: var(--accent-color);
+        }
+        .subject p { margin: 0; }
+
+
+        .salutation {
+            font-weight: 700;
+            margin-bottom: 15px; /* Reduced space */
+            font-size: 10.5pt;
+        }
+        .salutation p { margin: 0; }
+
+
+        .body p {
+            margin-bottom: 0.9em; /* Reduced space between paragraphs */
+            text-align: justify;
+        }
+
+        /* --- Footer Section --- */
+        .closing {
+            margin-top: 20px; /* Reduced space */
+            margin-bottom: 5px; /* Reduced space */
+            font-size: 10.5pt;
+        }
+        .closing p { margin: 0; }
+
+
+        .signature {
+            margin-top: 5px; /* Less space for manual signature */
+            margin-bottom: 15px; /* Reduced space */
+            line-height: 1.4;
+        }
+        .signature .signature-name {
+            font-family: var(--font-family-heading);
+            font-weight: 700;
+            font-size: 11pt; /* Slightly smaller */
+            color: var(--primary-color);
+        }
+        .signature .signature-contact {
+            font-size: 9.5pt; /* Smaller contact */
+            color: var(--secondary-color);
+            white-space: pre-line;
+            margin-top: 3px; /* Reduced space */
+        }
+
+        .attachments {
+            margin-top: 15px; /* Reduced space */
+            font-size: 9pt; /* Smaller attachments text */
+            color: #888;
+            border-top: 1px solid #eee;
+            padding-top: 8px; /* Reduced padding */
+        }
+         .attachments p {
+            margin: 0 0 4px 0; /* Reduced margin */
+            font-weight: 700;
+            color: var(--secondary-color);
+         }
+        .attachments ul { list-style: none; padding: 0; margin: 0; }
+        .attachments li { margin-bottom: 2px; /* Tighter list */ }
+
+    </style>
+</head>
+<body class="{{ theme_class | default('theme-classic') }}"> {# Apply theme class here #}
+    <div class="cover-letter-container">
+
+        {% if cover_letter.header %}
+        <div class="header-section">
+            <div class="sender-info">
+                {% if cover_letter.header.sender_name %}<p class="sender-name">{{ cover_letter.header.sender_name }}</p>{% endif %}
+                {% if cover_letter.header.sender_address %}<p>{{ cover_letter.header.sender_address }}</p>{% endif %}
+                {% if cover_letter.header.sender_city_postal %}<p>{{ cover_letter.header.sender_city_postal }}</p>{% endif %}
+                {% if cover_letter.header.sender_phone %}<p>{{ cover_letter.header.sender_phone }}</p>{% endif %}
+                {% if cover_letter.header.sender_email %}<p><a href="mailto:{{ cover_letter.header.sender_email }}">{{ cover_letter.header.sender_email }}</a></p>{% endif %}
+                {% if cover_letter.header.sender_linkedin %}<p><a href="{{ cover_letter.header.sender_linkedin }}" target="_blank">{{ cover_letter.header.sender_linkedin }}</a></p>{% endif %}
+            </div>
+
+            {% if cover_letter.header.date %}
+            <div class="date">
+                <p>{{ cover_letter.header.date }}</p>
+            </div>
+            {% endif %}
+
+            <div class="recipient-info">
+                {% if cover_letter.header.recipient_name %}<p class="recipient-name">{{ cover_letter.header.recipient_name }}</p>{% endif %}
+                {% if cover_letter.header.recipient_title %}<p class="recipient-title">{{ cover_letter.header.recipient_title }}</p>{% endif %}
+                {% if cover_letter.header.recipient_company %}<p>{{ cover_letter.header.recipient_company }}</p>{% endif %}
+                {% if cover_letter.header.recipient_address %}<p>{{ cover_letter.header.recipient_address }}</p>{% endif %}
+                {% if cover_letter.header.recipient_city_postal %}<p>{{ cover_letter.header.recipient_city_postal }}</p>{% endif %}
+            </div>
+        </div> {# End header-section #}
+
+        {% if cover_letter.header.subject %}
+        <div class="subject">
+            <p>{{ cover_letter.header.subject }}</p>
+        </div>
+        {% endif %}
+
+        {% if cover_letter.header.salutation %}
+        <div class="salutation">
+            <p>{{ cover_letter.header.salutation }}</p>
+        </div>
+        {% endif %}
+        {% endif %} {# End header check #}
+
+        {% if cover_letter.body_paragraphs %}
+        <div class="body">
+            {% for paragraph in cover_letter.body_paragraphs %}
+            <p>{{ paragraph | trim }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if cover_letter.footer %}
+        <div class="closing">
+            <p>{{ cover_letter.footer.closing | default('Sincerely,') }}</p>
+        </div>
+
+        <div class="signature">
+            {% if cover_letter.footer.signature_name %}<p class="signature-name">{{ cover_letter.footer.signature_name }}</p>{% endif %}
+            {% if cover_letter.footer.signature_contact %}<p class="signature-contact">{{ cover_letter.footer.signature_contact | trim }}</p>{% endif %}
+        </div>
+
+        {% if cover_letter.footer.attachments_mentioned %}
+        <div class="attachments">
+            <p>Attachment{% if cover_letter.footer.attachments_mentioned|length > 1 %}s{% endif %}</p>
+            <ul>
+                {% for attachment in cover_letter.footer.attachments_mentioned %}
+                <li>{{ attachment }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        {% endif %} {# End footer check #}
+
+    </div>
+</body>
+</html>
