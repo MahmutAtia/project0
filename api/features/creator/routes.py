@@ -6,7 +6,7 @@ from .prompts import (
                       ,edit_website_block_prompt,create_document_prompt,ats_checker_prompt,ats_checker_no_job_desc_prompt
 )
 
-from .docs_prompts import ( cover_letter_prompt, )
+from .docs_prompts import ( cover_letter_prompt, recommendation_letter_prompt,  motivation_letter_prompt ) 
 router = APIRouter()
 
 
@@ -172,6 +172,42 @@ add_routes(
     router,
     chain_instance.build_chain(cover_letter_prompt),
     path="/generate_cover_letter",
+    disabled_endpoints=[
+        "stream_events",
+        "stream_log",
+        "batch",
+        "playground",
+        "config_hashes",
+        "input_schema",
+        "output_schema",
+        "config_schema",
+        "token_feedback",
+        "stream",
+    ],
+)
+
+add_routes(
+    router,
+    chain_instance.build_chain(recommendation_letter_prompt),
+    path="/generate_recommendation_letter",
+    disabled_endpoints=[
+        "stream_events",
+        "stream_log",
+        "batch",
+        "playground",
+        "config_hashes",
+        "input_schema",
+        "output_schema",
+        "config_schema",
+        "token_feedback",
+        "stream",
+    ],
+)
+
+add_routes(
+    router,
+    chain_instance.build_chain(motivation_letter_prompt),
+    path="/generate_motivation_letter",
     disabled_endpoints=[
         "stream_events",
         "stream_log",
