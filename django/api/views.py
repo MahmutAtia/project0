@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django.http import StreamingHttpResponse, FileResponse, HttpResponse, JsonResponse,HttpResponseServerError
 from datetime import datetime  # Import datetime class directly
+import textwrap
 import json
 import yaml
 import os
@@ -664,10 +665,10 @@ def generate_document_bloks(request):
     API endpoint to generate a document using Bloks.
     """
     resume_id = request.data.get('resumeId')
-    preferences = request.data.get('preferences', {})
+    other_info = request.data.get('otherInfo', {})
     document_type = request.data.get('documentType', '') 
     language = request.data.get('language', 'en')  # Default to English if not provided
-    document_name = request.data.get('documentName', 'Generated Document')  # Default name if not provided
+    # document_name = request.data.get('documentName', 'Generated Document')  # Default name if not provided
     
     if not resume_id:
         return Response({"error": "resumeId is required"}, status=status.HTTP_400_BAD_REQUEST)
@@ -676,30 +677,53 @@ def generate_document_bloks(request):
         resume = get_object_or_404(Resume, pk=resume_id)
         about = resume.about
 
-        # Check if a document has already been generated for this resume
-        generated_document = GeneratedDocument.objects.filter(resume=resume).first()
+        # Check if a document of this specific type has already been generated for this resume
+        generated_document = GeneratedDocument.objects.filter(resume=resume, document_type=document_type).first()
         if generated_document:
-            # Document already exists, return the unique link
+            # Document of this type already exists, return the unique link
             return Response({"document_uuid": generated_document.unique_id}, status=status.HTTP_200_OK)
+    except Http404:
+         return Response({"error": f"Resume with ID {resume_id} not found."}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
+        # Log the specific error for debugging
+        logger.error(f"Error checking for existing document or fetching resume data for resume_id {resume_id}: {e}")
         return Response(
-            {"error": f"Error fetching resume data: {e}"},
+            {"error": f"Error processing request: {e}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
-    ai_service_url = os.environ.get("AI_SERVICE_URL") + "create_document/invoke"
+
+
+    document_endpoint_mapping = {
+        "cover_letter":  "generate_cover_letter/invoke",
+           
+        "recommendation_letter":  "generate_recommendation_letter/invoke",
+            
+        "motivation_letter": "generate_motivation_letter/invoke",
+
+    }
+    
+    # Get the endpoint for the specific document type
+    document_endpoint = document_endpoint_mapping.get(document_type)
+    if document_type not in document_endpoint_mapping:
+        return Response({"error": f"Unsupported documentType: {document_type}"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    
+    ai_service_url = os.environ.get("AI_SERVICE_URL") + document_endpoint
+
+
     body = {
         "input": {
-            "preferences": preferences,
-            "document_type": document_type,
+            "other_info": other_info,
             "language": language,
-            "about": about,
-            "document_name": document_name,
+            "about_candidate": about,
         }
     }
     try:
         ai_response = requests.post(ai_service_url, json=body)
         ai_response.raise_for_status()
-        generated_document_json = ai_response.json().get("output")
+        generated_yaml = ai_response.json().get("output")
+        generated_document_json = yaml.safe_load(generated_yaml)
+        
 
         # Save the generated document
         unique_id = str(uuid.uuid4())
@@ -707,9 +731,9 @@ def generate_document_bloks(request):
             resume=resume,
             unique_id=unique_id,
             json_content=generated_document_json,
-        )
-
-        # Return the unique id
+            document_type = document_type
+            )# Return the unique id
+        
         return Response({"document_uuid": unique_id}, status=status.HTTP_201_CREATED)
     except requests.exceptions.RequestException as e:
         return Response(
@@ -721,6 +745,26 @@ def generate_document_bloks(request):
             {"error": f"Error processing AI service response: {e}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+        
+        
+@api_view(["GET"])
+def get_document_bloks(request, document_id):
+    """
+    API endpoint to serve the generated document as a JSON response.
+    """
+    try:
+        generated_document = get_object_or_404(GeneratedDocument, unique_id=document_id)
+        #  i want also to return document type
+        json_data = generated_document.json_content
+        document_type = generated_document.document_type
+        
+        return Response({
+            "document_type": document_type,
+            "json_data": json_data
+        }, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({"error": f"Document not found: {e}"}, status=status.HTTP_404_NOT_FOUND)
+    
 @api_view(["GET"])
 def get_document_pdf(request, document_id):
     """
@@ -748,7 +792,6 @@ def get_document_pdf(request, document_id):
 
 ##################################### ATS Checker #####################################
 
-# ... existing imports ...
 from .tasks import generate_and_save_resume_task # Import the Celery task
 import logging # Import logging
 
@@ -944,51 +987,3 @@ def save_generated_resume(request):
         return Response({"error": "An unexpected error occurred while saving the resume."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-
-# @api_view(["POST"])
-# def generate_from_job_desc(request):
-#     try:
-#         # Handle file upload
-#         uploaded_file = request.FILES.get('resume')
-#         form_data = json.loads(request.POST.get('formData', '{}'))
-        
-#         # Extract text based on file type
-#         text = ''
-#         if uploaded_file.content_type == 'application/pdf':
-#             pdf_reader = PdfReader(io.BytesIO(uploaded_file.read()))
-#             text = '\n'.join([page.extract_text() for page in pdf_reader.pages])
-            
-#         elif uploaded_file.content_type in [
-#             'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-#             'application/msword'
-#         ]:
-#             doc = Document(io.BytesIO(uploaded_file.read()))
-#             text = '\n'.join([para.text for para in doc.paragraphs])
-            
-#         elif uploaded_file.content_type == 'text/plain':
-#             text = uploaded_file.read().decode('utf-8')
-            
-#         else:
-#             return Response({'error': 'Unsupported file type'}, status=400)
-
-#         # Prepare input for AI service
-#         input_data = {
-#             'input_text': text,
-#             'job_description': form_data.get('description'),
-#             'language': form_data.get('targetLanguage'),
-#             'docs_instructions': "\n".join(
-#                 f"Write a {key} tailored to the job description" 
-#                 for key, value in form_data.get('documentPreferences', {}).items() 
-#                 if value
-#             )
-#         }
-
-#         # Rest of your existing AI service call
-#         ai_service_url = f"{os.environ.get('AI_SERVICE_URL')}genereate_from_job_desc/invoke"
-#         response = requests.post(ai_service_url, json=input_data)
-#         # ... rest of your existing processing logic
-        
-        
-
-#     except Exception as e:
-#         return Response({'error': str(e)}, status=500)

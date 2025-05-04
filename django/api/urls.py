@@ -15,8 +15,8 @@ urlpatterns = [
     
     # gererate document
     path('resumes/generate_document/', views.generate_document_bloks, name='generate-document'),
-
-
+    # document bloks
+    path('resumes/document_bloks/<uuid:document_id>/', views.get_document_bloks, name='get-document-bloks'),
     # editor views here
     path('website-yaml/<uuid:resume_id>/', views.get_website_yaml_json, name='serve_website_yaml_json'),
     path('website-yaml/update/<uuid:unique_id>/', views.update_website_yaml, name='save-updates-to-personal-website'),
@@ -38,9 +38,9 @@ urlpatterns = [
     
     
     # 5. Generate document
-    path('resumes/generate_document/', views.generate_document_bloks, name='generate-document'),
-    path('resumes/document/<uuid:document_id>/', views.get_document_pdf, name='view-document'),
-    # path('resumes/<str:pk>/document/<uuid:unique_id>/update/', views.update_document, name='update-document'),
+    # path('resumes/generate_document/', views.generate_document_bloks, name='generate-document'),
+    # path('resumes/document/<uuid:document_id>/', views.get_document_pdf, name='view-document'),
+    # # path('resumes/<str:pk>/document/<uuid:unique_id>/update/', views.update_document, name='update-document'),
     
     
 
