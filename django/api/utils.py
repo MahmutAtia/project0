@@ -100,3 +100,167 @@ def generate_pdf_from_resume_data(resume_data, template_theme='resume_template_2
         print(f"Error generating PDF: {e}")
         return None
     
+def generate_html_from_yaml(json_data, template_name='html_bloks_template.html'):
+    """
+    Generates HTML from YAML data using a Jinja template.
+
+    Args:
+        yaml_data (dict): The YAML data as a dictionary.
+        template_name (str, optional): The name of the Jinja template file.
+            Defaults to 'utils.html.jinja'.
+
+    Returns:
+        str: The generated HTML as a string.  Returns None on error.
+    """
+    try:
+
+
+        env = Environment(
+            loader=FileSystemLoader('./html_templates/'),
+            autoescape=select_autoescape(['html', 'xml'])  # Auto-escape HTML
+        )
+        template = env.get_template(template_name)
+
+        # 4. Render the Jinja template with the data
+        html_output = template.render(data=json_data)  # Pass the entire data dictionary
+
+        return html_output
+
+    except Exception as e:
+        print(f"Error generating HTML: {e}")
+        return None
+
+
+
+def parse_custom_format_to_json(input_string):
+    """
+    Parses a custom string format (similar to YAML but with flexible
+    multi-line indentation) into a Python dictionary using regular expressions.
+
+    Includes print statements for debugging the input string content
+    and initial regex matches.
+
+    Args:
+        input_string: The string containing the custom format data.
+
+    Returns:
+        A Python dictionary representing the parsed data, or None if parsing fails.
+    """
+    # --- Debugging Prints ---
+    print(f"--- Debugging Input String ---")
+    print(f"Received input string (repr): {repr(input_string)}")
+    print(f"Received input string:\n---\n{input_string}\n---")
+    print(f"----------------------------")
+    # ------------------------
+
+    data = {}
+
+    # Define common whitespace including non-breaking space
+    WHITESPACE = r'[\s\u00a0]'
+
+    # Regex to capture the global section
+    # Using (?s) flag for '.' to match newlines
+    # Updated to handle non-breaking spaces and more robustly capture multi-line fields
+    # Assumes multi-line content starts on the line after the '|'
+    # Adjusted to be more flexible with whitespace around keys
+    global_regex = re.compile(rf'(?s)global:{WHITESPACE}*\n' # Match 'global:' followed by optional whitespace and a newline
+                              rf'{WHITESPACE}*name:{WHITESPACE}*"(?P<global_name>.*?)"{WHITESPACE}*\n' # Match 'name:', optional whitespace, quoted value, optional whitespace, newline
+                              rf'{WHITESPACE}*feedback:{WHITESPACE}*"(?P<global_feedback>.*?)"{WHITESPACE}*\n' # Match 'feedback:', optional whitespace, quoted value, optional whitespace, newline
+                              rf'{WHITESPACE}*js:{WHITESPACE}*\|{WHITESPACE}*\n(?P<global_js>.*?)(?={WHITESPACE}*css:)' # Match 'js: |', newline, capture content until 'css:'
+                              rf'{WHITESPACE}*css:{WHITESPACE}*\|{WHITESPACE}*\n(?P<global_css>.*?)(?={WHITESPACE}*html:)' # Match 'css: |', newline, capture content until 'html:'
+                              rf'{WHITESPACE}*html:{WHITESPACE}*\|{WHITESPACE}*\n(?P<global_html>.*?)(?={WHITESPACE}*code_bloks:|\Z)') # Match 'html: |', newline, capture content until 'code_bloks:' or end of string (\Z)
+
+    # --- Debugging Print for Global Match ---
+    print(f"Attempting to find global section...")
+    # ----------------------------------------
+
+    global_match = global_regex.search(input_string)
+
+    if global_match:
+        print("Debug: Global section regex matched successfully.")
+        data['global'] = global_match.groupdict()
+        # Clean up leading/trailing whitespace from multi-line fields
+        for key in ['global_js', 'global_css', 'global_html']:
+             if data['global'][key] is not None:
+                 data['global'][key] = data['global'][key].strip()
+        # Clean up the feedback string
+        if data['global']['global_feedback'] is not None:
+             data['global']['global_feedback'] = data['global']['global_feedback'].strip()
+    else:
+        print("Warning: Global section not found. Check input string format.")
+        data['global'] = {} # Initialize empty if not found
+
+    # Regex to capture the code_bloks section content
+    # Updated to handle non-breaking spaces and potential whitespace/newlines before '['
+    # We need to find the start of code_bloks and the content within the brackets
+    code_bloks_section_start_match = re.search(rf'(?s)code_bloks:{WHITESPACE}*\[', input_string)
+
+    data['code_bloks'] = []
+
+    if code_bloks_section_start_match:
+        print("Debug: Found 'code_bloks: [' marker.")
+        # Define the string to search for the content within brackets
+        # Start searching from the position immediately after the '['
+        search_string_for_blocks = input_string[code_bloks_section_start_match.end():]
+
+        # --- Debugging Print for Code Blocks Search String ---
+        print(f"Debug: Searching for code blocks content in string slice:\n---\n{search_string_for_blocks}\n---")
+        # ------------------------------------------------------
+
+        # Regex to capture the content between the first '[' after 'code_bloks:' and the final ']'
+        # This regex is applied to the slice starting after '['
+        code_bloks_content_regex = re.compile(rf'(?s)(.*?)]')
+        code_bloks_content_match = code_bloks_content_regex.search(search_string_for_blocks)
+
+        # --- Debugging Print for Code Blocks Content Match Result ---
+        print(f"Debug: Result of regex search for code_bloks content: {code_bloks_content_match}")
+        # ----------------------------------------------------------
+
+
+        if code_bloks_content_match:
+            code_bloks_content = code_bloks_content_match.group(1)
+            print(f"Debug: Captured code_bloks content:\n---\n{code_bloks_content}\n---")
+
+            # Regex to capture individual code blocks within the section
+            # Using (?s) flag for '.' to match newlines
+            # Updated to handle non-breaking spaces and more robustly capture multi-line fields
+            # Assumes multi-line content starts on the line after the '|'
+            # Adjusted to be more flexible with whitespace around keys and handle the end of the string
+            block_regex = re.compile(rf'(?s){WHITESPACE}*-\{WHITESPACE}*\n'  # Match optional whitespace, '-', optional whitespace and a newline (start of a block item)
+                                      rf'{WHITESPACE}*name:{WHITESPACE}*"(?P<block_name>.*?)"{WHITESPACE}*\n'  # Match 'name:', optional whitespace, quoted value, optional whitespace, newline
+                                      rf'{WHITESPACE}*feedback:{WHITESPACE}*"(?P<block_feedback>.*?)"{WHITESPACE}*\n'  # Match 'feedback:', optional whitespace, quoted value, optional whitespace, newline
+                                      rf'{WHITESPACE}*html:{WHITESPACE}*\|{WHITESPACE}*\n(?P<block_html>.*?)(?={WHITESPACE}*css:)'  # Match 'html: |', newline, capture content until 'css:'
+                                      rf'{WHITESPACE}*css:{WHITESPACE}*\|{WHITESPACE}*\n(?P<block_css>.*?)(?={WHITESPACE}*js:)'  # Match 'css: |', newline, capture content until 'js:'
+                                      rf'{WHITESPACE}*js:{WHITESPACE}*\|{WHITESPACE}*\n(?P<block_js>.*?)(?={WHITESPACE}*-\{WHITESPACE}*|\Z)')  # Match 'js: |', newline, capture content until next '-' or end of string (\Z)
+
+
+            # --- Debugging Print for Block Matches ---
+            print(f"Attempting to find code blocks within content...")
+            # -----------------------------------------
+
+            for block_match in block_regex.finditer(code_bloks_content):
+                print(f"Debug: Found a code block match.")
+                block_data = block_match.groupdict()
+                # Clean up leading/trailing whitespace from multi-line fields
+                for key in ['block_js', 'block_css', 'block_html']:
+                     if block_data[key] is not None:
+                         block_data[key] = block_data[key].strip()
+                # Clean up the feedback string
+                if block_data['block_feedback'] is not None:
+                     block_data['block_feedback'] = block_data['block_feedback'].strip()
+                data['code_bloks'].append(block_data)
+        else:
+             print("Warning: Could not capture content within code_bloks section brackets. Check for missing ']' or extra content after the last block.")
+    else:
+        print("Warning: 'code_bloks: [' marker not found. Code blocks section not found or is empty. Check input string format.")
+
+
+    # Return the Python dictionary
+    try:
+        # You can optionally return a JSON string if needed, but the function
+        # description says return a dictionary.
+        # return json.dumps(data, indent=2)
+        return data
+    except Exception as e:
+        print(f"Error returning data dictionary: {e}")
+        return None
