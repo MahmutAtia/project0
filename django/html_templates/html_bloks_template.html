@@ -1,36 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     {{ data.global.html | safe }}
     <style>
-        /* Global Styles */
+        /* Global + Section Styles */
         {{ data.global.css | safe }}
+        {% for block in data.code_bloks %}
+            {{ block.css | safe }}
+        {% endfor %}
     </style>
 </head>
 <body>
     <main>
         {% for block in data.code_bloks %}
-            <section id="{{ block.name | lower }}">
-                <style>
-                    /* Styles for {{ block.name }} */
-                    {{ block.css | safe }}
-                </style>
-                {{ block.html | safe }}
-                {% if block.js %}
-                    <script>
-                        /* Script for {{ block.name }} */
-                        {{ block.js | safe }}
-                    </script>
-                {% endif %}
-            </section>
+            {{ block.html | safe }}
         {% endfor %}
     </main>
-    
+
     <script>
-        /* Global Scripts */
+        /* Global + Section Scripts */
         {{ data.global.js | safe }}
+        {% for block in data.code_bloks %}
+            {{ block.js | safe }}
+        {% endfor %}
     </script>
 </body>
 </html>
