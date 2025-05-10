@@ -23,7 +23,6 @@ urlpatterns = [
     path('website-yaml/edit-block/', views.edit_website_block, name='edit_website_block'), # With trailing slash
 
     # 2. Other prefixes with 
-    path('website/<uuid:unique_id>/', views.serve_personal_website, name='view-personal-website'),
     path('<uuid:unique_id>/', views.serve_personal_website_yaml, name='view-personal-website-yaml'),
     
         #ats checker
