@@ -115,7 +115,6 @@ def generate_html_from_yaml(json_data, template_name='html_bloks_template.html')
     """
     try:
 
-
         env = Environment(
             loader=FileSystemLoader('./html_templates/'),
             autoescape=select_autoescape(['html', 'xml'])  # Auto-escape HTML

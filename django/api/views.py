@@ -2,7 +2,7 @@ from rest_framework import generics, permissions, status
 from .models import Resume, GeneratedWebsite,GeneratedDocument
 from .serializers import ResumeSerializer
 from django.http import Http404
-from .utils import cleanup_old_sessions, extract_text_from_file,generate_pdf_from_resume_data,generate_html_from_yaml
+from .utils import cleanup_old_sessions, extract_text_from_file,generate_pdf_from_resume_data,generate_html_from_yaml,parse_custom_format
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 import requests # For calling the AI service
@@ -500,13 +500,14 @@ def generate_personal_website_bloks(request):
         ai_response = requests.post(ai_service_url, json=body)
         ai_response.raise_for_status()
         generated_website_bloks = ai_response.json().get("output")
+        generated_website_bloks_json = parse_custom_format(generated_website_bloks)
 
         # Save the generated website YAML
         unique_id = str(uuid.uuid4())
         GeneratedWebsite.objects.create(
             resume=resume,
             unique_id=unique_id,
-            json_content=generated_website_bloks,
+            json_content=generated_website_bloks_json,
         )
 
         # Return the unique id
@@ -534,22 +535,7 @@ def get_website_yaml_json(request, resume_id):
         # Adjust lookup field if necessary (e.g., pk=resume_id)
         generated_website = get_object_or_404(GeneratedWebsite, unique_id=resume_id)
 
-        data = None
-        if not generated_website.json_content:
-            # If json_content is empty, use yaml_content
-            yaml_content = generated_website.yaml_content
-            # Parse the YAML content
-            try:
-                data = yaml.safe_load(yaml_content)
-            except yaml.YAMLError as e:
-                # Handle YAML parsing errors
-                return Response(
-                    {"error": f"Error parsing YAML content: {e}"},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                )        
-        else:
-            # If json_content is not empty, use it
-            data = generated_website.json_content
+        data = generated_website.json_content
             
 
         # Return the parsed YAML (Python dict/list) as JSON
@@ -571,21 +557,8 @@ def serve_personal_website_yaml(request, unique_id):
     """
     try:
         generated_website = get_object_or_404(GeneratedWebsite, unique_id=unique_id)
-        if not generated_website.json_content:
-            # If json_content is empty, use yaml_content
-            yaml_content = generated_website.yaml_content
-            # Parse the YAML content
-            try:
-                json_data = yaml.safe_load(yaml_content)
-            except yaml.YAMLError as e:
-                # Handle YAML parsing errors
-                return Response(
-                    {"error": f"Error parsing YAML content: {e}"},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                )
-        else:
-            # If json_content is not empty, use it
-            json_data = generated_website.json_content
+        
+        json_data = generated_website.json_content
         # Generate the HTML from the YAML data
         full_html = generate_html_from_yaml(json_data)
         return HttpResponse(full_html, content_type="text/html")
