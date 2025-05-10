@@ -12,6 +12,7 @@ import json
 from django.conf import settings
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from weasyprint import HTML, CSS
+from collections import OrderedDict
 # from weasyprint.fonts import FontConfiguration # Optional - Not used, so removed
 
 
@@ -264,3 +265,121 @@ def parse_custom_format_to_json(input_string):
     except Exception as e:
         print(f"Error returning data dictionary: {e}")
         return None
+    
+    
+################# Convert Code to JSON #####################
+
+def extract_html_blocks(html):
+    head_match = re.search(r'<head>(.*?)</head>', html, re.DOTALL)
+    head_inner = head_match.group(1).strip() if head_match else ""
+    html_wo_head = html.replace(head_match.group(0), '') if head_match else html
+
+    pattern = r'<!-- BEGIN (SECTION: )?(?P<name>.*?) -->\s*(?:<!-- DESCRIPTION: (?P<desc>.*?) -->\s*)?(?P<content>.*?)\s*<!-- END (SECTION: )?\1?(?P=name) -->'
+    matches = re.finditer(pattern, html_wo_head, re.DOTALL)
+
+    blocks = OrderedDict()
+    ordered_names = []
+
+    for match in re.finditer(pattern, html_wo_head, re.DOTALL):
+        name = match.group('name').strip()
+        description = (match.group('desc') or "").strip()
+        content = match.group('content').strip()
+        if name not in blocks:
+            blocks[name] = {
+                "html": content,
+                "description": description
+            }
+            ordered_names.append(name)
+
+
+    # Optional: handle footer as before
+    footer_match = re.search(r'<footer[\s\S]*?</footer>', html_wo_head, re.DOTALL)
+    if footer_match and 'footer' not in blocks:
+        blocks['footer'] = {
+            "html": footer_match.group(0).strip(),
+            "description": "Footer section"
+        }
+        ordered_names.append('footer')
+        html_wo_head = html_wo_head.replace(footer_match.group(0), '')
+
+    html_global = re.sub(pattern, '', html_wo_head, flags=re.DOTALL).strip()
+    html_global = html_global.replace('</html>', '').strip()
+
+    return head_inner, blocks, html_global, ordered_names
+
+def extract_css_blocks(css):
+    pattern = r'/\* BEGIN (SECTION: )?(.*?) \*/(.*?)/\* END (SECTION: )?\2 \*/'
+    matches = re.finditer(pattern, css, re.DOTALL)
+    blocks = OrderedDict()
+    for match in matches:
+        name = match.group(2).strip()
+        content = match.group(3).strip()
+        if name not in blocks:
+            blocks[name] = {"css": content}
+    css_global = re.sub(pattern, '', css, flags=re.DOTALL).strip()
+    return blocks, css_global
+
+def extract_js_blocks(js):
+    pattern = r'// BEGIN (SECTION: )?(.*?)\n(.*?)// END (SECTION: )?\2'
+    matches = re.finditer(pattern, js, re.DOTALL)
+    blocks = OrderedDict()
+    for match in matches:
+        name = match.group(2).strip()
+        content = match.group(3).strip()
+        if name not in blocks:
+            blocks[name] = {"js": content}
+    js_global = re.sub(pattern, '', js, flags=re.DOTALL).strip()
+    return blocks, js_global
+def parse_custom_format(text):
+    html = re.search(r'===SITE_HTML===(.*?)===SITE_CSS===', text, re.DOTALL).group(1).strip()
+    css = re.search(r'===SITE_CSS===(.*?)===SITE_JS===', text, re.DOTALL).group(1).strip()
+    js = re.search(r'===SITE_JS===(.*)', text, re.DOTALL).group(1).strip()
+
+    head_html, html_blocks, global_html, html_order = extract_html_blocks(html)
+    css_blocks, global_css = extract_css_blocks(css)
+    js_blocks, global_js = extract_js_blocks(js)
+
+    # Pull out theme_toggle if exists
+    theme_html = html_blocks.pop("theme_toggle", {}).get("html", "")
+    theme_css = css_blocks.pop("theme_toggle", {}).get("css", "")
+    theme_js = js_blocks.pop("theme_toggle", {}).get("js", "")
+
+    # Merge theme_toggle content into global
+    merged_global_html = f"{head_html}\n{theme_html}".strip()
+    merged_global_css = f"{global_css}\n{theme_css}".strip()
+    merged_global_js = f"{global_js}\n{theme_js}".strip()
+
+    seen = set()
+    ordered_names = []
+    for name in html_order:
+        if name not in seen and name != "theme_toggle":
+            ordered_names.append(name)
+            seen.add(name)
+    for d in (css_blocks, js_blocks):
+        for name in d:
+            if name not in seen and name != "theme_toggle":
+                ordered_names.append(name)
+                seen.add(name)
+
+    code_bloks = []
+    for name in ordered_names:
+        if name == "head":
+            continue
+        code_bloks.append({
+            "name": name,
+            "html": html_blocks.get(name, {}).get("html", ""),
+            "css": css_blocks.get(name, {}).get("css", ""),
+            "js": js_blocks.get(name, {}).get("js", ""),
+            "feedback": html_blocks.get(name, {}).get("description", "")
+        })
+
+    return {
+        "global": {
+            "name": "global",
+            "html": merged_global_html,
+            "css": merged_global_css,
+            "js": merged_global_js
+        },
+        "code_bloks": code_bloks
+    }
+

@@ -493,21 +493,20 @@ def generate_personal_website_bloks(request):
 
     # Generate the personal website using Bloks
     resume_yaml = yaml.dump(resume_data)
-    preferences = yaml.dump(preferences)
     ai_service_url = os.environ.get("AI_SERVICE_URL") + "create_resume_website_bloks/invoke"
     body = {"input": {"resume_yaml": resume_yaml, "preferences": preferences}}
 
     try:
         ai_response = requests.post(ai_service_url, json=body)
         ai_response.raise_for_status()
-        generated_website_bloks_yaml = ai_response.json().get("output")
+        generated_website_bloks = ai_response.json().get("output")
 
         # Save the generated website YAML
         unique_id = str(uuid.uuid4())
         GeneratedWebsite.objects.create(
             resume=resume,
             unique_id=unique_id,
-            yaml_content=generated_website_bloks_yaml,
+            json_content=generated_website_bloks,
         )
 
         # Return the unique id
@@ -535,20 +534,26 @@ def get_website_yaml_json(request, resume_id):
         # Adjust lookup field if necessary (e.g., pk=resume_id)
         generated_website = get_object_or_404(GeneratedWebsite, unique_id=resume_id)
 
-        yaml_content = generated_website.yaml_content
-
-        # Parse the YAML content
-        try:
-            parsed_yaml = yaml.safe_load(yaml_content)
-        except yaml.YAMLError as e:
-            # Handle YAML parsing errors
-            return Response(
-                {"error": f"Error parsing YAML content: {e}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+        data = None
+        if not generated_website.json_content:
+            # If json_content is empty, use yaml_content
+            yaml_content = generated_website.yaml_content
+            # Parse the YAML content
+            try:
+                data = yaml.safe_load(yaml_content)
+            except yaml.YAMLError as e:
+                # Handle YAML parsing errors
+                return Response(
+                    {"error": f"Error parsing YAML content: {e}"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )        
+        else:
+            # If json_content is not empty, use it
+            data = generated_website.json_content
+            
 
         # Return the parsed YAML (Python dict/list) as JSON
-        return Response(parsed_yaml, status=status.HTTP_200_OK)
+        return Response(data, status=status.HTTP_200_OK)
 
     except Exception as e:
         # Catch any other unexpected errors (e.g., database issues)
@@ -566,7 +571,21 @@ def serve_personal_website_yaml(request, unique_id):
     """
     try:
         generated_website = get_object_or_404(GeneratedWebsite, unique_id=unique_id)
-        json_data = yaml.safe_load(generated_website.yaml_content)
+        if not generated_website.json_content:
+            # If json_content is empty, use yaml_content
+            yaml_content = generated_website.yaml_content
+            # Parse the YAML content
+            try:
+                json_data = yaml.safe_load(yaml_content)
+            except yaml.YAMLError as e:
+                # Handle YAML parsing errors
+                return Response(
+                    {"error": f"Error parsing YAML content: {e}"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+        else:
+            # If json_content is not empty, use it
+            json_data = generated_website.json_content
         # Generate the HTML from the YAML data
         full_html = generate_html_from_yaml(json_data)
         return HttpResponse(full_html, content_type="text/html")
@@ -575,18 +594,6 @@ def serve_personal_website_yaml(request, unique_id):
 
         
 
-
-@api_view(["GET"])
-def serve_personal_website(request, unique_id):
-    """
-    API endpoint to serve a pre-generated personal website.
-    """
-    try:
-        generated_website = get_object_or_404(GeneratedWebsite, unique_id=unique_id)
-        return HttpResponse(generated_website.html_content, content_type="text/html")
-    except Exception as e:
-        return Response({"error": f"Website not found: {e}"}, status=status.HTTP_404_NOT_FOUND)
-    
 ############################## Update yaml website content ##############################
 @api_view(["PUT"])
 def update_website_yaml(request, unique_id):
@@ -623,6 +630,7 @@ def edit_website_block(request):
     artifacts = data.get('artifacts', [])
     
     if not all([resume_id, current_name, prompt]):
+            print("Missing required parameters:", resume_id, current_name, prompt)
             return JsonResponse({'error': 'Missing required parameters.'}, status=400)
         
     # Call the AI service
