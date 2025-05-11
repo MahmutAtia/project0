@@ -1,61 +1,20 @@
 
 from langchain_core.prompts import PromptTemplate
 
-create_resume_website_template = """ You are a professional designer and frontend developer tasked with creating a structured YAML file which contains the html,css and js code for a personal portfolio website based on a resume. . The website should be enhanced for professional appeal and include a compelling "about" section. 
-
-yaml output format:
-```yaml
-html: "html code here"
-css: "css code here"
-js: "js code here"
-```
-
-the resume information is provided below:
-YAML Template:
-```yaml
-{resume_yaml}
-```
-Instructions:
-- Be creative and innovative in your design.
-- Use modern design principles and best practices.
-- Ensure the website is responsive and works well on different devices.
-- Use fonts and colors that are suitable for the candidate's profession.
-- Use high-quality images and graphics to enhance the design.
-- Use iconography and illustrations to support the content.
-- Use icons to enhance the visual appeal.
-- Ensure the website is optimized for performance.
-- Use valid HTML, CSS, and JS code.
-- Make it easy to navigate and user-friendly.
-- Ensure the website is visually appealing.
-- use colors and fonts that are suitable for the candidate's profession.
-- use animated transitions and effects to enhance the user experience.
-- use animations and artistic elements to make the website more engaging.
-- make it realy visually appealing and creative.
-- Use modern design trends and techniques to create a unique and memorable website.
-- You may not use all the information in the resume yaml file, but use the most relevant and important information to create a visually appealing and creative website.
-- You may summarize or omit some information to make it more visually appealing and creative.
-- Ensure that all card and visual elements have a consistent design and style. Also add effects, animate and hover effects to the cards and visual elements.
-
-PAY ATTENTION, Quote all strings in the yaml output with double quotes. Use | for multiline strings and escape ':' s in the yaml output.
-PAY ATTENTION to all yaml parsing rules and indentation.
-Do not output any yaml comments in the output.
-
-
-Client Preferences:
-{preferences}
-
-personal website yaml output"""
+create_resume_website_template = """ """
 
 create_resume_website_prompt = PromptTemplate.from_template(create_resume_website_template)
-create_resume_website_bloks_template = """ You are a website generation AI.
-Based on the user's resume and preferences, generate the structure of a personal website with valid output format.
 
-the resume information is provided below:
+
+create_resume_website_bloks_template = """You are a professional designer and frontend developer tasked with creating a personal portfolio website for a client based on their resume and preferences with a valid output format required.
+
+the resume information is provided below you may summarize or omit some information if it verbose, to make it more visually appealing and creative:
 {resume_yaml}
 
-the user preferences are provided below:
+the client preferences are provided below:
+```
 {preferences}
-
+```
 
 **REQUIRED Output Format Example:**
 ```
@@ -70,12 +29,12 @@ the user preferences are provided below:
 <!-- here theme_toggle  -->
 <!-- END theme_toggle  -->
 
-<!-- BEGIN SECTION: header -->
+<!-- BEGIN SECTION: header_and_navigation -->
 <!-- DESCRIPTION: This handles the main header with logo and navigation -->
-<section id="header">
+<section id="header_and_navigation">
   <!-- here header content -->
 </section>
-<!-- END SECTION: header -->
+<!-- END SECTION: header_and_navigation -->
 
 <!-- BEGIN SECTION: hero -->
 <!-- DESCRIPTION: ... -->
@@ -119,17 +78,27 @@ the user preferences are provided below:
 // Hero scripts
 // END SECTION: hero
 ```
-I also need to follow a very specific set of negative constraints regarding the output format:
+
+I also need to follow a very specific set of constraints regarding the output format:
 
 No explanatory text, apologies, or extra characters before or after the output format.
 Use the same format and comments as the example.
 No other types of comments or explanations.
-No examples in code.
+No examples in code or extra verbose comments.
 No unfinished code; all functionalities must be complete and working.
-Add favicons, icons, 3d visuals, graphics, and illustrations to enhance the design.
-No empty placeholders or incomplete sections.
+No empty placeholders or incomplete sections. Do not add any file,img paths because there is not any other files, just the html, css and js code.
+Use icons, 3d visuals, graphics, and illustrations to enhance the design. Use css, js, and html to create the visuals.
+Also you may use anmiations and visuals from Anime.js,GSAP as it is widely used in personal websites.
+For icons use Font Awesome icons with defferent styles and use emogis as well.
+For favicons use emoji favicons.
+You may use SVG in the code, but do not be verbose with it.
+create also your own visuals with html, css and js.
 No contact forms which need backend integration. This is a static website.
 You may use local storage or session storage for storing user preferences or data, but no backend integration.
+Make sure that the mouse cursor is visible and not hidden.
+Make sure that the website is responsive and works on all devices.
+Make sure and all texts are visable and readable in both light and dark modes.
+Make sure that the layout is clean, consistent, and visually appealing. make sure that is not cluttered, ovarlaping, messy, unreadable or confusing.
 Do not initialize any section related scripts in global js. Every section must be working fine if i parsed the output and add it to iframe which has global js, css and html and one of any of section js, css and html. This is very important.
 
 
@@ -156,6 +125,10 @@ css: |
 {current_css}
 js: |
 {current_js}
+```
+Add this field to the yaml output without any comments:
+```yaml
+feedback_message: "here is the feedback message for the user to iteract with him." # Consider that the user will not see the code but will see the changes applied in preview"
 ```
 here also some artifacts that user added you can use them to edit the yaml:
 {artifacts}
