@@ -639,11 +639,13 @@ def edit_website_block(request):
             html_code = generated_block_data.get("html")
             css_code = generated_block_data.get("css")
             js_code = generated_block_data.get("js")
+            feedback_message = generated_block_data.get("feedback_message")
 
             return JsonResponse({
                 'html': html_code,
                 'css': css_code,
-                'js': js_code
+                'js': js_code,
+                'feedback_message': feedback_message
             }, status=200)
         except (json.JSONDecodeError, yaml.YAMLError) as e:
             return JsonResponse({"error": f"Invalid data received from AI service: {e}"}, status=500)
