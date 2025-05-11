@@ -382,3 +382,102 @@ def parse_custom_format(text):
         "code_bloks": code_bloks
     }
 
+
+
+
+
+def format_data_to_ordered_text(data, current_key_context, order_map, indent_level=0):
+    """
+    Formats a Python dictionary or list into ordered plain text lines.
+    - data: The dictionary or list to format.
+    - current_key_context: A string key to look up the order in order_map.
+                           For resume_data, this will be "resume".
+                           For nested dicts, it will be the key of that dict (e.g., "personal_information").
+    - order_map: The dictionary defining the order of keys.
+    - indent_level: Current indentation level for pretty printing.
+    """
+    output_lines = []
+    indent = "  " * indent_level
+    
+    # Get the list of ordered keys specifically for the current_key_context.
+    # If current_key_context is not in order_map (e.g. "personal_information" is not a key in the simplified ORDER_MAP),
+    # keys_in_defined_order will be an empty list.
+    keys_in_defined_order = order_map.get(current_key_context, [])
+
+    if isinstance(data, dict):
+        processed_keys = set()
+
+        # 1. Process keys that are in the defined order for the current_key_context
+        if keys_in_defined_order: # This will only be true for the "resume" context with the simplified map
+            for key in keys_in_defined_order:
+                if key in data:
+                    value = data[key]
+                    if isinstance(value, dict):
+                        output_lines.append(f"{indent}{key}:")
+                        # The 'key' (e.g., "personal_information") becomes the new context.
+                        # Since "personal_information" is not a key in ORDER_MAP, its fields will be unordered.
+                        output_lines.extend(format_data_to_ordered_text(value, key, order_map, indent_level + 1))
+                    elif isinstance(value, list):
+                        output_lines.append(f"{indent}{key}:")
+                        # The 'key' of the list (e.g., "experience") is the context for its items.
+                        # Since "experience" is not a key in ORDER_MAP defining item structure,
+                        # fields of dict items in this list will be unordered.
+                        for i, item in enumerate(value):
+                            # output_lines.append(f"{indent}  - Item {i+1}:") # Optional list item marker
+                            if isinstance(item, dict):
+                                output_lines.extend(format_data_to_ordered_text(item, key, order_map, indent_level + 1))
+                            elif isinstance(item, list):
+                                output_lines.append(f"{indent}  - Sub-list Item {i+1}:")
+                                for sub_idx, sub_item in enumerate(item):
+                                    output_lines.append(f"{indent}    - {sub_item}")
+                            else:
+                                output_lines.append(f"{indent}  - {item}")
+                    else: # Simple value
+                        output_lines.append(f"{indent}{key}: {value}")
+                    processed_keys.add(key)
+
+        # 2. Process remaining keys (i.e., all keys if no order defined for current_key_context,
+        #    or keys not listed in keys_in_defined_order if an order was partially defined)
+        for key in data: # Iterate through all keys in the current dictionary
+            if key not in processed_keys: # If not already processed by the ordered section
+                value = data[key]
+                if isinstance(value, dict):
+                    output_lines.append(f"{indent}{key}:")
+                    # Pass 'key' as context. If 'key' isn't in ORDER_MAP, its children are unordered.
+                    output_lines.extend(format_data_to_ordered_text(value, key, order_map, indent_level + 1))
+                elif isinstance(value, list):
+                    output_lines.append(f"{indent}{key}:")
+                    for i, item in enumerate(value):
+                        # output_lines.append(f"{indent}  - Item {i+1}:") # Optional
+                        if isinstance(item, dict):
+                            # Pass 'key' (list's key) as context for items.
+                            output_lines.extend(format_data_to_ordered_text(item, key, order_map, indent_level + 1))
+                        elif isinstance(item, list):
+                            output_lines.append(f"{indent}  - Sub-list Item {i+1}:")
+                            for sub_idx, sub_item in enumerate(item):
+                                output_lines.append(f"{indent}    - {sub_item}")
+                        else:
+                            output_lines.append(f"{indent}  - {item}")
+                else: # Simple value
+                    output_lines.append(f"{indent}{key}: {value}")
+                    
+    elif isinstance(data, list): # If the data itself is a list (e.g. a list of strings, or list of dicts passed directly)
+        # current_key_context would be the key that this list was associated with in its parent dict,
+        # or a generic context if this list is the top-level data.
+        for i, item in enumerate(data):
+            # output_lines.append(f"{indent}- Item {i+1}:") # Optional
+            if isinstance(item, dict):
+                # Use current_key_context to check if there's an order defined for items of this list type.
+                # With the simplified map, this usually means fields within 'item' will be unordered.
+                output_lines.extend(format_data_to_ordered_text(item, current_key_context, order_map, indent_level + (0 if indent_level == 0 else 1)))
+            elif isinstance(item, list):
+                output_lines.append(f"{indent}- Sub-list Item {i+1}:")
+                for sub_idx, sub_item in enumerate(item):
+                    output_lines.append(f"{indent}  - {sub_item}")
+            else:
+                output_lines.append(f"{indent}- {item}")
+    else: # Simple data type (string, number, boolean)
+        output_lines.append(f"{indent}{data}")
+        
+    return output_lines
+

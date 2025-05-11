@@ -89,6 +89,7 @@ the user preferences are provided below:
 ===SITE_CSS===
 /* GLOBAL */
 /* Here global styles (variables, base styles, themes)*/
+/* DO NOT ADD ANY SECTION SPECIFIC STYLES HERE. EVERY SECTION MUST HAVE ITS OWN STYLES ISOLATED FROM OTHER SECTIONS. BUT YOU CAN ADD GLOBAL STYLES HERE  WHICH WILL BE USED ACROSS ALL SECTIONS */
 
 /* BEGIN theme_toggle */
 /* Theme toggle styles */
@@ -104,6 +105,7 @@ the user preferences are provided below:
 ===SITE_JS===
 // GLOBAL
 // Here global scripts
+// DO NOT INITIALIZE ANY SECTION RELATED SCRIPTS HERE. EVERY SECTION MUST HAVE ITS OWN SCRIPTS ISOLATED FROM OTHER SECTIONS.
 
 // BEGIN theme_toggle
 // Theme toggle scripts
@@ -128,6 +130,7 @@ Add favicons, icons, 3d visuals, graphics, and illustrations to enhance the desi
 No empty placeholders or incomplete sections.
 No contact forms which need backend integration. This is a static website.
 You may use local storage or session storage for storing user preferences or data, but no backend integration.
+Do not initialize any section related scripts in global js. Every section must be working fine if i parsed the output and add it to iframe which has global js, css and html and one of any of section js, css and html. This is very important.
 
 
 personal portfolio website yaml output"""

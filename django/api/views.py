@@ -2,7 +2,7 @@ from rest_framework import generics, permissions, status
 from .models import Resume, GeneratedWebsite,GeneratedDocument
 from .serializers import ResumeSerializer
 from django.http import Http404
-from .utils import cleanup_old_sessions, extract_text_from_file,generate_pdf_from_resume_data,generate_html_from_yaml,parse_custom_format
+from .utils import cleanup_old_sessions, extract_text_from_file,generate_pdf_from_resume_data,generate_html_from_yaml,parse_custom_format, format_data_to_ordered_text
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 import requests # For calling the AI service
@@ -24,6 +24,19 @@ from .tasks import generate_resume_data_task # Import the Celery task
 # clerey
 from celery import states # Import states
 from celery.result import AsyncResult 
+
+ORDER_MAP = {
+    "resume": [
+        "personal_information", "summary", "objective", "experience", "education",
+        "skills", "projects", "awards_and_recognition", "Volunteer_and_social_activities",
+        "certifications", "languages", "interests", "references", "publications",
+        "courses", "conferences", "speaking_engagements", "patents",
+        "professional_memberships", "military_service", "teaching_experience",
+        "research_experience"
+    ]
+    # No order defined for keys within "personal_information", "experience" items, etc.
+    # They will be printed in their natural dictionary order.
+}
 
 
 def file_iterator(file_handle, chunk_size=8192):
@@ -180,7 +193,6 @@ def generate_resume_section(request):
         try:
             generated_section_yaml = response.json().get("output")
             generated_section_data = yaml.safe_load(generated_section_yaml)
-            print
             return Response(generated_section_data)
 
         except (json.JSONDecodeError, yaml.YAMLError) as e:
@@ -492,7 +504,7 @@ def generate_personal_website_bloks(request):
         )
 
     # Generate the personal website using Bloks
-    resume_yaml = yaml.dump(resume_data)
+    resume_yaml =  "\n".join(format_data_to_ordered_text(resume_data, "resume",ORDER_MAP))
     ai_service_url = os.environ.get("AI_SERVICE_URL") + "create_resume_website_bloks/invoke"
     body = {"input": {"resume_yaml": resume_yaml, "preferences": preferences}}
 
@@ -581,7 +593,7 @@ def update_website_yaml(request, unique_id):
 
        
         # Update the YAML content in the database
-        generated_website.yaml_content = yaml.dump(json_content)
+        generated_website.json_content = json_content
         generated_website.save()
 
         return Response({"message": "YAML content updated successfully"}, status=status.HTTP_200_OK)
