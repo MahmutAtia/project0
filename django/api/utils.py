@@ -173,7 +173,10 @@ def parse_custom_format(site_text):
 
     # Extract all sections in HTML with ID and DESCRIPTION
     html_sections = re.findall(
-        r"<!--\s*BEGIN SECTION:\s*([\w_]+)\s*-->\s*<!--\s*DESCRIPTION:\s*(.*?)\s*-->\s*<section[^>]*?id=[\"']\1[\"'][^>]*?>(.*?)</section>\s*<!--\s*END SECTION:\s*\1\s*-->",
+        r"<!--\s*BEGIN SECTION:\s*([\w_]+)\s*-->\s*"
+        r"<!--\s*DESCRIPTION:\s*(.*?)\s*-->\s*"
+        r"(.*?)"
+        r"<!--\s*END SECTION:\s*\1\s*-->",
         html, re.DOTALL
     )
 
