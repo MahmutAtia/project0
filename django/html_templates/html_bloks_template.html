@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    {{ data.global.html | safe }}
+    {{ data.head | safe }}
     <style>
         /* Global + Section Styles */
         {{ data.global.css | safe }}
@@ -11,12 +11,12 @@
     </style>
 </head>
 <body>
+    {{ data.global.html | safe }}
     <main>
         {% for block in data.code_bloks %}
             {{ block.html | safe }}
         {% endfor %}
     </main>
-
     <script>
         /* Global + Section Scripts */
         {{ data.global.js | safe }}
