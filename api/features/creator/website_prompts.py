@@ -100,13 +100,13 @@ The website must be fully responsive and display correctly on all devices.
 All text must be clearly visible and readable in both light and dark modes.
 The layout must be clean, consistent, and visually appealing—never cluttered, overlapping, messy, unreadable, or confusing.
 All content must be visible and the layout must not be broken.
-Implement single-page JavaScript initialization: Use a single `DOMContentLoaded` listener for the entire page. Define global and section-specific initialization logic within the respective JS blocks. Ensure each block's JavaScript defines its relevant initialization function(s) (e.g., `initHero`, `initAbout`) and makes them accessible in the global `window` scope (e.g., `window.initSectionName = function() {{ ... }};`). The JavaScript generated for the `BEGIN global` block should define common global initialization functions (e.g., `initTheme`, `initGlobalFeatures`) and make them accessible in the global `window` scope. Inside the single `DOMContentLoaded` listener, conditionally call all potential global and section initialization functions by checking if they exist in the global `window` scope (e.g., `if (typeof window.initFunctionName === 'function')`).
+**Ensure JavaScript code is correct and functional:** Verify all functions, especially theme toggle function, are defined correctly and work as intended.
 All JavaScript must work and all sections must function correctly.
 Do not initialize section-specific scripts in global JS.
 Avoid global event listeners or variables for section scripts. Each section’s JS, CSS, and HTML must be fully self-contained and work independently if loaded in isolation (e.g., in an iframe). Each section must not depend on external scripts or styles.
 Do not output anything except the required format.
 
-personal portfolio website yaml output"""
+personal portfolio website output"""
 
 create_resume_website_bloks_prompt = PromptTemplate.from_template(create_resume_website_bloks_template)
 
