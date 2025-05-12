@@ -18,16 +18,18 @@ the client preferences are provided below:
 
 **REQUIRED Output Format Example:**
 ```
-===SITE_HTML===
-<!-- BEGIN head -->
+===HTML===
 <head>
-  <!-- here fonts meta, title, etc. also add dark and light mode toggle -->
-</head>
+<!-- BEGIN head -->
+  <!-- here fonts meta, title, etc. -->
 <!-- END head -->
+</head>
+
 <body>
-<!-- BEGIN theme_toggle  -->
-<!-- here theme_toggle  -->
-<!-- END theme_toggle  -->
+<!-- BEGIN global -->
+<!-- DESCRIPTION: This handles global settings, dark mode, light mode, interactive background, overlay, etc. -->
+<!-- here global html code  dark and light mode toggle buttons, interactive background,interactive background animations,custom cursor, etc. these should be between BEGIN global and END global -->
+<!-- END global -->
 
 <!-- BEGIN SECTION: header_and_navigation -->
 <!-- DESCRIPTION: This handles the main header with logo and navigation -->
@@ -43,64 +45,62 @@ the client preferences are provided below:
 </section>
 <!-- END SECTION: hero -->
 
-<!-- Rest of the sections -->
+<!-- Rest of the sections till footer section in the same format -->
 </body>
-===SITE_CSS===
-/* GLOBAL */
-/* Here global styles (variables, base styles, themes)*/
+
+===CSS===
+/* BEGIN global */
+/* Here global styles (variables, base styles, themes custom cursor, interactive background,styles uesd in multiple sections, etc.) like global styles, themes, colors, fonts, etc. */
 /* DO NOT ADD ANY SECTION SPECIFIC STYLES HERE. EVERY SECTION MUST HAVE ITS OWN STYLES ISOLATED FROM OTHER SECTIONS. BUT YOU CAN ADD GLOBAL STYLES HERE  WHICH WILL BE USED ACROSS ALL SECTIONS */
+/* Add the styles which are used in multiple sections here */
+/* END global */
 
-/* BEGIN theme_toggle */
-/* Theme toggle styles */
-/* END theme_toggle */
-
-/* BEGIN SECTION: header \*/
+/* BEGIN SECTION: header_and_navigation */
 /* Header styles */
-/* END SECTION: header \*/
+/* END SECTION: header_and_navigation */
 
 /* BEGIN SECTION: hero */
 /* Hero styles */
-/* END SECTION: hero \*/
-===SITE_JS===
-// GLOBAL
-// Here global scripts
-// DO NOT INITIALIZE ANY SECTION RELATED SCRIPTS HERE. EVERY SECTION MUST HAVE ITS OWN SCRIPTS ISOLATED FROM OTHER SECTIONS.
+/* END SECTION: hero */
 
-// BEGIN theme_toggle
-// Theme toggle scripts
-// END theme_toggle
+/* here rest of the sections styles till footer section in the same format */
+===JS===
+// BEGIN global
+// Here global scripts like libraries, frameworks, global animations, global effects, dark mode, light mode etc. these should be between BEGIN global and END global. DO NOT INITIALIZE ANY SECTION RELATED SCRIPTS HERE. EVERY SECTION MUST HAVE ITS OWN SCRIPTS ISOLATED FROM OTHER SECTIONS.
+// END global
 
-// BEGIN SECTION: header
+// BEGIN SECTION: header_and_navigation
 // Header scripts
-// END SECTION: header
+// END SECTION: header_and_navigation
 
 // BEGIN SECTION: hero
 // Hero scripts
 // END SECTION: hero
+
+// here rest of the sections scripts till footer section in the same format
 ```
 
-I also need to follow a very specific set of constraints regarding the output format:
+STRICT OUTPUT INSTRUCTIONS
 
-No explanatory text, apologies, or extra characters before or after the output format.
-Use the same format and comments as the example.
-No other types of comments or explanations.
-No examples in code or extra verbose comments.
-No unfinished code; all functionalities must be complete and working.
-No empty placeholders or incomplete sections. Do not add any file,img paths because there is not any other files, just the html, css and js code.
-Use icons, 3d visuals, graphics, and illustrations to enhance the design. Use css, js, and html to create the visuals.
-Also you may use anmiations and visuals from Anime.js,GSAP as it is widely used in personal websites.
-For icons use Font Awesome icons with defferent styles and use emogis as well.
-For favicons use emoji favicons.
-You may use SVG in the code, but do not be verbose with it.
-create also your own visuals with html, css and js.
-No contact forms which need backend integration. This is a static website.
-You may use local storage or session storage for storing user preferences or data, but no backend integration.
-Make sure that the mouse cursor is visible and not hidden.
-Make sure that the website is responsive and works on all devices.
-Make sure and all texts are visable and readable in both light and dark modes.
-Make sure that the layout is clean, consistent, and visually appealing. make sure that is not cluttered, ovarlaping, messy, unreadable or confusing.
-Do not initialize any section related scripts in global js. Every section must be working fine if i parsed the output and add it to iframe which has global js, css and html and one of any of section js, css and html. This is very important.
-
+Output must match the provided format and comments exactly.
+===HTML===, ===CSS===, and ===JS=== are unique identifiers and should not be changed or adding multiple times. And must be in the same order.
+No explanations, apologies, or extra text before or after the output.
+Do not include any code examples, extra comments, or verbose explanations.
+All code must be complete and functional—no placeholders, unfinished, or empty sections.
+Do not use file or image paths; all visuals must be created with HTML, CSS, and JS only.
+Use emoji favicons.
+Enhance the design with icons, 3D visuals, graphics, and illustrations using only HTML, CSS, and JS.
+Create original visuals; do not reference external files.
+Do not include contact forms or any feature requiring backend integration.
+You may use localStorage or sessionStorage for user preferences, but no backend calls.
+The mouse cursor must always be visible.
+The website must be fully responsive and display correctly on all devices.
+All text must be clearly visible and readable in both light and dark modes.
+The layout must be clean, consistent, and visually appealing—never cluttered, overlapping, messy, unreadable, or confusing.
+All content must be visible and the layout must not be broken. All JavaScript must work and all sections must function correctly.
+Do not initialize section-specific scripts in global JS. Each section’s JS, CSS, and HTML must be fully self-contained and work independently if loaded in isolation (e.g., in an iframe).
+Avoid global event listeners or variables for section scripts. Each section must not depend on external scripts or styles.
+Do not output anything except the required format.
 
 personal portfolio website yaml output"""
 
