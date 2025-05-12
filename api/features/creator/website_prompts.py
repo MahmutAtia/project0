@@ -21,14 +21,14 @@ the client preferences are provided below:
 ===HTML===
 <head>
 <!-- BEGIN head -->
-  <!-- here fonts meta, title, etc. -->
+  <!-- here meta, title, favicon, etc. these should be between BEGIN head and END head -->
 <!-- END head -->
 </head>
 
 <body>
 <!-- BEGIN global -->
 <!-- DESCRIPTION: This handles global settings, dark mode, light mode, interactive background, overlay, etc. -->
-<!-- here global html code  dark and light mode toggle buttons, interactive background,interactive background animations,custom cursor, etc. these should be between BEGIN global and END global -->
+<!-- here in global JUST GLOBAL HTML CODE -->
 <!-- END global -->
 
 <!-- BEGIN SECTION: header_and_navigation -->
@@ -45,7 +45,7 @@ the client preferences are provided below:
 </section>
 <!-- END SECTION: hero -->
 
-<!-- Rest of the sections till footer section in the same format -->
+<!-- Rest of the sections html till footer section in the same format -->
 </body>
 
 ===CSS===
@@ -82,6 +82,8 @@ the client preferences are provided below:
 
 STRICT OUTPUT INSTRUCTIONS
 
+These instructions are for generating the complete personal portfolio website in a single HTML file. Please note that individual sections of this website are intended to be loaded and previewed in isolation within an editor environment (e.g., in an iframe). Therefore, the generated HTML, CSS, and JavaScript for each section must be modular and functional both when combined in the final single-page output and when loaded independently alongside global code within an iframe.
+
 Output must match the provided format and comments exactly.
 ===HTML===, ===CSS===, and ===JS=== are unique identifiers and should not be changed or adding multiple times. And must be in the same order.
 No explanations, apologies, or extra text before or after the output.
@@ -97,9 +99,11 @@ The mouse cursor must always be visible.
 The website must be fully responsive and display correctly on all devices.
 All text must be clearly visible and readable in both light and dark modes.
 The layout must be clean, consistent, and visually appealing—never cluttered, overlapping, messy, unreadable, or confusing.
-All content must be visible and the layout must not be broken. All JavaScript must work and all sections must function correctly.
-Do not initialize section-specific scripts in global JS. Each section’s JS, CSS, and HTML must be fully self-contained and work independently if loaded in isolation (e.g., in an iframe).
-Avoid global event listeners or variables for section scripts. Each section must not depend on external scripts or styles.
+All content must be visible and the layout must not be broken.
+Implement single-page JavaScript initialization: Use a single `DOMContentLoaded` listener for the entire page. Define global and section-specific initialization logic within the respective JS blocks. Ensure each block's JavaScript defines its relevant initialization function(s) (e.g., `initHero`, `initAbout`) and makes them accessible in the global `window` scope (e.g., `window.initSectionName = function() {{ ... }};`). The JavaScript generated for the `BEGIN global` block should define common global initialization functions (e.g., `initTheme`, `initGlobalFeatures`) and make them accessible in the global `window` scope. Inside the single `DOMContentLoaded` listener, conditionally call all potential global and section initialization functions by checking if they exist in the global `window` scope (e.g., `if (typeof window.initFunctionName === 'function')`).
+All JavaScript must work and all sections must function correctly.
+Do not initialize section-specific scripts in global JS.
+Avoid global event listeners or variables for section scripts. Each section’s JS, CSS, and HTML must be fully self-contained and work independently if loaded in isolation (e.g., in an iframe). Each section must not depend on external scripts or styles.
 Do not output anything except the required format.
 
 personal portfolio website yaml output"""
