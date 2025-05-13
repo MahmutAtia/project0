@@ -81,8 +81,7 @@ the client preferences are provided below:
 ```
 
 STRICT OUTPUT INSTRUCTIONS
-
-These instructions are for generating the complete personal portfolio website in a single HTML file. Please note that individual sections of this website are intended to be loaded and previewed in isolation within an editor environment (e.g., in an iframe). Therefore, the generated HTML, CSS, and JavaScript for each section must be modular and functional both when combined in the final single-page output and when loaded independently alongside global code within an iframe.
+Generate code for a complete single-page website that functions correctly when all sections are combined with global, and also ensures global code plus any single section's code functions correctly when loaded in isolation (for iframe code editor preview).
 
 Output must match the provided format and comments exactly.
 ===HTML===, ===CSS===, and ===JS=== are unique identifiers and should not be changed or adding multiple times. And must be in the same order.
@@ -93,14 +92,15 @@ Do not use file or image paths; all visuals must be created with HTML, CSS, and 
 Use emoji favicons.
 Enhance the design with icons, 3D visuals, graphics, and illustrations using only HTML, CSS, and JS.
 Create original visuals; do not reference external files.
-Do not include contact forms or any feature requiring backend integration.
+Do not include contact forms or any feature requiring backend integration implement "get in touch" section in creative way.
 You may use localStorage or sessionStorage for user preferences, but no backend calls.
-The mouse cursor must always be visible.
+The mouse cursor must always be visible, ensure it is visible in dark mode and light mode.
 The website must be fully responsive and display correctly on all devices.
 All text must be clearly visible and readable in both light and dark modes.
 The layout must be clean, consistent, and visually appealing—never cluttered, overlapping, messy, unreadable, or confusing.
 All content must be visible and the layout must not be broken.
 **Ensure JavaScript code is correct and functional:** Verify all functions, especially theme toggle function, are defined correctly and work as intended.
+Add a loading overlay. Include a fixed, full-viewport HTML/CSS overlay with a loading indicator, styled to match the site's design. It should be visible on load and fade out via JS on `window.onload`. 
 All JavaScript must work and all sections must function correctly.
 Do not initialize section-specific scripts in global JS.
 Avoid global event listeners or variables for section scripts. Each section’s JS, CSS, and HTML must be fully self-contained and work independently if loaded in isolation (e.g., in an iframe). Each section must not depend on external scripts or styles.
