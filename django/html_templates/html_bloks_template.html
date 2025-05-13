@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
     {{ data.head | safe }}
     <style>
         /* Global + Section Styles */
@@ -12,16 +13,28 @@
 </head>
 <body>
     {{ data.global.html | safe }}
-    <main>
-        {% for block in data.code_bloks %}
-            {{ block.html | safe }}
-        {% endfor %}
-    </main>
+    {% for block in data.code_bloks %}
+        {{ block.html | safe }}
+    {% endfor %}
     <script>
-        /* Global + Section Scripts */
-        {{ data.global.js | safe }}
+        // Global JavaScript
+        (function () {
+            try {
+                {{ data.global.js | safe }}
+            } catch (err) {
+                console.error('Error in global JavaScript:', err);
+            }
+        })();
+
+        // Section JavaScript
         {% for block in data.code_bloks %}
-            {{ block.js | safe }}
+        (function () {
+            try {
+                {{ block.js | safe }}
+            } catch (err) {
+                console.error('Error in section "{{ block.name }}":', err);
+            }
+        })();
         {% endfor %}
     </script>
 </body>
