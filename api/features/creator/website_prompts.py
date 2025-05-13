@@ -95,7 +95,7 @@ Create original visuals; do not reference external files.
 Do not include contact forms or any feature requiring backend integration implement "get in touch" section in creative way.
 You may use localStorage or sessionStorage for user preferences, but no backend calls.
 The mouse cursor must always be visible, ensure it is visible in dark mode and light mode.
-The website must be fully responsive and display correctly on all devices.
+The website must be fully responsive and display correctly on all devices, including mobile-optimized UI patterns like hamburger menus, accordions, tabs, navigation drawers, etc.
 All text must be clearly visible and readable in both light and dark modes.
 The layout must be clean, consistent, and visually appealing—never cluttered, overlapping, messy, unreadable, or confusing.
 All content must be visible and the layout must not be broken.
