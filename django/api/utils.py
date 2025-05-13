@@ -143,10 +143,10 @@ def parse_custom_format(site_text):
     css = css_match.group(1) if css_match else ""
     js = js_match.group(1) if js_match else ""
 
-    # Extract <head> content
-    head_match = re.search(r"<!--\s*BEGIN head\s*-->(.*?)<!--\s*END head\s*-->", html, re.DOTALL)
+    # Extract everything between <head> and </head>
+    head_match = re.search(r"<head>(.*?)</head>", html, re.DOTALL)
     head_content = head_match.group(1).strip() if head_match else ""
-
+    
     # Extract global HTML + DESCRIPTION
     global_html_match = re.search(
         r"<!--\s*BEGIN global\s*-->\s*<!--\s*DESCRIPTION:\s*(.*?)\s*-->\s*(.*?)<!--\s*END global\s*-->",
