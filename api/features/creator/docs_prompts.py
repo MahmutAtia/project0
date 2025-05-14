@@ -65,7 +65,7 @@ Information about the job and the company:
 
 Yaml Output:"""
 
-cover_letter_prompt =  PromptTemplate.from_template( cover_letter_template)
+cover_letter_prompt = PromptTemplate.from_template(cover_letter_template)
 
 recommendation_letter_template = """You are a Human Resources professional tasked with creating a recommendation letter for a candidate.
 The recommendation letter should be tailored to the candidate and information provided.
@@ -132,7 +132,9 @@ Information about candidate:
 Other information:
 {other_info}
 Yaml Output:"""
-recommendation_letter_prompt = PromptTemplate.from_template(recommendation_letter_template)
+recommendation_letter_prompt = PromptTemplate.from_template(
+    recommendation_letter_template
+)
 
 
 motivation_letter_template = """You are an academic advisor or career counselor tasked with creating a motivation letter.

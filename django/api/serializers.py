@@ -1,10 +1,8 @@
-
-
 from rest_framework import serializers
 from django.contrib.auth import get_user_model  # Use get_user_model for flexibility
 from .models import Resume
 
-User = get_user_model() # this is important
+User = get_user_model()  # this is important
 
 # class ResumeSerializer(serializers.ModelSerializer):
 #     class Meta:
@@ -36,11 +34,14 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+
 class ResumeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Resume
-        fields = '__all__'
-        extra_kwargs = {'user': {'required': False}}  # Make user field optional in requests
+        fields = "__all__"
+        extra_kwargs = {
+            "user": {"required": False}
+        }  # Make user field optional in requests
 
     def create(self, validated_data):
         # Get the first user from the database

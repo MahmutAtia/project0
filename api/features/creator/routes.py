@@ -1,13 +1,25 @@
 from fastapi import APIRouter
 from langserve.server import add_routes
 from .chains import chain_instance
-from .prompts import ( 
-                      create_resume_prompt, edit_resume_section_prompt ,job_desc_resume_prompt,  
-                      ats_checker_prompt,ats_checker_no_job_desc_prompt
+from .prompts import (
+    create_resume_prompt,
+    edit_resume_section_prompt,
+    job_desc_resume_prompt,
+    ats_checker_prompt,
+    ats_checker_no_job_desc_prompt,
 )
 
-from .website_prompts import ( create_resume_website_prompt, create_resume_website_bloks_prompt, edit_website_block_prompt )
-from .docs_prompts import ( cover_letter_prompt, recommendation_letter_prompt,  motivation_letter_prompt ) 
+from .website_prompts import (
+    create_resume_website_prompt,
+    create_resume_website_bloks_prompt,
+    edit_website_block_prompt,
+)
+from .docs_prompts import (
+    cover_letter_prompt,
+    recommendation_letter_prompt,
+    motivation_letter_prompt,
+)
+
 router = APIRouter()
 
 
@@ -46,7 +58,7 @@ add_routes(
 )
 
 
-add_routes( 
+add_routes(
     router,
     chain_instance.build_chain(job_desc_resume_prompt),
     path="/genereate_from_job_desc",
@@ -115,7 +127,6 @@ add_routes(
 )
 
 
-
 add_routes(
     router,
     chain_instance.build_chain(ats_checker_prompt),
@@ -148,7 +159,6 @@ add_routes(
         "token_feedback",
     ],
 )
-
 
 
 #################### Document Generation #####################

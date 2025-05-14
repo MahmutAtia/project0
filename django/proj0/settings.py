@@ -15,8 +15,8 @@ from dotenv import load_dotenv
 import os
 from datetime import timedelta
 
-# if the .env file loaad it 
-if Path('.env').exists():
+# if the .env file loaad it
+if Path(".env").exists():
     load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -38,7 +38,6 @@ ALLOWED_HOSTS = []
 # Application definition
 
 
-
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -46,40 +45,34 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    
     # installed apps
-    'rest_framework',
-    'rest_framework.authtoken',  # If using DRF's TokenAuth
-    'rest_framework_simplejwt', # JWT authentication
-    'corsheaders', # For CORS
-            'rest_framework_simplejwt.token_blacklist',
-
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
-    'dj_rest_auth',
-    'dj_rest_auth.registration',
-    'drf_yasg',
-    
+    "rest_framework",
+    "rest_framework.authtoken",  # If using DRF's TokenAuth
+    "rest_framework_simplejwt",  # JWT authentication
+    "corsheaders",  # For CORS
+    "rest_framework_simplejwt.token_blacklist",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
+    "dj_rest_auth",
+    "dj_rest_auth.registration",
+    "drf_yasg",
     # custom apps
-    'api',
-    'accounts',
-
+    "api",
+    "accounts",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-        'corsheaders.middleware.CorsMiddleware',
-
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    'allauth.account.middleware.AccountMiddleware',
-
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 ROOT_URLCONF = "proj0.urls"
@@ -113,13 +106,13 @@ WSGI_APPLICATION = "proj0.wsgi.application"
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',
-        'USER': 'postgres',
-        'PASSWORD': 'postgres',
-        'HOST': 'db',
-        'PORT': 5432,
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "postgres",
+        "USER": "postgres",
+        "PASSWORD": "postgres",
+        "HOST": "db",
+        "PORT": 5432,
     }
 }
 
@@ -172,7 +165,7 @@ CACHES = {
         "LOCATION": "redis://redis:6379/1",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        }
+        },
     }
 }
 
@@ -180,28 +173,21 @@ SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
 
 
-
-
-
-
 # Auth Settings
 REST_USE_JWT = True
-JWT_AUTH_COOKIE = 'auth'
-JWT_AUTH_REFRESH_COOKIE = 'refresh'
+JWT_AUTH_COOKIE = "auth"
+JWT_AUTH_REFRESH_COOKIE = "refresh"
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
     )
 }
 
 
-
-
-
 AUTHENTICATION_BACKENDS = (
-    'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
 )
 
 SITE_ID = 1  # Important for django-allauth
@@ -209,24 +195,17 @@ SITE_ID = 1  # Important for django-allauth
 
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
+ACCOUNT_AUTHENTICATION_METHOD = "username_email"
 
 
 # CORS configuration
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # Your Next.js frontend URL
 ]
-CORS_ALLOW_CREDENTIALS = True # Allow cookies to be sent+
-
-
-
-
+CORS_ALLOW_CREDENTIALS = True  # Allow cookies to be sent+
 
 
 # Auth Settings
-
-
-
 
 
 REST_AUTH = {
@@ -236,24 +215,24 @@ REST_AUTH = {
 
 # JWT Settings
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes= 100),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=2),
-    'ALGORITHM': os.getenv('JWT_ALGORITHM', 'HS256'),
-    'SIGNING_KEY': os.getenv('JWT_SECRET_KEY'),
-    'AUTH_HEADER_TYPES': ('Bearer',),
-    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
-    'BLACKLIST_AFTER_ROTATION': True,
-    'ROTATE_REFRESH_TOKENS': True,
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=100),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=2),
+    "ALGORITHM": os.getenv("JWT_ALGORITHM", "HS256"),
+    "SIGNING_KEY": os.getenv("JWT_SECRET_KEY"),
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    "BLACKLIST_AFTER_ROTATION": True,
+    "ROTATE_REFRESH_TOKENS": True,
 }
 
 
 # Email Settings
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.getenv('EMAIL_HOST')
-EMAIL_PORT = int(os.getenv('EMAIL_PORT'))
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = os.getenv("EMAIL_HOST")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT"))
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 
 # Auth Settings
 # ACCOUNT_EMAIL_REQUIRED = True
@@ -261,38 +240,41 @@ ACCOUNT_UNIQUE_EMAIL = True
 
 
 # --- ADD or MODIFY these lines ---
-ACCOUNT_LOGIN_METHODS = {'email'}  # Or {'username'}, {'username', 'email'}
-ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*'] # Add 'username*' if needed
-ACCOUNT_EMAIL_VERIFICATION = 'none' # Example: Keep other allauth settings
+ACCOUNT_LOGIN_METHODS = {"email"}  # Or {'username'}, {'username', 'email'}
+ACCOUNT_SIGNUP_FIELDS = [
+    "email*",
+    "password1*",
+    "password2*",
+]  # Add 'username*' if needed
+ACCOUNT_EMAIL_VERIFICATION = "none"  # Example: Keep other allauth settings
 # ---
-ACCOUNT_EMAIL_SUBJECT_PREFIX = 'Your Site - '
+ACCOUNT_EMAIL_SUBJECT_PREFIX = "Your Site - "
 
 
 # Adapter for social login if email is already in use
-SOCIALACCOUNT_ADAPTER = 'accounts.adapter.MySocialAccountAdapter'
+SOCIALACCOUNT_ADAPTER = "accounts.adapter.MySocialAccountAdapter"
 
 
 SITE_ID = 1
 
 
-
 SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        'APP': {
-            'client_id': os.getenv('GOOGLE_CLIENT_ID'),
-            'secret': os.getenv('GOOGLE_CLIENT_SECRET'),
-            'key': ''
+    "google": {
+        "APP": {
+            "client_id": os.getenv("GOOGLE_CLIENT_ID"),
+            "secret": os.getenv("GOOGLE_CLIENT_SECRET"),
+            "key": "",
         },
-        'SCOPE': [
-            'profile',
-            'email',
-            'openid',
+        "SCOPE": [
+            "profile",
+            "email",
+            "openid",
         ],
-        'AUTH_PARAMS': {
-            'access_type': 'offline',
-            'prompt': 'consent',
-            'response_type': 'code'
-        }
+        "AUTH_PARAMS": {
+            "access_type": "offline",
+            "prompt": "consent",
+            "response_type": "code",
+        },
     }
 }
 
@@ -303,14 +285,14 @@ APPEND_SLASH = True
 # Celery Configuration Options
 # Make sure this URL points to your running broker service
 # Example for Redis (if running in Docker with service name 'redis'):
-CELERY_BROKER_URL = 'redis://redis:6379/0'
+CELERY_BROKER_URL = "redis://redis:6379/0"
 # Example for RabbitMQ (if running in Docker with service name 'rabbitmq'):
 # CELERY_BROKER_URL = 'amqp://guest:guest@rabbitmq:5672//'
 # Example for Redis running locally on default port:
 # CELERY_BROKER_URL = 'redis://localhost:6379/0'
 
-CELERY_RESULT_BACKEND = 'redis://redis:6379/0' # Optional: Where to store task results (often same as broker)
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = TIME_ZONE # Use Django's timezone
+CELERY_RESULT_BACKEND = "redis://redis:6379/0"  # Optional: Where to store task results (often same as broker)
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = TIME_ZONE  # Use Django's timezone

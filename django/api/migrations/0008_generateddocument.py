@@ -8,18 +8,36 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0007_generatedwebsite_yaml_content'),
+        ("api", "0007_generatedwebsite_yaml_content"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='GeneratedDocument',
+            name="GeneratedDocument",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('unique_id', models.UUIDField(default=uuid.uuid4, editable=False, unique=True)),
-                ('yaml_content', models.TextField(default='')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('resume', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='generated_documents', to='api.resume')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "unique_id",
+                    models.UUIDField(default=uuid.uuid4, editable=False, unique=True),
+                ),
+                ("yaml_content", models.TextField(default="")),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "resume",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="generated_documents",
+                        to="api.resume",
+                    ),
+                ),
             ],
         ),
     ]

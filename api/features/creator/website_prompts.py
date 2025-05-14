@@ -1,9 +1,10 @@
-
 from langchain_core.prompts import PromptTemplate
 
 create_resume_website_template = """ """
 
-create_resume_website_prompt = PromptTemplate.from_template(create_resume_website_template)
+create_resume_website_prompt = PromptTemplate.from_template(
+    create_resume_website_template
+)
 
 
 create_resume_website_bloks_template = """You are a professional designer and frontend developer tasked with creating a personal portfolio website for a client based on their resume and preferences with a valid output format required.
@@ -109,7 +110,9 @@ Do not use or create base64 images. Also do not create verbose SVG strings.
 
 personal portfolio website output"""
 
-create_resume_website_bloks_prompt = PromptTemplate.from_template(create_resume_website_bloks_template)
+create_resume_website_bloks_prompt = PromptTemplate.from_template(
+    create_resume_website_bloks_template
+)
 
 
 edit_resume_website_block_template = """ You are a professional designer and frontend developer tasked with editing a specific section of a personal portfolio website based on a client prompt.
@@ -141,7 +144,9 @@ here also some artifacts that user added you can use them to edit the yaml:
 
 Client Prompt: {prompt}
 Updated yaml output:"""
-edit_website_block_prompt = PromptTemplate.from_template(edit_resume_website_block_template)  
+edit_website_block_prompt = PromptTemplate.from_template(
+    edit_resume_website_block_template
+)
 
 """
 Structure:
@@ -190,13 +195,13 @@ This array contains multiple objects, where each object represents a distinct se
     * **`js`**: The JavaScript code specifically for functionality *only* within this section block.
 """
 
-# I did not like most of design concepts results 
+# I did not like most of design concepts results
 
 # you must think of modern creative pesonal sites for designers and frontend developers and then draw the design concepts
 
 # also think of list of prefrejnces that the user can choose from to make the website more visually appealing and creative. and all of them add certain instructions to the PromptTemplate
 
-# - for example the design concepts after doing the refinement make them different 5 design concepts 
+# - for example the design concepts after doing the refinement make them different 5 design concepts
 # - somethings like cheklist adding then will add instructions like the cursor animation trick think of other tricks and things which are widly uesed in pesonal websites
 # - think of other themes and colors and fonts that are widely used in personal websites
 # - i waht ther preferences that will make perfect personal websites and the most visually appealing and creative and unique authentic fot this specific user

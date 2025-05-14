@@ -14,7 +14,6 @@ class BaseChain:
     BaseChain class to build and manage a chain of components for language processing.
     """
 
-
     def __init__(
         self, input_chain=RunnablePassthrough(), output_parser=StrOutputParser()
     ):

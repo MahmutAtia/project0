@@ -8,8 +8,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware import Middleware
 
 
-
-
 # routers
 from features.creator.routes import router as creator_router
 
@@ -29,7 +27,6 @@ app = FastAPI(
         ),
     ],
 )
-
 
 
 # include the routers

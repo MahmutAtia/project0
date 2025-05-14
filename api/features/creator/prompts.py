@@ -59,7 +59,6 @@ create_resume_prompt = (
 #########################################
 
 
-
 job_desc_template_first_part = """  You are a Human Resources professional tasked with creating a structured YAML file from a resume. The YAML file should be enhanced for professional appeal and include a compelling "about" section. The resume text is provided below:
 
 YAML Template:
@@ -119,12 +118,7 @@ job_desc_resume_prompt = (
 )
 
 
-
-
-
 ########################################
-
-
 
 
 edit_resume_section_template = """  You are a Human Resources professional tasked with editing a specific section of a structured YAML file created from a resume.
@@ -143,7 +137,7 @@ Candidate's Prompt:{prompt}
 Output YAML:"""
 
 
-edit_resume_section_prompt =  PromptTemplate.from_template(edit_resume_section_template)
+edit_resume_section_prompt = PromptTemplate.from_template(edit_resume_section_template)
 
 ###################### ATS Checker ######################
 
@@ -233,9 +227,9 @@ Target role: "{user_input_role}"
 
 the evaluation output: """
 
-ats_checker_no_job_desc_prompt = PromptTemplate.from_template(ats_checker_no_job_desc_template)
-
-
+ats_checker_no_job_desc_prompt = PromptTemplate.from_template(
+    ats_checker_no_job_desc_template
+)
 
 
 # edit_document_template = """ You are a human resources professional,also designer and frontend developer tasked with editing a specific section of a document based on a client prompt.
