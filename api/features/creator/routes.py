@@ -18,6 +18,7 @@ from .docs_prompts import (
     cover_letter_prompt,
     recommendation_letter_prompt,
     motivation_letter_prompt,
+    edit_docs_section_prompt
 )
 
 router = APIRouter()
@@ -214,5 +215,23 @@ add_routes(
         "config_schema",
         "token_feedback",
         "stream",
+    ],
+)
+
+
+add_routes(
+    router,
+    chain_instance.build_chain(edit_docs_section_prompt),
+    path="/edit_docs_section",
+    disabled_endpoints=[
+        "stream_events",
+        "stream_log",
+        "batch",
+        "playground",
+        "config_hashes",
+        "input_schema",
+        "output_schema",
+        "config_schema",
+        "token_feedback",
     ],
 )

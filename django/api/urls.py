@@ -39,6 +39,13 @@ urlpatterns = [
         views.get_document_bloks,
         name="get-document-bloks",
     ),
+    
+    path(
+        "resumes/edit_document_blok/",
+        views.edit_document_blok,
+        name="edit-document-blok",
+    ),
+        
     # editor views here
     path(
         "website-yaml/<uuid:resume_id>/",

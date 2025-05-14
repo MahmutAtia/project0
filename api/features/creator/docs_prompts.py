@@ -198,3 +198,25 @@ Information about the program/scholarship/opportunity:
 Yaml Output:"""
 
 motivation_letter_prompt = PromptTemplate.from_template(motivation_letter_template)
+
+
+
+edit_docs_section_template = """You are a Human Resources professional tasked with editing a section of a {document_type} document based on client prompt.
+your task it to edit thecontent of provided yaml section of the document after understanding the client prompt.
+
+yaml section to edit:
+```yaml
+{section_yaml}
+```
+
+Add this field to the yaml output without any comments:
+```yaml
+feedback_message: "<here short feedback message,max 100 characters>" # Interact with user here. try to help user to understand the changes and what else may be needed. 
+```
+client prompt:
+{prompt}
+yaml section output:"""
+
+edit_docs_section_prompt = PromptTemplate.from_template(
+    edit_docs_section_template
+)

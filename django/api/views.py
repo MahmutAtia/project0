@@ -881,6 +881,39 @@ def get_document_bloks(request, document_id):
         )
 
 
+
+@api_view(["POST"])
+def edit_document_blok(request):
+    input_data = request.data
+    prompt, section_data,document_type = input_data.get("prompt"), input_data.get("sectionData"), input_data.get("documentType")
+    section_yaml = yaml.dump(section_data)  
+    
+    # Call the AI service
+    ai_service_url = os.environ.get("AI_SERVICE_URL") + "edit_docs_section/invoke"
+    body = {
+        "input": {
+            "prompt": prompt,
+            "section_yaml": section_yaml,
+            "document_type": document_type
+        }
+        
+    }
+    response = requests.post(ai_service_url, json=body)
+    if response.status_code == 200:
+        try:
+            generated_section_yaml = response.json().get("output")
+            generated_section_data = yaml.safe_load(generated_section_yaml)
+            return Response(generated_section_data)
+
+        except (json.JSONDecodeError, yaml.YAMLError) as e:
+            return Response(
+                {"error": f"Invalid data received from AI service: {e}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+    else:
+        return Response(response.json(), status=response.status_code)
+    
+    
 @api_view(["GET"])
 def get_document_pdf(request, document_id):
     """
