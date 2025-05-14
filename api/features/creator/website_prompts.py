@@ -88,7 +88,6 @@ Output must match the provided format and comments exactly.
 No explanations, apologies, or extra text before or after the output.
 Do not include any code examples, extra comments, or verbose explanations.
 All code must be complete and functional—no placeholders, unfinished, or empty sections.
-Do not use file or image paths; all visuals must be created with HTML, CSS, and JS only.
 Use emoji favicons.
 Enhance the design with icons, 3D visuals, graphics, and illustrations using only HTML, CSS, and JS.
 Create original visuals; do not reference external files.
@@ -104,6 +103,8 @@ All JavaScript must work and all sections must function correctly.
 Do not initialize section-specific scripts in global JS.
 Avoid global event listeners or variables for section scripts. Each section’s JS, CSS, and HTML must be fully self-contained and work independently if loaded in isolation (e.g., in an iframe). Each section must not depend on external scripts or styles.
 Do not output anything except the required format.
+Do not use file or image paths; all visuals must be created with HTML, CSS, and JS only.
+Do not use or create base64 images. Also do not create verbose SVG strings.
 **Ensure JavaScript code is correct and functional:** Verify all functions, especially theme toggle function or library imports, are correct and functional. Ensure all functions are called correctly and in the right order.
 
 personal portfolio website output"""
@@ -119,6 +120,7 @@ PAY ATTENTION, Quote all strings in the yaml output with double quotes. Use | fo
 Do not ever use ':' in any of the yaml fields. 
 PAY ATTENTION to all yaml parsing rules and indentation.
 Do not output any yaml comments in the output.
+Understand the client prompt and make the necessary changes to the code block. Be specific and concise in your changes.
 
 the yaml to edit:
 ```yaml
@@ -132,16 +134,14 @@ js: |
 ```
 Add this field to the yaml output without any comments:
 ```yaml
-feedback_message: "here is the feedback message for the user to iteract with him." # Consider that the user will not see the code but will see the changes applied in preview"
+feedback_message: "<here feedback message>" # Interact with user here. Consider that the user will not see the code but will see the changes applied in iframe preview"
 ```
 here also some artifacts that user added you can use them to edit the yaml:
 {artifacts}
 
 Client Prompt: {prompt}
 Updated yaml output:"""
-edit_website_block_prompt = PromptTemplate.from_template(edit_resume_website_block_template)
-  
-  
+edit_website_block_prompt = PromptTemplate.from_template(edit_resume_website_block_template)  
 
 """
 Structure:
