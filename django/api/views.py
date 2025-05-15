@@ -922,14 +922,22 @@ def get_document_pdf(request, document_id):
     try:
         generated_document = get_object_or_404(GeneratedDocument, unique_id=document_id)
         json_data = generated_document.json_content
+        document_type = generated_document.document_type
+        
+        # mapping document type to template
+        template_mapping = {
+            "cover_letter": "document_templates/cover_letter.html",
+            "recommendation_letter": "document_templates/recommendation_letter.html",
+            "motivation_letter": "document_templates/motivation_letter.html",
+        }
+        template_name = template_mapping.get(document_type, "document-default.html")
 
         # Convert YAML content to PDF
         pdf_data = generate_pdf_from_resume_data(
-            json_data, template_theme="document-default.html", chosen_theme=""
+            json_data,template_name , chosen_theme=""
         )
 
         if pdf_data:
-            import io
 
             pdf_buffer = io.BytesIO(pdf_data)
             response = StreamingHttpResponse(
@@ -950,6 +958,28 @@ def get_document_pdf(request, document_id):
             {"error": f"Document not found: {e}"}, status=status.HTTP_404_NOT_FOUND
         )
 
+@api_view(["PUT"])
+def update_document(request, document_id):
+    """
+    API endpoint to update the generated document.
+    """
+    try:
+        generated_document = get_object_or_404(GeneratedDocument, unique_id=document_id)
+        json_content = request.data  # the json content from the frontend
+
+        # Update the YAML content in the database
+        generated_document.json_content = json_content
+        generated_document.save()
+
+        return Response(
+            {"message": "Document updated successfully"}, status=status.HTTP_200_OK
+        )
+
+    except Exception as e:
+        return Response(
+            {"error": f"Error updating document: {e}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
 ##################################### ATS Checker #####################################
 

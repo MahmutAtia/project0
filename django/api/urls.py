@@ -39,11 +39,19 @@ urlpatterns = [
         views.get_document_bloks,
         name="get-document-bloks",
     ),
-    
+            path('resumes/document/<uuid:document_id>/', views.get_document_pdf, name='get-document-pdf'),
+
     path(
         "resumes/edit_document_blok/",
         views.edit_document_blok,
         name="edit-document-blok",
+    ),
+
+    # update_document
+    path(
+        "resumes/document/<uuid:document_id>/update/",
+        views.update_document,
+        name="update-document",
     ),
         
     # editor views here
@@ -87,6 +95,5 @@ urlpatterns = [
     ),
     # 5. Generate document
     # path('resumes/generate_document/', views.generate_document_bloks, name='generate-document'),
-    # path('resumes/document/<uuid:document_id>/', views.get_document_pdf, name='view-document'),
     # # path('resumes/<str:pk>/document/<uuid:unique_id>/update/', views.update_document, name='update-document'),
 ]
