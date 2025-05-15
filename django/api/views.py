@@ -9,6 +9,7 @@ from .utils import (
     generate_html_from_yaml,
     parse_custom_format,
     format_data_to_ordered_text,
+    generate_docx_from_template
 )
 from rest_framework.response import Response
 from django.contrib.auth.models import User
@@ -958,6 +959,48 @@ def get_document_pdf(request, document_id):
             {"error": f"Document not found: {e}"}, status=status.HTTP_404_NOT_FOUND
         )
 
+@api_view(["GET"])
+def get_document_docx(request, document_id):
+    """
+    API endpoint to serve the generated document as a Word (.docx) file.
+    """
+    try:
+        generated_document = get_object_or_404(GeneratedDocument, unique_id=document_id)
+        json_data = generated_document.json_content
+        document_type = generated_document.document_type
+        
+        # mapping document type to template
+        template_mapping = {
+            "cover_letter": "document_templates/cover_letter.html",
+            "recommendation_letter": "document_templates/recommendation_letter.html",
+            "motivation_letter": "document_templates/motivation_letter.html",
+        }
+        template_name = template_mapping.get(document_type, "document-default.html")
+
+        # Generate DOCX using WeasyPrint PDF conversion
+        docx_buffer = generate_docx_from_template(
+            json_data, template_name, chosen_theme=""
+        )
+
+        if docx_buffer:
+            response = FileResponse(
+                docx_buffer,
+                as_attachment=True,
+                content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            )
+            response['Content-Disposition'] = f'attachment; filename="{document_type}_{document_id}.docx"'
+            return response
+        else:
+            return Response(
+                {"error": "Error generating Word document"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+    except Exception as e:
+        return Response(
+            {"error": f"Document not found: {e}"}, status=status.HTTP_404_NOT_FOUND
+        )
+        
+        
 @api_view(["PUT"])
 def update_document(request, document_id):
     """
