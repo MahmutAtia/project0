@@ -136,9 +136,6 @@ def generate_html_from_yaml(json_data, template_name="html_bloks_template.html")
 
 
 ############################  parse custom format  ############################
-import re
-import json
-
 
 def parse_custom_format(site_text):
     # Extract HTML, CSS, JS blocks
@@ -150,23 +147,21 @@ def parse_custom_format(site_text):
     css = css_match.group(1) if css_match else ""
     js = js_match.group(1) if js_match else ""
 
-    # Extract everything between <head> and </head>
+    # Extract <head> content
     head_match = re.search(r"<head>(.*?)</head>", html, re.DOTALL)
     head_content = head_match.group(1).strip() if head_match else ""
 
-    # Extract global HTML + DESCRIPTION
+    # Extract global HTML (DESCRIPTION optional)
     global_html_match = re.search(
-        r"<!--\s*BEGIN global\s*-->\s*<!--\s*DESCRIPTION:\s*(.*?)\s*-->\s*(.*?)<!--\s*END global\s*-->",
+        r"<!--\s*BEGIN global\s*-->\s*(?:<!--\s*DESCRIPTION:\s*(.*?)\s*-->\s*)?(.*?)<!--\s*END global\s*-->",
         html,
         re.DOTALL,
     )
-    global_description = global_html_match.group(1).strip() if global_html_match else ""
+    global_description = global_html_match.group(1).strip() if global_html_match and global_html_match.group(1) else ""
     global_html = global_html_match.group(2).strip() if global_html_match else ""
 
     # Extract global CSS and JS
-    global_css = re.search(
-        r"/\*\s*BEGIN global\s*\*/(.*?)/\*\s*END global\s*\*/", css, re.DOTALL
-    )
+    global_css = re.search(r"/\*\s*BEGIN global\s*\*/(.*?)/\*\s*END global\s*\*/", css, re.DOTALL)
     global_js = re.search(r"//\s*BEGIN global\s*(.*?)//\s*END global", js, re.DOTALL)
 
     result = {
@@ -181,17 +176,20 @@ def parse_custom_format(site_text):
         "code_bloks": [],
     }
 
-    # Extract all sections in HTML with ID and DESCRIPTION
-    html_sections = re.findall(
+    # Extract section blocks, DESCRIPTION optional
+    section_pattern = re.compile(
         r"<!--\s*BEGIN SECTION:\s*([\w_]+)\s*-->\s*"
-        r"<!--\s*DESCRIPTION:\s*(.*?)\s*-->\s*"
+        r"(?:<!--\s*DESCRIPTION:\s*(.*?)\s*-->\s*)?"
         r"(.*?)"
         r"<!--\s*END SECTION:\s*\1\s*-->",
-        html,
         re.DOTALL,
     )
 
-    for name, description, html_content in html_sections:
+    for match in section_pattern.finditer(html):
+        name = match.group(1)
+        description = match.group(2).strip() if match.group(2) else ""
+        html_content = match.group(3).strip()
+
         css_section = re.search(
             rf"/\*\s*BEGIN SECTION:\s*{re.escape(name)}\s*\*/(.*?)/\*\s*END SECTION:\s*{re.escape(name)}\s*\*/",
             css,
@@ -205,8 +203,8 @@ def parse_custom_format(site_text):
 
         block = {
             "name": name,
-            "feedback": description.strip(),
-            "html": html_content.strip(),
+            "feedback": description,
+            "html": html_content,
             "css": css_section.group(1).strip() if css_section else "",
             "js": js_section.group(1).strip() if js_section else "",
         }
