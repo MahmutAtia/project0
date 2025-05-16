@@ -137,6 +137,7 @@ def generate_html_from_yaml(json_data, template_name="html_bloks_template.html")
 
 ############################  parse custom format  ############################
 
+
 def parse_custom_format(site_text):
     # Extract HTML, CSS, JS blocks
     html_match = re.search(r"===HTML===\s*(.*?)\s*===CSS===", site_text, re.DOTALL)
@@ -157,11 +158,17 @@ def parse_custom_format(site_text):
         html,
         re.DOTALL,
     )
-    global_description = global_html_match.group(1).strip() if global_html_match and global_html_match.group(1) else ""
+    global_description = (
+        global_html_match.group(1).strip()
+        if global_html_match and global_html_match.group(1)
+        else ""
+    )
     global_html = global_html_match.group(2).strip() if global_html_match else ""
 
     # Extract global CSS and JS
-    global_css = re.search(r"/\*\s*BEGIN global\s*\*/(.*?)/\*\s*END global\s*\*/", css, re.DOTALL)
+    global_css = re.search(
+        r"/\*\s*BEGIN global\s*\*/(.*?)/\*\s*END global\s*\*/", css, re.DOTALL
+    )
     global_js = re.search(r"//\s*BEGIN global\s*(.*?)//\s*END global", js, re.DOTALL)
 
     result = {
@@ -342,53 +349,51 @@ def format_data_to_ordered_text(data, current_key_context, order_map, indent_lev
 def convert_pdf_to_docx(pdf_content, output_path=None):
     """
     Converts PDF content to DOCX format.
-    
+
     Args:
         pdf_content (bytes): The PDF content as bytes
         output_path (str, optional): Path to save the output DOCX. If None, only the BytesIO object is returned.
-        
+
     Returns:
         BytesIO: A BytesIO object containing the DOCX content
     """
-    try:      
+    try:
         # Create temporary files for the conversion process
-        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as pdf_temp:
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as pdf_temp:
             pdf_temp.write(pdf_content)
             pdf_temp_path = pdf_temp.name
-            
-        docx_temp_path = pdf_temp_path.replace('.pdf', '.docx')
-        
+
+        docx_temp_path = pdf_temp_path.replace(".pdf", ".docx")
+
         # Convert PDF to DOCX
         cv = Converter(pdf_temp_path)
         cv.convert(docx_temp_path)
         cv.close()
-        
+
         # Read the DOCX file into memory
-        with open(docx_temp_path, 'rb') as docx_file:
+        with open(docx_temp_path, "rb") as docx_file:
             docx_content = io.BytesIO(docx_file.read())
-        
+
         # Optionally save the DOCX to the specified output path
         if output_path:
-            with open(output_path, 'wb') as f:
+            with open(output_path, "wb") as f:
                 f.write(docx_content.getvalue())
-        
+
         # Clean up temporary files
         os.unlink(pdf_temp_path)
         os.unlink(docx_temp_path)
-        
+
         docx_content.seek(0)
         return docx_content
-        
+
     except Exception as e:
         print(f"Error converting PDF to DOCX: {e}")
         return None
-    
-    
-    
-    
 
 
-def generate_docx_from_template(resume_data, template_theme="resume_template_2.html", chosen_theme="theme-default"):
+def generate_docx_from_template(
+    resume_data, template_theme="resume_template_2.html", chosen_theme="theme-default"
+):
     """
     Generates a DOCX document from template data using WeasyPrint to PDF and then converting to DOCX.
 
@@ -396,14 +401,16 @@ def generate_docx_from_template(resume_data, template_theme="resume_template_2.h
         resume_data (dict): The document data as a dictionary
         template_theme (str): The HTML template to use
         chosen_theme (str): CSS theme class name
-        
+
     Returns:
         BytesIO: The DOCX file content as BytesIO object. Returns None on error.
     """
     try:
         # First generate PDF using existing function
-        pdf_content = generate_pdf_from_resume_data(resume_data, template_theme, chosen_theme)
-        
+        pdf_content = generate_pdf_from_resume_data(
+            resume_data, template_theme, chosen_theme
+        )
+
         if pdf_content:
             # Convert PDF to DOCX
             docx_content = convert_pdf_to_docx(pdf_content)

@@ -9,7 +9,7 @@ from .utils import (
     generate_html_from_yaml,
     parse_custom_format,
     format_data_to_ordered_text,
-    generate_docx_from_template
+    generate_docx_from_template,
 )
 from rest_framework.response import Response
 from django.contrib.auth.models import User
@@ -882,22 +882,24 @@ def get_document_bloks(request, document_id):
         )
 
 
-
 @api_view(["POST"])
 def edit_document_blok(request):
     input_data = request.data
-    prompt, section_data,document_type = input_data.get("prompt"), input_data.get("sectionData"), input_data.get("documentType")
-    section_yaml = yaml.dump(section_data)  
-    
+    prompt, section_data, document_type = (
+        input_data.get("prompt"),
+        input_data.get("sectionData"),
+        input_data.get("documentType"),
+    )
+    section_yaml = yaml.dump(section_data)
+
     # Call the AI service
     ai_service_url = os.environ.get("AI_SERVICE_URL") + "edit_docs_section/invoke"
     body = {
         "input": {
             "prompt": prompt,
             "section_yaml": section_yaml,
-            "document_type": document_type
+            "document_type": document_type,
         }
-        
     }
     response = requests.post(ai_service_url, json=body)
     if response.status_code == 200:
@@ -913,8 +915,8 @@ def edit_document_blok(request):
             )
     else:
         return Response(response.json(), status=response.status_code)
-    
-    
+
+
 @api_view(["GET"])
 def get_document_pdf(request, document_id):
     """
@@ -924,7 +926,7 @@ def get_document_pdf(request, document_id):
         generated_document = get_object_or_404(GeneratedDocument, unique_id=document_id)
         json_data = generated_document.json_content
         document_type = generated_document.document_type
-        
+
         # mapping document type to template
         template_mapping = {
             "cover_letter": "document_templates/cover_letter.html",
@@ -935,7 +937,7 @@ def get_document_pdf(request, document_id):
 
         # Convert YAML content to PDF
         pdf_data = generate_pdf_from_resume_data(
-            json_data,template_name , chosen_theme=""
+            json_data, template_name, chosen_theme=""
         )
 
         if pdf_data:
@@ -959,6 +961,7 @@ def get_document_pdf(request, document_id):
             {"error": f"Document not found: {e}"}, status=status.HTTP_404_NOT_FOUND
         )
 
+
 @api_view(["GET"])
 def get_document_docx(request, document_id):
     """
@@ -968,7 +971,7 @@ def get_document_docx(request, document_id):
         generated_document = get_object_or_404(GeneratedDocument, unique_id=document_id)
         json_data = generated_document.json_content
         document_type = generated_document.document_type
-        
+
         # mapping document type to template
         template_mapping = {
             "cover_letter": "document_templates/cover_letter.html",
@@ -986,9 +989,11 @@ def get_document_docx(request, document_id):
             response = FileResponse(
                 docx_buffer,
                 as_attachment=True,
-                content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             )
-            response['Content-Disposition'] = f'attachment; filename="{document_type}_{document_id}.docx"'
+            response["Content-Disposition"] = (
+                f'attachment; filename="{document_type}_{document_id}.docx"'
+            )
             return response
         else:
             return Response(
@@ -999,8 +1004,8 @@ def get_document_docx(request, document_id):
         return Response(
             {"error": f"Document not found: {e}"}, status=status.HTTP_404_NOT_FOUND
         )
-        
-        
+
+
 @api_view(["PUT"])
 def update_document(request, document_id):
     """
@@ -1023,6 +1028,7 @@ def update_document(request, document_id):
             {"error": f"Error updating document: {e}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
 
 ##################################### ATS Checker #####################################
 

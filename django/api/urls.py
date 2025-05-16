@@ -39,21 +39,27 @@ urlpatterns = [
         views.get_document_bloks,
         name="get-document-bloks",
     ),
-            path('resumes/document/<uuid:document_id>/', views.get_document_pdf, name='get-document-pdf'),
-path('resumes/document/<uuid:document_id>/word/', views.get_document_docx, name='get-document-docx'),
+    path(
+        "resumes/document/<uuid:document_id>/",
+        views.get_document_pdf,
+        name="get-document-pdf",
+    ),
+    path(
+        "resumes/document/<uuid:document_id>/word/",
+        views.get_document_docx,
+        name="get-document-docx",
+    ),
     path(
         "resumes/edit_document_blok/",
         views.edit_document_blok,
         name="edit-document-blok",
     ),
-
     # update_document
     path(
         "resumes/document/<uuid:document_id>/update/",
         views.update_document,
         name="update-document",
     ),
-        
     # editor views here
     path(
         "website-yaml/<uuid:resume_id>/",

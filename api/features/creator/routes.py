@@ -18,7 +18,7 @@ from .docs_prompts import (
     cover_letter_prompt,
     recommendation_letter_prompt,
     motivation_letter_prompt,
-    edit_docs_section_prompt
+    edit_docs_section_prompt,
 )
 
 router = APIRouter()
