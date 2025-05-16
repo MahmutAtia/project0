@@ -67,6 +67,7 @@ the client preferences are provided below:
 /* here rest of the sections styles till footer section in the same format */
 ===JS===
 // BEGIN global
+// libraries imports must be here
 // Here global scripts like libraries, frameworks, global animations, global effects, dark mode, light mode etc. these should be between BEGIN global and END global. DO NOT INITIALIZE ANY SECTION RELATED SCRIPTS HERE. EVERY SECTION MUST HAVE ITS OWN SCRIPTS ISOLATED FROM OTHER SECTIONS.
 // END global
 
