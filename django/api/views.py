@@ -42,6 +42,9 @@ from .tasks import generate_resume_data_task  # Import the Celery task
 from celery import states  # Import states
 from celery.result import AsyncResult
 
+import httpx  # Add httpx for async requests
+from asgiref.sync import sync_to_async  # For wrapping sync code if needed
+
 ORDER_MAP = {
     "resume": [
         "personal_information",
@@ -766,15 +769,14 @@ def edit_website_block(request):
 
 
 @api_view(["POST"])
-def generate_document_bloks(request):
+async def generate_document_bloks(request):  # Changed to async def
     """
     API endpoint to generate a document using Bloks.
     """
     resume_id = request.data.get("resumeId")
     other_info = request.data.get("otherInfo", {})
     document_type = request.data.get("documentType", "")
-    language = request.data.get("language", "en")  # Default to English if not provided
-    # document_name = request.data.get('documentName', 'Generated Document')  # Default name if not provided
+    language = request.data.get("language", "en")
 
     if not resume_id:
         return Response(
@@ -782,31 +784,30 @@ def generate_document_bloks(request):
         )
 
     try:
-        resume = get_object_or_404(Resume, pk=resume_id)
-        about = resume.about
+        # Use async ORM methods
+        resume = await Resume.objects.aget(pk=resume_id)
+        about = resume.about  # Accessing attribute is fine
 
-        # Check if a document of this specific type has already been generated for this resume
-        generated_document = GeneratedDocument.objects.filter(
+        generated_document = await GeneratedDocument.objects.filter(
             resume=resume, document_type=document_type
-        ).first()
+        ).afirst()  # Use afirst() for async
+
         if generated_document:
-            # Document of this type already exists, return the unique link
             return Response(
                 {"document_uuid": generated_document.unique_id},
                 status=status.HTTP_200_OK,
             )
-    except Http404:
+    except Resume.DoesNotExist:  # Specific exception for aget
         return Response(
             {"error": f"Resume with ID {resume_id} not found."},
             status=status.HTTP_404_NOT_FOUND,
         )
     except Exception as e:
-        # Log the specific error for debugging
         logger.error(
             f"Error checking for existing document or fetching resume data for resume_id {resume_id}: {e}"
         )
         return Response(
-            {"error": f"Error processing request: {e}"},
+            {"error": f"Error processing request: {str(e)}"},  # Use str(e) for safety
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
@@ -816,9 +817,8 @@ def generate_document_bloks(request):
         "motivation_letter": "generate_motivation_letter/invoke",
     }
 
-    # Get the endpoint for the specific document type
     document_endpoint = document_endpoint_mapping.get(document_type)
-    if document_type not in document_endpoint_mapping:
+    if not document_endpoint:  # Check before using document_type in f-string
         return Response(
             {"error": f"Unsupported documentType: {document_type}"},
             status=status.HTTP_400_BAD_REQUEST,
@@ -833,30 +833,56 @@ def generate_document_bloks(request):
             "about_candidate": about,
         }
     }
+
     try:
-        ai_response = requests.post(ai_service_url, json=body)
-        ai_response.raise_for_status()
+        # Use httpx for async HTTP request
+        async with httpx.AsyncClient(timeout=120.0) as client:  # Increased timeout as in other similar views
+            ai_response = await client.post(ai_service_url, json=body)
+            ai_response.raise_for_status()  # Raise an exception for bad status codes
+
         generated_yaml = ai_response.json().get("output")
+        # yaml.safe_load is CPU-bound, generally okay to call directly in async.
+        # If it were extremely slow with huge YAMLs, consider sync_to_async.
         generated_document_json = yaml.safe_load(generated_yaml)
 
-        # Save the generated document
         unique_id = str(uuid.uuid4())
-        GeneratedDocument.objects.create(
+        # Use async ORM create
+        await GeneratedDocument.objects.acreate(
             resume=resume,
             unique_id=unique_id,
             json_content=generated_document_json,
             document_type=document_type,
-        )  # Return the unique id
+        )
 
         return Response({"document_uuid": unique_id}, status=status.HTTP_201_CREATED)
-    except requests.exceptions.RequestException as e:
+    except httpx.RequestError as e:  # Catch httpx specific network errors
+        logger.error(
+            f"AI service request failed for generate_document_bloks ({document_type}): {e}"
+        )
         return Response(
-            {"error": f"Error communicating with AI service: {e}"},
+            {"error": f"Error communicating with AI service: {str(e)}"},
             status=status.HTTP_503_SERVICE_UNAVAILABLE,
         )
-    except (yaml.YAMLError, AttributeError) as e:
+    except httpx.HTTPStatusError as e:  # Catch httpx specific HTTP errors (4xx, 5xx)
+        logger.error(
+            f"AI service HTTP error for generate_document_bloks ({document_type}): {e.response.status_code} - {e.response.text}"
+        )
         return Response(
-            {"error": f"Error processing AI service response: {e}"},
+            e.response.json() if e.response.content else {"error": "AI service error"},
+            status=e.response.status_code,
+        )
+    except (yaml.YAMLError, AttributeError, TypeError, KeyError) as e:  # Added TypeError, KeyError for robustness
+        logger.error(
+            f"Error processing AI service response (generate_document_bloks): {e}. YAML: {generated_yaml[:500] if 'generated_yaml' in locals() else 'N/A'}"
+        )
+        return Response(
+            {"error": f"Error processing AI service response: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+    except Exception as e:  # Catch any other unexpected errors
+        logger.exception(f"Unexpected error in generate_document_bloks after AI call: {e}")
+        return Response(
+            {"error": f"An unexpected error occurred: {str(e)}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
