@@ -46,9 +46,9 @@
 
         @page {
             size: A4;
-            margin: 0.4cm;
-            orphans: 3;
-            widows: 3;
+            margin: 0.8cm 0.4cm 0.4cm 0.4cm; /* Top, right, bottom, left */
+            orphans: 2;   /* At least 2 lines at bottom of page */
+            widows: 2;    /* At least 2 lines at top of next page */
         }
 
         body {
@@ -67,21 +67,64 @@
         .resume-container {
             display: flex;
             flex-direction: row;
-            min-height: calc(29.7cm - 3cm); /* A4 height minus margins */
+            /* Remove the fixed min-height to allow natural content flow */
+            /* min-height: calc(29.7cm - 3cm); */
         }
 
+        /* Reduce vertical spacing */
         .sidebar {
-            flex: 0 0 30%; /* Sidebar takes 30% width */
+            flex: 0 0 30%;
             background-color: var(--europass-light-blue);
-            padding: 1.5cm 1cm; /* Match page margin top/bottom */
+            padding: 1cm 1cm; /* Reduced from 1.5cm to 1cm */
             border-right: 1px solid var(--europass-border-grey);
             box-sizing: border-box;
         }
 
         .main-content {
-            flex: 1; /* Main content takes remaining space */
-            padding: 1.5cm 1cm; /* Match page margin top/bottom */
+            flex: 1;
+            padding: 1cm 1cm; /* Reduced from 1.5cm to 1cm */
             box-sizing: border-box;
+        }
+
+        /* Allow main content sections to break across pages */
+        .main-content section {
+            margin-bottom: 1.5em; /* Reduced from 2em */
+            page-break-inside: auto; /* Changed from avoid to auto */
+        }
+
+        /* Modify item styling to allow page breaks */
+        .item {
+            margin-bottom: 1em;  /* Reduced from 1.2em */
+            padding-left: 15px; 
+            margin-left: 10px;
+            page-break-inside: auto;  /* Changed from avoid to auto */
+            position: relative;
+        }
+        
+        /* Keep smaller items together */
+        .item.keep-together {
+            page-break-inside: avoid;
+        }
+
+        /* Ensure item headers stay with at least some content */
+        .item-header {
+            margin-bottom: 0.3em;  /* Reduced from 0.4em */
+            page-break-after: avoid;  /* Keep header with at least some content */
+        }
+
+        /* Prevent headings from being orphaned at bottom of page */
+        h2 {
+            page-break-after: avoid;
+        }
+        
+        /* Reduce spacing between elements */
+        .sidebar-section {
+            margin-bottom: 1.2em; /* Reduced from 1.5em */
+        }
+        
+        .item .description ul {
+            margin-top: 0.2em; /* Reduced from 0.3em */
+            margin-bottom: 0.4em; /* Reduced from 0.5em */
         }
 
         /* --- RTL Support --- */
@@ -195,8 +238,8 @@
             margin-top: 0;
         }
         .main-content section {
-            margin-bottom: 2em;
-            page-break-inside: avoid;
+            margin-bottom: 1.5em; /* Reduced from 2em */
+            page-break-inside: auto; /* Changed from avoid to auto */
         }
         .main-content section:last-child {
             margin-bottom: 0;
@@ -214,25 +257,24 @@
         }
 
         .item {
-            margin-bottom: 1.5em;
-            padding-left: 15px; /* Indent items slightly */
-            margin-left: 10px; /* Align with heading indent */
-            page-break-inside: avoid;
+            margin-bottom: 1em;  /* Reduced from 1.2em */
+            padding-left: 15px; 
+            margin-left: 10px;
+            page-break-inside: auto;  /* Changed from avoid to auto */
             position: relative;
         }
-        .item:last-child {
-            margin-bottom: 0;
+        
+        /* Keep smaller items together */
+        .item.keep-together {
+            page-break-inside: avoid;
         }
-        /* Optional: Add a subtle line for items if needed */
-        /* .item::before {
-            content: ''; position: absolute;
-            left: 0; top: 0.5em; bottom: 0;
-            width: 1px; background-color: var(--europass-border-grey);
-        } */
 
+        /* Ensure item headers stay with at least some content */
         .item-header {
-            margin-bottom: 0.4em;
+            margin-bottom: 0.3em;  /* Reduced from 0.4em */
+            page-break-after: avoid;  /* Keep header with at least some content */
         }
+
         .item-title {
             font-size: 1.1rem;
             font-weight: 700;
