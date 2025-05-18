@@ -1,0 +1,3 @@
+[submodule "careerflow"]
+	path = careerflow
+	url = https://github.com/MahmutAtia/proj0_front.git
