@@ -37,6 +37,7 @@ import uuid
 import io
 
 from .tasks import generate_resume_data_task  # Import the Celery task
+from asgiref.sync import async_to_sync
 
 # clerey
 from celery import states  # Import states
@@ -767,9 +768,8 @@ def edit_website_block(request):
 
 ############################# Documents ##############################
 
-
 @api_view(["POST"])
-async def generate_document_bloks(request):  # Changed to async def
+def generate_document_bloks(request):
     """
     API endpoint to generate a document using Bloks.
     """
@@ -784,13 +784,13 @@ async def generate_document_bloks(request):  # Changed to async def
         )
 
     try:
-        # Use async ORM methods
-        resume = await Resume.objects.aget(pk=resume_id)
+        # Use async ORM methods via async_to_sync
+        resume = async_to_sync(Resume.objects.aget)(pk=resume_id)
         about = resume.about  # Accessing attribute is fine
 
-        generated_document = await GeneratedDocument.objects.filter(
-            resume=resume, document_type=document_type
-        ).afirst()  # Use afirst() for async
+        generated_document = async_to_sync(
+            GeneratedDocument.objects.filter(resume=resume, document_type=document_type).afirst
+        )()
 
         if generated_document:
             return Response(
@@ -807,7 +807,7 @@ async def generate_document_bloks(request):  # Changed to async def
             f"Error checking for existing document or fetching resume data for resume_id {resume_id}: {e}"
         )
         return Response(
-            {"error": f"Error processing request: {str(e)}"},  # Use str(e) for safety
+            {"error": f"Error processing request: {str(e)}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
@@ -835,19 +835,17 @@ async def generate_document_bloks(request):  # Changed to async def
     }
 
     try:
-        # Use httpx for async HTTP request
-        async with httpx.AsyncClient(timeout=120.0) as client:  # Increased timeout as in other similar views
-            ai_response = await client.post(ai_service_url, json=body)
+        # Use httpx for sync HTTP request
+        with httpx.Client(timeout=120.0) as client:
+            ai_response = client.post(ai_service_url, json=body)
             ai_response.raise_for_status()  # Raise an exception for bad status codes
 
         generated_yaml = ai_response.json().get("output")
-        # yaml.safe_load is CPU-bound, generally okay to call directly in async.
-        # If it were extremely slow with huge YAMLs, consider sync_to_async.
         generated_document_json = yaml.safe_load(generated_yaml)
 
         unique_id = str(uuid.uuid4())
-        # Use async ORM create
-        await GeneratedDocument.objects.acreate(
+        # Use async ORM create via async_to_sync
+        async_to_sync(GeneratedDocument.objects.acreate)(
             resume=resume,
             unique_id=unique_id,
             json_content=generated_document_json,
@@ -885,8 +883,7 @@ async def generate_document_bloks(request):  # Changed to async def
             {"error": f"An unexpected error occurred: {str(e)}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
-
-
+        
 @api_view(["GET"])
 def get_document_bloks(request, document_id):
     """
