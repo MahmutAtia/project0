@@ -1,14 +1,19 @@
 services:
-  # chroma:
-  #   container_name: chroma_db
-  #   image: chromadb/chroma:0.5.4.dev16
-  #   volumes:
-  #     - ./index_data:/chroma/chroma   # This is the path to the index data for turboard docs
-  #   environment:
-  #     IS_PERSISTENT: 'TRUE'
-  #     # ALLOW_RESET: 'TRUE'
-  #   restart: always
-
+  nginx:
+    image: nginx:alpine
+    container_name: proj0_nginx
+    ports:
+      - "880:80"
+      - "443:443"  # For HTTPS
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/ssl:/etc/nginx/ssl  # If using SSL
+      - ./django/static:/usr/share/nginx/html/static  # For Django static files
+      - ./django/media:/usr/share/nginx/html/media  # For Django media files
+    depends_on:
+      - django
+      - careerflow
+    restart: always
   api:
     container_name: proj0_api
     build: ./api
@@ -30,7 +35,7 @@ services:
     container_name: proj0_django
     build: ./django
     image: proj0_django_image
-    command: gunicorn proj0.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers 4 --log-level info --reload
+    command: gunicorn proj0.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers 4 --log-level info
     volumes:
       - ./django:/app
       # - static_volume:/app/staticfiles
@@ -42,17 +47,24 @@ services:
     depends_on:
       - db
     environment:
-      - DEBUG=1
-      - DJANGO_ALLOWED_HOSTS=*
-      - DJANGO_SECRET_KEY=secret
-      - DJANGO_SETTINGS_MODULE=proj0.settings
-      - DJANGO_DB_NAME=postgres
-      - DJANGO_DB_USER=postgres
-      - DJANGO_DB_PASSWORD=postgres
-      - DJANGO_DB_HOST=db
-      - DJANGO_DB_PORT=5432
-      - PYTHONUNBUFFERED=1
-      - AI_SERVICE_URL=http://api:80/resumes/
+        DEBUG: '1'
+        DJANGO_ALLOWED_HOSTS: '*'
+        DJANGO_SECRET_KEY: 'your-secret-key'
+        DJANGO_SETTINGS_MODULE: 'proj0.settings'
+        DJANGO_DB_NAME: 'postgres'
+        DJANGO_DB_USER: 'postgres'
+        DJANGO_DB_PASSWORD: 'postgres'
+        DJANGO_DB_HOST: 'db'
+        DJANGO_DB_PORT: '5432'
+        EMAIL_HOST: 'smtp.example.com'
+        EMAIL_PORT: '587'
+        EMAIL_HOST_USER: 'your-email@example.com'
+        EMAIL_HOST_PASSWORD: 'your-email-password'
+        GOOGLE_CLIENT_ID: 'secret'
+        GOOGLE_CLIENT_SECRET: 'secret'
+        JWT_SECRET_KEY: 'your-jwt-secret-key'
+        JWT_ALGORITHM: 'HS256'
+        AI_SERVICE_URL: 'http://api:80/resumes/'
 
 
     restart: always
@@ -79,6 +91,53 @@ services:
     command: redis-server --appendonly yes  # Enable persistence
     restart: always
 
+
+
+
+  celery:
+    container_name: proj0_celery
+    build: ./django
+    image: proj0_django_image  # Reuse the Django image
+    command: celery -A proj0 worker -l info
+    volumes:
+      - ./django:/app
+    depends_on:
+      - db
+      - redis
+    environment:
+      - DEBUG=1 
+      - DJANGO_ALLOWED_HOSTS="localhost,127.0.0.1,django"
+      - DJANGO_SECRET_KEY=secret
+      - DJANGO_SETTINGS_MODULE=proj0.settings
+      - DJANGO_DB_NAME=postgres
+      - DJANGO_DB_USER=postgres
+      - DJANGO_DB_PASSWORD=postgres
+      - DJANGO_DB_HOST=db
+      - DJANGO_DB_PORT=5432
+      - PYTHONUNBUFFERED=1
+      - AI_SERVICE_URL=http://api:80/resumes/
+    restart: always
+  careerflow:
+    container_name: careerflow_frontend
+    build:
+      context: ./careerflow
+      args: # Pass build arguments
+        - NEXT_PUBLIC_BACKEND_URL=http://localhost:880
+        - NEXT_PUBLIC_API_URL=http://localhost:880
+    environment:
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - NEXT_PUBLIC_BACKEND_URL=http://localhost:880
+      - NEXT_PUBLIC_API_URL=http://localhost:880
+
+
+    image: careerflow_frontend_image
+    ports:  
+      - "3000:3000"
+    depends_on:
+      - api
+      - django
+    restart: always
 volumes:
   redis_data:  # Define volume for persistence
   postgres_data:  # Define volume for persistence
