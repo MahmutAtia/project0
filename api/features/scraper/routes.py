@@ -1,5 +1,6 @@
 import asyncio
-from fastapi import APIRouter, HTTPException, Query # Query is not strictly needed for POST body but can be for GET
+import functools # Import functools
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, HttpUrl, Field
 from typing import List, Optional, Dict, Any
 from jobspy import scrape_jobs # Assuming jobspy is installed and importable
@@ -8,15 +9,7 @@ from jobspy import scrape_jobs # Assuming jobspy is installed and importable
 class JobSourcingParams(BaseModel):
     search_term: Optional[str] = Field(default=None, description="General search term for jobs.")
     location: Optional[str] = Field(default=None, description="Location to search for jobs.")
-    google_search_term: Optional[str] = Field(default=None, description="Specific search term for Google Jobs. Overrides search_term for Google if provided.")
     country: Optional[str] = Field(default=None, description="Country for the job search (e.g., 'USA', 'UK', 'Egypt', 'Türkiye').")
-
-    # Backend-controlled or default parameters (not sent by frontend)
-    site_name: List[str] = Field(default=["google"], description="List of job sites to scrape.", exclude=True) # Exclude from request schema
-    results_wanted: int = Field(default=20, ge=1, le=100, description="Number of job results wanted.", exclude=True)
-    hours_old: Optional[int] = Field(default=168, ge=1, description="Filter jobs posted within the last x hours (e.g., 24 for last day, 168 for last week).", exclude=True)
-    country_indeed: Optional[str] = Field(default="USA", description="Country for Indeed searches.", exclude=True)
-    country_aware: Optional[bool] = Field(default=True, description="Whether the scraper should be country-aware.", exclude=True)
 
 
 class ScrapedJob(BaseModel):
@@ -33,11 +26,7 @@ class ScrapedJob(BaseModel):
     # job_type: Optional[str] = None
 
 # --- APIRouter ---
-router = APIRouter(
-    prefix="/scraper",
-    tags=["Job Scraper"],
-    responses={404: {"description": "Not found"}},
-)
+router = APIRouter()
 
 # --- Helper function to run blocking scrape_jobs in a thread ---
 async def run_scrape_jobs_async(params: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -47,8 +36,10 @@ async def run_scrape_jobs_async(params: Dict[str, Any]) -> List[Dict[str, Any]]:
     """
     loop = asyncio.get_event_loop()
     try:
-        # jobspy returns a pandas DataFrame, convert to list of dicts
-        df_jobs = await loop.run_in_executor(None, scrape_jobs, **params)
+        # Use functools.partial to pass keyword arguments to scrape_jobs
+        func_with_kwargs = functools.partial(scrape_jobs, **params)
+        df_jobs = await loop.run_in_executor(None, func_with_kwargs)
+
         if df_jobs is not None and not df_jobs.empty:
             return df_jobs.to_dict(orient='records')
         return []
@@ -77,23 +68,24 @@ async def get_and_scrape_jobs(
     - **is_remote**: Boolean indicating if the job is remote.
     """
     # Use backend defaults for parameters not sent by frontend
-    # The JobSourcingParams model now has these defaults
     scraping_params = {
-        "site_name": frontend_params.site_name, # Default from model
+        "site_name": ["google","indeed", "linkedin", "zip_recruiter"], # Default sites
         "search_term": frontend_params.search_term,
         "location": frontend_params.location,
-        "results_wanted": frontend_params.results_wanted, # Default from model
-        "hours_old": frontend_params.hours_old, # Default from model
-        "country_indeed": frontend_params.country_indeed, # Default from model
-        "google_search_term": frontend_params.google_search_term,
+        "results_wanted": 20, # Default results
+        "hours_old": 168, # Default hours_old (1 week)
+        "country_indeed": frontend_params.country if frontend_params.country else "USA", # Default for Indeed if country not specified
+        "google_search_term": f"{frontend_params.search_term} jobs near {frontend_params.location} since few days" ,
         "country": frontend_params.country,
-        "country_aware": frontend_params.country_aware, # Default from model
+        "country_aware": True, # Default country_aware
         # Add any other parameters from JobSourcingParams that scrape_jobs accepts
     }
-    # Filter out None values
-    scraping_params = {k: v for k, v in scraping_params.items() if v is not None}
+    # Filter out None values because scrape_jobs might not expect them for all args
+    # or might have its own internal defaults for None.
+    # It's generally safer to only pass arguments that have actual values.
+    final_scraping_params = {k: v for k, v in scraping_params.items() if v is not None}
 
-    scraped_data = await run_scrape_jobs_async(scraping_params)
+    scraped_data = await run_scrape_jobs_async(final_scraping_params)
 
     processed_jobs: List[ScrapedJob] = []
     for job_dict in scraped_data:
@@ -112,20 +104,22 @@ async def get_and_scrape_jobs(
             )
         )
     
-    if not processed_jobs:
+    if not processed_jobs and not scraped_data: # Check if scraped_data was also empty
         # You might want to return an empty list or a specific message
+        # If no jobs are found, it's often better to return an empty list (HTTP 200)
+        # than a 404, unless the query itself was invalid.
         # raise HTTPException(status_code=404, detail="No jobs found matching your criteria.")
         pass
 
+
     return processed_jobs
 
-# --- Example of how to include this router in your main FastAPI app ---
-# In your main.py or app.py:
+# Example of how to include this router in your main FastAPI app:
 # from fastapi import FastAPI
-# from api.features.scraper.routes import router as scraper_router
+# from api.features.scraper.routes import router as scraper_router # Adjust import path as needed
 #
 # app = FastAPI()
 #
-# app.include_router(scraper_router)
+# app.include_router(scraper_router) # The prefix="/scraper" is already in the router
 #
 # # To run: uvicorn main:app --reload

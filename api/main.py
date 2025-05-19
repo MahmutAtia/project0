@@ -10,6 +10,7 @@ from fastapi.middleware import Middleware
 
 # routers
 from features.creator.routes import router as creator_router
+from features.scraper.routes import router as scraper_router
 
 # create the fastapi app
 
@@ -32,3 +33,4 @@ app = FastAPI(
 # include the routers
 
 app.include_router(creator_router, prefix="/resumes", tags=["resumes"])
+app.include_router(scraper_router, prefix="/scraper", tags=["scraper"])
