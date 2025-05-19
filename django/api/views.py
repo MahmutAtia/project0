@@ -157,10 +157,11 @@ def generate_resume(request):
             description = generated_resume_data.get(
                 "description"
             )  # the description of the resume
-            icon = generated_resume_data.get("primeicon")  # the icon of the resume
-            other_docs = generated_resume_data.get(
-                "other_docs"
-            )  # a list of other documents
+            icon = generated_resume_data.get("fontawesome_icon")  # the icon of the resume
+            job_search_keywords = generated_resume_data.get(
+                "job_search_keywords"
+            )  # the job search keywords of the resume
+            
             resume_data = generated_resume_data.get("resume")  # the resume data
             about = generated_resume_data.get("about")  # the about of the resume
 
@@ -201,7 +202,7 @@ def generate_resume(request):
                 resume = Resume.objects.create(
                     user=request.user,
                     resume=resume_data,
-                    other_docs=other_docs,
+                    job_search_keywords=job_search_keywords,
                     is_default=is_default,
                     title=title,
                     about=about,
@@ -298,8 +299,8 @@ def generate_from_job_desc(request):
 
                 title = generated_resume_data.get("title")
                 description = generated_resume_data.get("description")
-                icon = generated_resume_data.get("primeicon")
-                other_docs = generated_resume_data.get("other_docs")
+                icon = generated_resume_data.get("fontawesome_icon")
+                job_search_keywords= generated_resume_data.get("job_search_keywords")
                 resume_data = generated_resume_data.get("resume")
                 about = generated_resume_data.get("about")
 
@@ -323,7 +324,7 @@ def generate_from_job_desc(request):
                     resume = Resume.objects.create(
                         user=request.user,
                         resume=resume_data,
-                        other_docs=other_docs,
+                        job_search_keywords=job_search_keywords,
                         is_default=is_default,
                         title=title,
                         about=about,
@@ -1203,7 +1204,6 @@ def ats_checker(request):
 
 
 ###### Saving Resume After AUTH ########
-# ... imports ...
 from rest_framework import permissions  # Import permissions
 from django.core.cache import cache  # Import cache
 
@@ -1260,13 +1260,12 @@ def save_generated_resume(request):
         # 3. Extract data (ensure keys match what's stored in cache)
         title = generated_data.get("title", "Generated Resume")
         description = generated_data.get("description", "")
-        icon = generated_data.get("primeicon", "")
+        icon = generated_data.get("fontawesome_icon", "")
         resume_data = generated_data.get("resume")  # Main resume content
         about = generated_data.get(
             "about_candidate", ""
         )  # Or "about" depending on task output
-        other_docs = generated_data.get("other_docs", {})  # If generated
-
+        job_search_keywords = generated_data.get("job_search_keywords", "")
         if not resume_data:
             logger.error(
                 f"Cached data for task {task_id} is missing 'resume' content for user {user.id}."
@@ -1281,7 +1280,7 @@ def save_generated_resume(request):
         new_resume = Resume.objects.create(
             user=user,
             resume=resume_data,
-            other_docs=other_docs,  # Add if generated
+            job_search_keywords=job_search_keywords,
             is_default=is_default,
             title=title,
             about=about,

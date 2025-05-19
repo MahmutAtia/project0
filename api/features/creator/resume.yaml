@@ -1,7 +1,8 @@
 title: Data Analyst Resume Collection # Title of the resume should be idenified by the candidate's experience or job title of interest 
-dicription: # very brief description of the resume few words
-primeicon: # icon name from primeicons library. an icon that represents the resume for example: pi pi-code ,pi pi-chart-line etc
+dicription: # very brief description of the resume few words maximum 100 characters
+fontawesome_icon: # icon name from fontawesome library. an icon that represents the resume.
 about_candidate: "" # maximum 100 words. A very personalized overview of the candidate and its resume and should contain personal information, career goals, and a brief summary of the resume.
+job_search_keywords: "" # here add a string to be used to search for jobs. For example: "Python,React","Data Analyst R ,Python,SQL" etc. A small string can be used to search for jobs in linkedIn, google, indeed, etc.
 resume:
   personal_information:
     name: ""
@@ -42,6 +43,10 @@ resume:
       name: ""
       proficiency: ""
       keywords: [] # type: array of strings
+  languages:
+    - id: 1 # Unique id for each language
+      language: ""
+      proficiency: ""
   projects:
     - id: 1 # Unique id for each project
       name: ""
@@ -69,10 +74,6 @@ resume:
       date_obtained: ""
       expiry_date: ""
       discription: ""
-  languages:
-    - id: 1 # Unique id for each language
-      language: ""
-      proficiency: ""
   interests: 
     - id: 1 # Unique id for each interest
       name: ""
@@ -175,19 +176,5 @@ resume:
       collaborators: []  # type: array of strings
       description: ""
   
-
-
-
-  
-
-
-
-
-
-
-
-
-
-
 
 

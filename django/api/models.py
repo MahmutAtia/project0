@@ -3,6 +3,31 @@ from django.db.models import JSONField
 import uuid
 
 
+DEFAULT_RESUME_SECTION_KEYS = [
+    "personal_information",
+    "summary",
+    "objective",
+    "experience",
+    "education",
+    "skills",
+    "languages",
+    "projects",
+    "awards_and_recognition",
+    "Volunteer_and_social_activities",
+    "certifications",
+    "interests",
+    "references",
+    "publications",
+    "courses",
+    "conferences",
+    "speaking_engagements",
+    "patents",
+    "professional_memberships",
+    "military_service",
+    "teaching_experience",
+    "research_experience"
+]
+
 class Resume(models.Model):
     user = models.ForeignKey(
         "auth.User", on_delete=models.CASCADE, related_name="resumes"
@@ -26,16 +51,42 @@ class Resume(models.Model):
     is_default = models.BooleanField(
         default=False, help_text="Whether this resume is the default resume"
     )
-    other_docs = models.JSONField(
+
+    job_search_keywords = models.CharField(
+        max_length=255,
         blank=True,
         null=True,
-        help_text="Any attachments related to this resume (e.g., cover letter)",
+        help_text="Keywords related to job search (e.g., 'Python, Django')",
+    )
+    sections_sort=  models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Ordered list of section keys for the resume structure."
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.user.username}'s Resume: {self.title or 'Unnamed'}"
+
+    def save(self, *args, **kwargs):
+        is_new = not self.pk  # Check if the instance is being created
+        
+        # Ensure only one resume is marked as default
+        if self.is_default:
+            # Set is_default=False for all other resumes of the same user
+            Resume.objects.filter(user=self.user, is_default=True).exclude(pk=self.pk).update(is_default=False)
+
+        # If this is the first resume for the user, set it as default
+        if is_new and not Resume.objects.filter(user=self.user).exists():
+            self.is_default = True
+        
+        if is_new:
+            # 1. Initialize sections_sort if it's empty or not provided
+            if not self.sections_sort: # Handles None or empty list from default=list
+                self.sections_sort = list(DEFAULT_RESUME_SECTION_KEYS) # Ensure it's a new list instance
+
+        super().save(*args, **kwargs)
 
 
 class GeneratedWebsite(models.Model):
