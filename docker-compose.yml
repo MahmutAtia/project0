@@ -12,7 +12,7 @@ services:
       - ./django/media:/usr/share/nginx/html/media  # For Django media files
     depends_on:
       - django
-      - careerflow
+      # - careerflow
     restart: always
   api:
     container_name: proj0_api
@@ -117,27 +117,28 @@ services:
       - PYTHONUNBUFFERED=1
       - AI_SERVICE_URL=http://api:80/resumes/
     restart: always
-  careerflow:
-    container_name: careerflow_frontend
-    build:
-      context: ./careerflow
-      args: # Pass build arguments
-        - NEXT_PUBLIC_BACKEND_URL=http://localhost:880
-        - NEXT_PUBLIC_API_URL=http://localhost:880
-    environment:
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-      - NEXT_PUBLIC_BACKEND_URL=http://localhost:880
-      - NEXT_PUBLIC_API_URL=http://localhost:880
+
+#   careerflow:
+#     container_name: careerflow_frontend
+#     build:
+#       context: ./careerflow
+#       args: # Pass build arguments
+#         - NEXT_PUBLIC_BACKEND_URL=http://localhost:880
+#         - NEXT_PUBLIC_API_URL=http://localhost:880
+#     environment:
+#       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+#       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+#       - NEXT_PUBLIC_BACKEND_URL=http://localhost:880
+#       - NEXT_PUBLIC_API_URL=http://localhost:880
 
 
-    image: careerflow_frontend_image
-    ports:  
-      - "3000:3000"
-    depends_on:
-      - api
-      - django
-    restart: always
+#     image: careerflow_frontend_image
+#     ports:  
+#       - "3000:3000"
+#     depends_on:
+#       - api
+#       - django
+#     restart: always
 volumes:
   redis_data:  # Define volume for persistence
   postgres_data:  # Define volume for persistence
