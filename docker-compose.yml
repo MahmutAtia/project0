@@ -1,3 +1,5 @@
+version: "3.8"
+
 services:
   nginx:
     image: nginx:alpine
@@ -14,6 +16,7 @@ services:
       - django
       # - careerflow
     restart: always
+
   api:
     container_name: proj0_api
     build: ./api
@@ -24,80 +27,79 @@ services:
       - ./api:/api
     # depends_on:
     #   - chroma
-
     environment:
-      DEBUG: '1'  # Set to '0' for production
+      # Variables sourced from root .env file or shell
+      - DEBUG=${DEBUG:-1} # Example with a default if not set
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - LANGCHAIN_TRACING_V2=${LANGCHAIN_TRACING_V2}
+      - LANGCHAIN_ENDPOINT=${LANGCHAIN_ENDPOINT}
+      - LANGCHAIN_API_KEY=${LANGCHAIN_API_KEY}
+      - LANGCHAIN_PROJECT=${LANGCHAIN_PROJECT}
+      # Add any other environment variables your 'api' service needs
     restart: always
-
-
 
   django:
     container_name: proj0_django
     build: ./django
     image: proj0_django_image
     command: gunicorn proj0.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers 4 --log-level info
+    
     volumes:
       - ./django:/app
-      # - static_volume:/app/staticfiles
-      # - media_volume:/app/mediafiles
-    expose: # Expose port only to linked services if Nginx will handle external
+    expose:
       - "8000"
-    ports: # Remove this if Nginx will handle external port mapping
+    ports:
      - 8000:8000
     depends_on:
       - db
     environment:
-        DEBUG: '1'
-        DJANGO_ALLOWED_HOSTS: '*'
-        DJANGO_SECRET_KEY: 'your-secret-key'
-        DJANGO_SETTINGS_MODULE: 'proj0.settings'
-        DJANGO_DB_NAME: 'postgres'
-        DJANGO_DB_USER: 'postgres'
-        DJANGO_DB_PASSWORD: 'postgres'
-        DJANGO_DB_HOST: 'db'
-        DJANGO_DB_PORT: '5432'
-        EMAIL_HOST: 'smtp.example.com'
-        EMAIL_PORT: '587'
-        EMAIL_HOST_USER: 'your-email@example.com'
-        EMAIL_HOST_PASSWORD: 'your-email-password'
-        GOOGLE_CLIENT_ID: 'secret'
-        GOOGLE_CLIENT_SECRET: 'secret'
-        JWT_SECRET_KEY: 'your-jwt-secret-key'
-        JWT_ALGORITHM: 'HS256'
-        AI_SERVICE_URL: 'http://api:80/resumes/'
-
-
+      # Variables sourced from root .env file or shell
+      - DEBUG=${DEBUG:-1}
+      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS:-\*} # Default to '*' if not set
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-proj0.settings}
+      - DJANGO_DB_NAME=${DJANGO_DB_NAME}
+      - DJANGO_DB_USER=${DJANGO_DB_USER}
+      - DJANGO_DB_PASSWORD=${DJANGO_DB_PASSWORD}
+      - DJANGO_DB_HOST=${DJANGO_DB_HOST:-db}
+      - DJANGO_DB_PORT=${DJANGO_DB_PORT:-5432}
+      - EMAIL_HOST=${EMAIL_HOST}
+      - EMAIL_PORT=${EMAIL_PORT}
+      - EMAIL_HOST_USER=${EMAIL_HOST_USER}
+      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID} # Assuming Django uses the same as careerflow
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET} # Assuming Django uses the same
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
+      - AI_SERVICE_URL=${AI_SERVICE_URL:-http://api:80/resumes/}
+      - PYTHONUNBUFFERED=${PYTHONUNBUFFERED:-1}
+      # Add any other environment variables your 'django' service needs
     restart: always
 
   db:
-    image: postgres:16  # Changed from postgres:13 to postgres:16
+    image: postgres:16
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: postgres
+      # Variables sourced from root .env file or shell, crucial for PostgreSQL initialization
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     ports:
       - "5432:5432"
-    volumes: # It's highly recommended to use a named volume to persist your data
+    volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: always
 
-
   redis:
-    image: redis:6.2-alpine  # More specific version, alpine for smaller size
-    # ports:
-    #   - "6379:6379"
+    image: redis:6.2-alpine
     volumes:
-      - redis_data:/data  # Add persistence
-    command: redis-server --appendonly yes  # Enable persistence
+      - redis_data:/data
+    command: redis-server --appendonly yes
     restart: always
-
-
-
 
   celery:
     container_name: proj0_celery
-    build: ./django
-    image: proj0_django_image  # Reuse the Django image
+    build: ./django # Assuming celery uses the same Django environment
+    image: proj0_django_image
     command: celery -A proj0 worker -l info
     volumes:
       - ./django:/app
@@ -105,40 +107,48 @@ services:
       - db
       - redis
     environment:
-      - DEBUG=1 
-      - DJANGO_ALLOWED_HOSTS="localhost,127.0.0.1,django"
-      - DJANGO_SECRET_KEY=secret
-      - DJANGO_SETTINGS_MODULE=proj0.settings
-      - DJANGO_DB_NAME=postgres
-      - DJANGO_DB_USER=postgres
-      - DJANGO_DB_PASSWORD=postgres
-      - DJANGO_DB_HOST=db
-      - DJANGO_DB_PORT=5432
-      - PYTHONUNBUFFERED=1
-      - AI_SERVICE_URL=http://api:80/resumes/
+      # Variables sourced from root .env file or shell, mirroring Django's needs
+      - DEBUG=${DEBUG:-1}
+      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS:-\*}
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-proj0.settings}
+      - DJANGO_DB_NAME=${DJANGO_DB_NAME}
+      - DJANGO_DB_USER=${DJANGO_DB_USER}
+      - DJANGO_DB_PASSWORD=${DJANGO_DB_PASSWORD}
+      - DJANGO_DB_HOST=${DJANGO_DB_HOST:-db}
+      - DJANGO_DB_PORT=${DJANGO_DB_PORT:-5432}
+      - PYTHONUNBUFFERED=${PYTHONUNBUFFERED:-1}
+      - AI_SERVICE_URL=${AI_SERVICE_URL:-http://api:80/resumes/}
+      # Add specific Celery variables if any, e.g., C_FORCE_ROOT, BROKER_URL (if not in Django settings)
+      # Ensure all variables needed by your Django settings for Celery are present
     restart: always
 
-#   careerflow:
-#     container_name: careerflow_frontend
-#     build:
-#       context: ./careerflow
-#       args: # Pass build arguments
-#         - NEXT_PUBLIC_BACKEND_URL=http://localhost:880
-#         - NEXT_PUBLIC_API_URL=http://localhost:880
-#     environment:
-#       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-#       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-#       - NEXT_PUBLIC_BACKEND_URL=http://localhost:880
-#       - NEXT_PUBLIC_API_URL=http://localhost:880
+  careerflow:
+    container_name: careerflow_frontend
+    build:
+      context: ./careerflow
+      args: # Build arguments are separate, for build-time configuration
+        - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL_BUILD:-http://localhost:880} # Example build arg
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL_BUILD:-http://localhost:880}       # Example build arg
+    environment:
+      # Runtime environment variables sourced from root .env file or shell
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL} # For runtime
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}         # For runtime
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - NODE_ENV=${NODE_ENV:-production}
+      - NEXT_TELEMETRY_DISABLED=${NEXT_TELEMETRY_DISABLED:-1}
+      # Add any other environment variables your 'careerflow' service needs at runtime
+    image: careerflow_frontend_image
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+      - django
+    restart: always
 
-
-#     image: careerflow_frontend_image
-#     ports:  
-#       - "3000:3000"
-#     depends_on:
-#       - api
-#       - django
-#     restart: always
 volumes:
-  redis_data:  # Define volume for persistence
-  postgres_data:  # Define volume for persistence
+  redis_data:
+  postgres_data:
