@@ -127,9 +127,6 @@ services:
     container_name: careerflow_frontend
     build:
       context: ./careerflow
-      args: # Build arguments are separate, for build-time configuration
-        - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL_BUILD:-http://localhost:880} # Example build arg
-        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL_BUILD:-http://localhost:880}       # Example build arg
     environment:
       # Runtime environment variables sourced from root .env file or shell
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
@@ -140,6 +137,7 @@ services:
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
       - NODE_ENV=${NODE_ENV:-production}
       - NEXT_TELEMETRY_DISABLED=${NEXT_TELEMETRY_DISABLED:-1}
+      - NEXTAUTH_BACKEND_URL=${NEXTAUTH_BACKEND_URL}
       # Add any other environment variables your 'careerflow' service needs at runtime
     image: careerflow_frontend_image
     ports:
