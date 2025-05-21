@@ -94,7 +94,23 @@ class ResumeListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Resume.objects.filter(user=self.request.user)
+        """
+        This view should return a list of all the resumes
+        for the currently authenticated user.
+        It also prefetches related documents and website
+        to optimize queries for the serializer's SerializerMethodFields.
+        """
+        user = self.request.user
+        return Resume.objects.filter(user=user).prefetch_related(
+            'generated_documents',  # Related name from Resume to GeneratedDocument
+            'personal_website'      # Related name from Resume to GeneratedWebsite (OneToOne)
+        )
+
+    def perform_create(self, serializer):
+        """
+        Associate the resume with the logged-in user upon creation.
+        """
+        serializer.save(user=self.request.user)
 
 
 class ResumeRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
