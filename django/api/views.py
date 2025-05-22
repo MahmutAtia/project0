@@ -112,44 +112,43 @@ class ResumeListCreateView(generics.ListCreateAPIView):
         """
         serializer.save(user=self.request.user)
 
-
 class ResumeRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ResumeSerializer
-    permission_classes = []
+    permission_classes = [permissions.IsAuthenticated]
     lookup_field = "pk"
-
+    
     def get_object(self):
-        session_key = str(self.kwargs.get("pk"))
-
-        if session_key.startswith("temp_resume_"):
-            cached_data = cache.get(session_key)
-
-            if cached_data:
-                try:
-                    resume_data = json.loads(cached_data)
-
-                    class TempResume:
-                        def __init__(self, data):
-                            self.name = f"Temporary Resume {session_key}"
-                            self.data = data["data"]
-                            # Fix timestamp conversion
-                            timestamp = float(data["created_at"])
-                            dt = datetime.fromtimestamp(timestamp)
-                            self.created_at = timezone.make_aware(dt)
-                            self.updated_at = self.created_at
-
-                    return TempResume(resume_data)
-                except (json.JSONDecodeError, KeyError) as e:
-                    raise Http404("Invalid cache data")
-
-            raise Http404("Temporary resume not found or expired")
-
-        if self.request.user.is_authenticated:
-            return Resume.objects.get(id=session_key, user=self.request.user)
-
-        raise Http404("Resume not found")
-
-
+        """
+        Returns the object the view is displaying.
+        Ensures the resume belongs to the current user.
+        """
+        resume_id = self.kwargs.get(self.lookup_field)
+        resume = get_object_or_404(Resume, pk=resume_id, user=self.request.user)
+        return resume
+        
+    def update(self, request, *args, **kwargs):
+        """
+        Update method that handles both PUT and PATCH.
+        Most commonly used to update just the resume JSON content.
+        """
+        try:
+            resume = self.get_object()
+            partial = request.method == 'PATCH'
+            
+            # Use the serializer to validate and update the data
+            serializer = self.get_serializer(resume, data=request.data, partial=partial)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+            
+            return Response(serializer.data)
+            
+        except Exception as e:
+            logger.exception(f"Error updating resume {self.kwargs.get(self.lookup_field)}: {e}")
+            return Response(
+                {"error": f"Error updating resume: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+            
 @api_view(["POST"])
 def generate_resume(request):
     # Test Redis connection
@@ -901,6 +900,9 @@ def generate_document_bloks(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
         
+        
+        
+        
 @api_view(["GET"])
 def get_document_bloks(request, document_id):
     """
@@ -1326,3 +1328,4 @@ def save_generated_resume(request):
             {"error": "An unexpected error occurred while saving the resume."},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+

@@ -32,8 +32,8 @@ class GeneratedDocumentSerializer(serializers.ModelSerializer):
 class ResumeSerializer(serializers.ModelSerializer):
     # user = serializers.ReadOnlyField(source='user.username') # Option 1: Display username
     user = serializers.PrimaryKeyRelatedField(read_only=True) # Option 2: Display user ID (default for FK)
-    generated_documents_data = serializers.SerializerMethodField() 
-    personal_website_uuid = serializers.SerializerMethodField()
+    generated_documents_data = serializers.SerializerMethodField(read_only=True) # New field 
+    personal_website_uuid = serializers.SerializerMethodField(read_only=True) # New field
 
     class Meta:
         model = Resume
