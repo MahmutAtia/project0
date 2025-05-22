@@ -60,6 +60,10 @@ The output should be in {language} language.
 
 Information  about candidate:
 {about_candidate}
+
+Personal information:
+{personal_info}
+
 Information about the job and the company:
 {other_info}
 
@@ -129,6 +133,10 @@ The output should be in {language} language.
 
 Information about candidate:
 {about_candidate}
+
+Personal information:
+{personal_info}
+
 Other information:
 {other_info}
 Yaml Output:"""
@@ -192,6 +200,10 @@ The output should be in {language} language.
 
 Information about the applicant:
 {about_candidate}
+
+Personal information about the applicant:
+{personal_info}
+
 Information about the program/scholarship/opportunity:
 {other_info}
 

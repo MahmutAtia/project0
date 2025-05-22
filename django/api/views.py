@@ -234,7 +234,6 @@ def generate_resume(request):
                 )
 
         except (json.JSONDecodeError, yaml.YAMLError) as e:
-            print(generated_resume_yaml)
             return Response(
                 {"error": f"Invalid data received from AI service: {e}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -803,6 +802,7 @@ def generate_document_bloks(request):
         # Use async ORM methods via async_to_sync
         resume = async_to_sync(Resume.objects.aget)(pk=resume_id)
         about = resume.about  # Accessing attribute is fine
+        personal_info = resume.resume.get("personal_information", {})
 
         generated_document = async_to_sync(
             GeneratedDocument.objects.filter(resume=resume, document_type=document_type).afirst
@@ -847,6 +847,8 @@ def generate_document_bloks(request):
             "other_info": other_info,
             "language": language,
             "about_candidate": about,
+            "personal_info": personal_info,
+            
         }
     }
 
