@@ -28,13 +28,13 @@ class BaseChain:
         self.output_parser = output_parser
         self.chain = None
 
-    def build_chain(self, prompt):
+    def build_chain(self, prompt, model="gemini-2.0-flash"):
         """
         Builds the chain of components, connecting inputs, prompt, language model, and output parser.
 
         Returns:
             Runnable: The constructed chain.
         """
-        llm = llm_with_alternatives
+        llm = llm_with_alternatives.with_config(configurable={"model": model})
         self.chain = self.input_chain | prompt | llm | self.output_parser
         return self.chain

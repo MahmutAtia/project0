@@ -1,12 +1,5 @@
 from langchain_core.prompts import PromptTemplate
 
-create_resume_website_template = """ """
-
-create_resume_website_prompt = PromptTemplate.from_template(
-    create_resume_website_template
-)
-
-
 create_resume_website_bloks_template = """You are a professional designer and frontend developer tasked with creating a personal portfolio website for a client based on their resume and preferences with a valid output format required.
 
 the resume information is provided below you may summarize or omit some information if it verbose, to make it more visually appealing and creative:

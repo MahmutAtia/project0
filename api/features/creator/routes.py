@@ -10,7 +10,6 @@ from .prompts import (
 )
 
 from .website_prompts import (
-    create_resume_website_prompt,
     create_resume_website_bloks_prompt,
     edit_website_block_prompt,
 )
@@ -76,26 +75,10 @@ add_routes(
     ],
 )
 
-add_routes(
-    router,
-    chain_instance.build_chain(create_resume_website_prompt),
-    path="/create_resume_website",
-    disabled_endpoints=[
-        "stream_events",
-        "stream_log",
-        "batch",
-        "playground",
-        "config_hashes",
-        "input_schema",
-        "output_schema",
-        "config_schema",
-        "token_feedback",
-    ],
-)
 
 add_routes(
     router,
-    chain_instance.build_chain(create_resume_website_bloks_prompt),
+    chain_instance.build_chain(create_resume_website_bloks_prompt, model="gemini-2.5-flash-preview-05-20"),
     path="/create_resume_website_bloks",
     disabled_endpoints=[
         "stream_events",
