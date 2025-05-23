@@ -138,6 +138,7 @@ services:
       - NODE_ENV=${NODE_ENV:-production}
       - NEXT_TELEMETRY_DISABLED=${NEXT_TELEMETRY_DISABLED:-1}
       - NEXTAUTH_BACKEND_URL=${NEXTAUTH_BACKEND_URL}
+      - NEXT_PUBLIC_AI_API_URL=${NEXT_PUBLIC_AI_API_URL:-http://api:80/resumes/}
       # Add any other environment variables your 'careerflow' service needs at runtime
     image: careerflow_frontend_image
     ports:

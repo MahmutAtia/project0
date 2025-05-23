@@ -19,6 +19,23 @@ FRONTEND_SUBDIR_NAME="careerflow" # Should be consistent with FRONTEND_PROJECT_D
 ENV_FILE=".env" # This .env file will be in the root  of BACKEND_PROJECT_DIR_NAME
 DOCKER_COMPOSE_FILE="docker-compose.yml"
 
+# --- Self-preservation logic ---
+SCRIPT_EXECUTING_PATH=$(readlink -f "$0")
+SCRIPT_EXECUTING_NAME=$(basename "$SCRIPT_EXECUTING_PATH")
+SCRIPT_EXECUTING_DIR=$(dirname "$SCRIPT_EXECUTING_PATH")
+TEMP_SCRIPT_COPY=""
+
+# Check if the script is running from the directory designated as BACKEND_PROJECT_DIR_NAME
+# and if BACKEND_PROJECT_DIR_NAME is set to "./" (current directory)
+# This means the script is in the root of the backend project.
+if [ "$(realpath "$SCRIPT_EXECUTING_DIR")" = "$(realpath "$PWD/$BACKEND_PROJECT_DIR_NAME")" ]; then
+  TEMP_SCRIPT_COPY="/tmp/${SCRIPT_EXECUTING_NAME}.$$_deploy_backup"
+  # print_info "Backing up running script '$SCRIPT_EXECUTING_NAME' to '$TEMP_SCRIPT_COPY'" # Optional: for debugging
+  cp "$SCRIPT_EXECUTING_PATH" "$TEMP_SCRIPT_COPY"
+  # Ensure cleanup on exit or interruption
+  trap 'if [ -n "$TEMP_SCRIPT_COPY" ] && [ -f "$TEMP_SCRIPT_COPY" ]; then rm -f "$TEMP_SCRIPT_COPY"; fi' EXIT HUP INT QUIT TERM
+fi
+
 # --- Helper Functions ---
 print_success() {
   echo -e "\033[0;32mSUCCESS: $1\033[0m"
@@ -87,13 +104,29 @@ if [ -f "$DOCKER_COMPOSE_FILE" ]; then # Check if docker-compose.yml exists as a
   fi
 
   print_info "Checking out and resetting backend branch '$BACKEND_BRANCH' to 'origin/$BACKEND_BRANCH'..."
-  git checkout -B "$BACKEND_BRANCH" "origin/$BACKEND_BRANCH"
+  # REMOVED: Temporarily staging './$SCRIPT_EXECUTING_NAME'
+  # if [ -n "$TEMP_SCRIPT_COPY" ] && [ -f "./$SCRIPT_EXECUTING_NAME" ]; then
+  #   print_info "Temporarily staging './$SCRIPT_EXECUTING_NAME' to allow checkout/reset."
+  #   git add "./$SCRIPT_EXECUTING_NAME"
+  # fi
+
+  # MODIFIED: Added -f (force) to checkout
+  git checkout -f -B "$BACKEND_BRANCH" "refs/remotes/origin/$BACKEND_BRANCH"
   if [ $? -ne 0 ]; then print_error "Failed to checkout/reset backend branch '$BACKEND_BRANCH' to 'origin/$BACKEND_BRANCH'."; exit 1; fi
   
-  git reset --hard "origin/$BACKEND_BRANCH"
+  git reset --hard "refs/remotes/origin/$BACKEND_BRANCH"
   if [ $? -ne 0 ]; then
     print_error "Failed to reset backend branch to 'origin/$BACKEND_BRANCH'."
     exit 1
+  fi
+
+  # Restore the original running script if it was backed up
+  if [ -n "$TEMP_SCRIPT_COPY" ] && [ -f "$TEMP_SCRIPT_COPY" ]; then
+    # print_info "Restoring the executed version of '$SCRIPT_EXECUTING_NAME' from backup (update path)." # Optional: for debugging
+    cp "$TEMP_SCRIPT_COPY" "./$SCRIPT_EXECUTING_NAME"
+    chmod +x "./$SCRIPT_EXECUTING_NAME"
+  elif [ -f "./$SCRIPT_EXECUTING_NAME" ]; then # Ensure script from repo is executable
+     chmod +x "./$SCRIPT_EXECUTING_NAME"
   fi
   print_success "Backend updated successfully."
 else
@@ -135,13 +168,26 @@ else
   fi
 
   print_info "Checking out and resetting backend to 'origin/$BACKEND_BRANCH'..."
-  git checkout -B "$BACKEND_BRANCH" "origin/$BACKEND_BRANCH"
+  # REMOVED: Temporarily staging './$SCRIPT_EXECUTING_NAME'
+  # if [ -n "$TEMP_SCRIPT_COPY" ] && [ -f "./$SCRIPT_EXECUTING_NAME" ]; then
+  #   print_info "Temporarily staging './$SCRIPT_EXECUTING_NAME' to allow checkout/reset."
+  #   git add "./$SCRIPT_EXECUTING_NAME"
+  # fi
+
+  # MODIFIED: Added -f (force) to checkout
+  git checkout -f -B "$BACKEND_BRANCH" "refs/remotes/origin/$BACKEND_BRANCH"
   if [ $? -ne 0 ]; then print_error "Failed to checkout/reset backend local branch '$BACKEND_BRANCH' to 'origin/$BACKEND_BRANCH'."; exit 1; fi
-  git reset --hard "origin/$BACKEND_BRANCH"
+  
+  git reset --hard "refs/remotes/origin/$BACKEND_BRANCH"
   if [ $? -ne 0 ]; then print_error "Failed to hard reset backend local branch '$BACKEND_BRANCH' to 'origin/$BACKEND_BRANCH'."; exit 1; fi
 
-  if [ -f "./deploy.sh" ]; then
-    chmod +x "./deploy.sh"
+  # Restore the original running script if it was backed up
+  if [ -n "$TEMP_SCRIPT_COPY" ] && [ -f "$TEMP_SCRIPT_COPY" ]; then
+    # print_info "Restoring the executed version of '$SCRIPT_EXECUTING_NAME' from backup (clone path)." # Optional: for debugging
+    cp "$TEMP_SCRIPT_COPY" "./$SCRIPT_EXECUTING_NAME"
+    chmod +x "./$SCRIPT_EXECUTING_NAME"
+  elif [ -f "./$SCRIPT_EXECUTING_NAME" ]; then # If script came from repo, ensure it's executable
+    chmod +x "./$SCRIPT_EXECUTING_NAME"
   fi
   print_success "Backend repository set up successfully in current directory."
 fi
@@ -175,10 +221,11 @@ if [ -d "$FRONTEND_FULL_PATH" ]; then
       fi
 
       print_info "Checking out and resetting frontend branch '$FRONTEND_BRANCH' to 'origin/$FRONTEND_BRANCH'..."
-      git checkout -B "$FRONTEND_BRANCH" "origin/$FRONTEND_BRANCH"
+      # Using -f for frontend too, for consistency, though less likely to be an issue here.
+      git checkout -f -B "$FRONTEND_BRANCH" "refs/remotes/origin/$FRONTEND_BRANCH"
       if [ $? -ne 0 ]; then print_error "Failed to checkout/reset frontend branch '$FRONTEND_BRANCH' to 'origin/$FRONTEND_BRANCH'."; exit 1; fi
       
-      git reset --hard "origin/$FRONTEND_BRANCH" # Ensures working directory is pristine
+      git reset --hard "refs/remotes/origin/$FRONTEND_BRANCH" # Ensures working directory is pristine
       if [ $? -ne 0 ]; then
         print_error "Failed to hard reset frontend branch '$FRONTEND_BRANCH'."
         exit 1
@@ -214,7 +261,6 @@ if [ "$NEEDS_CLONE" = true ]; then
 fi
 
 # 4. Setup .env file (in the root of BACKEND_PROJECT_DIR_NAME)
-# ... (rest of your script remains the same) ...
 if [ -f "$ENV_FILE" ]; then
   print_info ".env file already exists. Ensuring production settings are applied."
 else
