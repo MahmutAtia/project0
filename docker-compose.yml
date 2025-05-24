@@ -14,7 +14,7 @@ services:
       - ./django/media:/usr/share/nginx/html/media  # For Django media files
     depends_on:
       - django
-      # - careerflow
+      - careerflow
     restart: always
 
   api:
@@ -131,6 +131,8 @@ services:
         - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL}
         - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
         - NEXT_PUBLIC_AI_API_URL=${NEXT_PUBLIC_AI_API_URL}
+        - NEXT_PUBLIC_IPDATA_API_KEY=${NEXT_PUBLIC_IPDATA_API_KEY}
+        
     environment:
       # Runtime environment variables sourced from root .env file or shell
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
