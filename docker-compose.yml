@@ -127,6 +127,10 @@ services:
     container_name: careerflow_frontend
     build:
       context: ./careerflow
+      args:
+        - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL}
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+        - NEXT_PUBLIC_AI_API_URL=${NEXT_PUBLIC_AI_API_URL}
     environment:
       # Runtime environment variables sourced from root .env file or shell
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
