@@ -101,6 +101,19 @@ Do not output anything except the required format.
 Do not use file or image paths; all visuals must be created with HTML, CSS, and JS only.
 Do not use or create base64 images. Also do not create verbose SVG strings.
 **Ensure JavaScript code is correct and functional:** Verify all functions, especially theme toggle function or library imports, are correct and functional. Ensure all functions are called correctly and in the right order.
+DO NOT use infinite loops or recursive functions
+DO NOT use setInterval or setTimeout without clearInterval/clearTimeout
+DO NOT use document.write() or document.open()
+DO NOT use window.location redirects
+DO NOT use excessive DOM manipulation in loops
+DO NOT use heavy animations or continuous effects
+DO NOT use eval() or Function() constructor
+DO NOT create memory leaks with event listeners
+ENSURE all scripts have error handling (try-catch)
+ENSURE animations are lightweight and finite
+ENSURE scripts complete execution quickly (under 2 seconds)
+IF using event listeners, provide cleanup methods
+IF using animations, use CSS instead of JavaScript when possible
 
 personal portfolio website output"""
 
