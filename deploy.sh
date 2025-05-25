@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Deployment Script for CareerFlow (Handling Separate Frontend Repo)
+# Deployment Script for CareerFlow (Handling Separate Frontend Repo with SSL)
 
 # --- Configuration ---
 # Main Backend Repository (contains docker compose.yml, django, api, etc.)
@@ -30,7 +30,6 @@ TEMP_SCRIPT_COPY=""
 # This means the script is in the root of the backend project.
 if [ "$(realpath "$SCRIPT_EXECUTING_DIR")" = "$(realpath "$PWD/$BACKEND_PROJECT_DIR_NAME")" ]; then
   TEMP_SCRIPT_COPY="/tmp/${SCRIPT_EXECUTING_NAME}.$$_deploy_backup"
-  # print_info "Backing up running script '$SCRIPT_EXECUTING_NAME' to '$TEMP_SCRIPT_COPY'" # Optional: for debugging
   cp "$SCRIPT_EXECUTING_PATH" "$TEMP_SCRIPT_COPY"
   # Ensure cleanup on exit or interruption
   trap 'if [ -n "$TEMP_SCRIPT_COPY" ] && [ -f "$TEMP_SCRIPT_COPY" ]; then rm -f "$TEMP_SCRIPT_COPY"; fi' EXIT HUP INT QUIT TERM
@@ -70,24 +69,140 @@ update_env_var() {
   fi
 }
 
+# --- SSL Setup Functions ---
+setup_ssl() {
+    local domain=$1
+    local email=$2
+    
+    print_info "Setting up SSL certificates for domain: $domain"
+    
+    if [ "$domain" = "localhost" ]; then
+        # Create self-signed certificates for localhost
+        print_info "Creating self-signed certificates for localhost..."
+        mkdir -p nginx/ssl
+        
+        openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+            -keyout nginx/ssl/localhost.key \
+            -out nginx/ssl/localhost.crt \
+            -subj "/C=US/ST=Test/L=Test/O=Test/CN=localhost" \
+            -addext "subjectAltName=DNS:localhost,IP:127.0.0.1" 2>/dev/null || \
+        openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+            -keyout nginx/ssl/localhost.key \
+            -out nginx/ssl/localhost.crt \
+            -subj "/C=US/ST=Test/L=Test/O=Test/CN=localhost"
+            
+        print_success "Self-signed certificates created for localhost"
+        
+    else
+        # Try to get Let's Encrypt certificates
+        print_info "Attempting to get Let's Encrypt certificate for $domain..."
+        
+        # Start nginx first for webroot validation
+        print_info "Starting nginx for certificate validation..."
+        docker compose -f "$DOCKER_COMPOSE_FILE" up -d nginx
+        sleep 10
+        
+        # Check if domain is accessible
+        print_info "Checking domain accessibility..."
+        if curl -s --connect-timeout 10 "http://$domain:880/.well-known/acme-challenge/" > /dev/null 2>&1; then
+            print_info "Domain appears to be accessible, proceeding with Let's Encrypt..."
+            
+            # Try to get certificate without profile flag (for older docker-compose versions)
+            if docker compose -f "$DOCKER_COMPOSE_FILE" run --rm certbot certonly \
+                --webroot \
+                --webroot-path=/var/www/certbot \
+                --email "$email" \
+                --agree-tos \
+                --no-eff-email \
+                --non-interactive \
+                -d "$domain"; then
+                
+                print_success "Let's Encrypt certificate obtained for $domain"
+                
+                # Copy certificates to nginx ssl directory for easier access
+                mkdir -p nginx/ssl
+                docker run --rm \
+                    -v "$(pwd)/nginx/ssl:/ssl" \
+                    -v "$(docker compose -f "$DOCKER_COMPOSE_FILE" config --volumes | grep certbot-etc):$(docker compose -f "$DOCKER_COMPOSE_FILE" config --volumes | grep certbot-etc)" \
+                    alpine:latest sh -c "
+                        if [ -f /etc/letsencrypt/live/$domain/fullchain.pem ]; then
+                            cp /etc/letsencrypt/live/$domain/fullchain.pem /ssl/$domain.crt 2>/dev/null || true
+                            cp /etc/letsencrypt/live/$domain/privkey.pem /ssl/$domain.key 2>/dev/null || true
+                            echo 'Certificates copied successfully'
+                        else
+                            echo 'Let's Encrypt certificates not found'
+                            exit 1
+                        fi
+                    " 2>/dev/null
+                
+                if [ $? -eq 0 ]; then
+                    print_success "Let's Encrypt certificates copied to nginx/ssl/"
+                    return 0
+                fi
+            fi
+        else
+            print_warning "Domain $domain is not accessible from the internet. This is required for Let's Encrypt validation."
+        fi
+        
+        # Fallback to self-signed certificate
+        print_warning "Failed to get Let's Encrypt certificate. Creating self-signed certificate as fallback..."
+        mkdir -p nginx/ssl
+        openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+            -keyout "nginx/ssl/$domain.key" \
+            -out "nginx/ssl/$domain.crt" \
+            -subj "/C=US/ST=Test/L=Test/O=Test/CN=$domain"
+        print_info "Self-signed certificate created for $domain"
+    fi
+}
+
+setup_nginx_config() {
+    local domain=$1
+    
+    print_info "Configuring nginx for domain: $domain"
+    
+    # If template exists, use it with envsubst
+    if [ -f "nginx/conf.d/default.conf.template" ]; then
+        envsubst '${DOMAIN}' < nginx/conf.d/default.conf.template > nginx/conf.d/default.conf
+        print_success "Nginx configuration created from template"
+    else
+        # Update existing config with domain
+        if [ -f "nginx/conf.d/default.conf" ]; then
+            sed -i "s/server_name localhost.*/server_name $domain;/g" nginx/conf.d/default.conf
+            sed -i "s|ssl_certificate /etc/nginx/ssl/.*\.crt;|ssl_certificate /etc/nginx/ssl/$domain.crt;|g" nginx/conf.d/default.conf
+            sed -i "s|ssl_certificate_key /etc/nginx/ssl/.*\.key;|ssl_certificate_key /etc/nginx/ssl/$domain.key;|g" nginx/conf.d/default.conf
+            print_success "Nginx configuration updated"
+        fi
+    fi
+}
+
+detect_environment() {
+    # Simple environment detection
+    if [ -n "$SERVER_MODE" ] || [ -n "$CI" ] || [[ "$(hostname)" != *"localhost"* && "$(hostname)" != *"127.0.0.1"* ]]; then
+        echo "server"
+    else
+        echo "localhost"
+    fi
+}
+
 # --- Main Deployment Logic ---
 
+print_info "🚀 Starting CareerFlow deployment with SSL automation..."
+
 # 1. Check for necessary tools
-print_info "Checking for required tools (git, docker, docker compose)..."
+print_info "Checking for required tools (git, docker, docker compose, openssl)..."
 check_command "git"
 check_command "docker"
-# check_command "docker compose" # Assuming docker compose is part of docker now
+check_command "openssl"
 print_success "All required tools are installed."
 
 # 2. Clone or update Backend Repository
-# This script assumes it's run from the directory where the backend should reside.
-if [ -f "$DOCKER_COMPOSE_FILE" ]; then # Check if docker-compose.yml exists as a file
+if [ -f "$DOCKER_COMPOSE_FILE" ]; then
   print_info "Backend project already exists (found $DOCKER_COMPOSE_FILE). Updating..."
   if [ ! -d ".git" ]; then
     print_error ".git directory not found, but $DOCKER_COMPOSE_FILE exists. This script expects to manage the backend git repo. Please check your setup or remove $DOCKER_COMPOSE_FILE to re-initialize."
     exit 1
   fi
-  # Ensure remote 'origin' is correct
+  
   current_remote_url=$(git config --get remote.origin.url)
   if [ "$current_remote_url" != "$BACKEND_GIT_REPO_URL" ]; then
       print_warning "Backend remote 'origin' URL mismatch. Current: $current_remote_url, Expected: $BACKEND_GIT_REPO_URL. Updating remote."
@@ -96,21 +211,14 @@ if [ -f "$DOCKER_COMPOSE_FILE" ]; then # Check if docker-compose.yml exists as a
   fi
 
   print_info "Fetching latest changes for backend branch '$BACKEND_BRANCH'..."
-  git fetch --depth 1 origin "$BACKEND_BRANCH":"refs/remotes/origin/$BACKEND_BRANCH"
+  git fetch --depth 1 origin "+$BACKEND_BRANCH:refs/remotes/origin/$BACKEND_BRANCH"
    if [ $? -ne 0 ]; then
     print_warning "Shallow fetch for backend branch '$BACKEND_BRANCH' failed, attempting full fetch..."
-    git fetch origin "$BACKEND_BRANCH":"refs/remotes/origin/$BACKEND_BRANCH"
+    git fetch origin "+$BACKEND_BRANCH:refs/remotes/origin/$BACKEND_BRANCH"
     if [ $? -ne 0 ]; then print_error "Failed to fetch origin for backend branch '$BACKEND_BRANCH'."; exit 1; fi
   fi
 
   print_info "Checking out and resetting backend branch '$BACKEND_BRANCH' to 'origin/$BACKEND_BRANCH'..."
-  # REMOVED: Temporarily staging './$SCRIPT_EXECUTING_NAME'
-  # if [ -n "$TEMP_SCRIPT_COPY" ] && [ -f "./$SCRIPT_EXECUTING_NAME" ]; then
-  #   print_info "Temporarily staging './$SCRIPT_EXECUTING_NAME' to allow checkout/reset."
-  #   git add "./$SCRIPT_EXECUTING_NAME"
-  # fi
-
-  # MODIFIED: Added -f (force) to checkout
   git checkout -f -B "$BACKEND_BRANCH" "refs/remotes/origin/$BACKEND_BRANCH"
   if [ $? -ne 0 ]; then print_error "Failed to checkout/reset backend branch '$BACKEND_BRANCH' to 'origin/$BACKEND_BRANCH'."; exit 1; fi
   
@@ -122,15 +230,15 @@ if [ -f "$DOCKER_COMPOSE_FILE" ]; then # Check if docker-compose.yml exists as a
 
   # Restore the original running script if it was backed up
   if [ -n "$TEMP_SCRIPT_COPY" ] && [ -f "$TEMP_SCRIPT_COPY" ]; then
-    # print_info "Restoring the executed version of '$SCRIPT_EXECUTING_NAME' from backup (update path)." # Optional: for debugging
     cp "$TEMP_SCRIPT_COPY" "./$SCRIPT_EXECUTING_NAME"
     chmod +x "./$SCRIPT_EXECUTING_NAME"
-  elif [ -f "./$SCRIPT_EXECUTING_NAME" ]; then # Ensure script from repo is executable
+  elif [ -f "./$SCRIPT_EXECUTING_NAME" ]; then
      chmod +x "./$SCRIPT_EXECUTING_NAME"
   fi
   print_success "Backend updated successfully."
 else
   print_info "Backend project files (e.g., $DOCKER_COMPOSE_FILE) not found. Setting up repository in current directory ('$BACKEND_PROJECT_DIR_NAME')..."
+  
   if [ ! -d ".git" ]; then
     print_info "Initializing new Git repository in current directory..."
     if git init -b "$BACKEND_BRANCH" 2>/dev/null; then
@@ -160,21 +268,14 @@ else
   fi
 
   print_info "Fetching backend branch '$BACKEND_BRANCH' from $BACKEND_GIT_REPO_URL..."
-  git fetch --depth 1 origin "$BACKEND_BRANCH":"refs/remotes/origin/$BACKEND_BRANCH"
+  git fetch --depth 1 origin "+$BACKEND_BRANCH:refs/remotes/origin/$BACKEND_BRANCH"
   if [ $? -ne 0 ]; then
     print_warning "Shallow fetch failed for backend, attempting full fetch for branch '$BACKEND_BRANCH'..."
-    git fetch origin "$BACKEND_BRANCH":"refs/remotes/origin/$BACKEND_BRANCH"
+    git fetch origin "+$BACKEND_BRANCH:refs/remotes/origin/$BACKEND_BRANCH"
     if [ $? -ne 0 ]; then print_error "Full fetch also failed for backend branch '$BACKEND_BRANCH'."; exit 1; fi
   fi
 
   print_info "Checking out and resetting backend to 'origin/$BACKEND_BRANCH'..."
-  # REMOVED: Temporarily staging './$SCRIPT_EXECUTING_NAME'
-  # if [ -n "$TEMP_SCRIPT_COPY" ] && [ -f "./$SCRIPT_EXECUTING_NAME" ]; then
-  #   print_info "Temporarily staging './$SCRIPT_EXECUTING_NAME' to allow checkout/reset."
-  #   git add "./$SCRIPT_EXECUTING_NAME"
-  # fi
-
-  # MODIFIED: Added -f (force) to checkout
   git checkout -f -B "$BACKEND_BRANCH" "refs/remotes/origin/$BACKEND_BRANCH"
   if [ $? -ne 0 ]; then print_error "Failed to checkout/reset backend local branch '$BACKEND_BRANCH' to 'origin/$BACKEND_BRANCH'."; exit 1; fi
   
@@ -183,26 +284,23 @@ else
 
   # Restore the original running script if it was backed up
   if [ -n "$TEMP_SCRIPT_COPY" ] && [ -f "$TEMP_SCRIPT_COPY" ]; then
-    # print_info "Restoring the executed version of '$SCRIPT_EXECUTING_NAME' from backup (clone path)." # Optional: for debugging
     cp "$TEMP_SCRIPT_COPY" "./$SCRIPT_EXECUTING_NAME"
     chmod +x "./$SCRIPT_EXECUTING_NAME"
-  elif [ -f "./$SCRIPT_EXECUTING_NAME" ]; then # If script came from repo, ensure it's executable
+  elif [ -f "./$SCRIPT_EXECUTING_NAME" ]; then
     chmod +x "./$SCRIPT_EXECUTING_NAME"
   fi
   print_success "Backend repository set up successfully in current directory."
 fi
-# At this point, we are in the root of the backend project.
 
 # 3. Clone or update Frontend Repository
-FRONTEND_FULL_PATH="${BACKEND_PROJECT_DIR_NAME%/}/${FRONTEND_PROJECT_DIR_NAME}" # e.g., ./careerflow
+FRONTEND_FULL_PATH="${BACKEND_PROJECT_DIR_NAME%/}/${FRONTEND_PROJECT_DIR_NAME}"
 NEEDS_CLONE=false
 
 if [ -d "$FRONTEND_FULL_PATH" ]; then
   print_info "Frontend project directory '$FRONTEND_FULL_PATH' already exists. Checking status..."
-  # Check for .git directory *inside* FRONTEND_FULL_PATH
   if [ -d "${FRONTEND_FULL_PATH}/.git" ]; then
     print_info "Found .git directory in '$FRONTEND_FULL_PATH'. Attempting update..."
-    ( # Start a subshell to manage cd and isolate git commands for frontend
+    ( 
       cd "$FRONTEND_FULL_PATH" || { print_error "Could not cd to '$FRONTEND_FULL_PATH'."; exit 1; }
 
       current_frontend_remote_url=$(git config --get remote.origin.url)
@@ -213,19 +311,18 @@ if [ -d "$FRONTEND_FULL_PATH" ]; then
       fi
 
       print_info "Fetching latest for frontend branch '$FRONTEND_BRANCH' from remote 'origin'..."
-      git fetch --depth 1 origin "$FRONTEND_BRANCH":"refs/remotes/origin/$FRONTEND_BRANCH"
+      git fetch --depth 1 origin "+$FRONTEND_BRANCH:refs/remotes/origin/$FRONTEND_BRANCH"
       if [ $? -ne 0 ]; then
           print_warning "Shallow fetch for frontend branch '$FRONTEND_BRANCH' failed, attempting full fetch..."
-          git fetch origin "$FRONTEND_BRANCH":"refs/remotes/origin/$FRONTEND_BRANCH"
+          git fetch origin "+$FRONTEND_BRANCH:refs/remotes/origin/$FRONTEND_BRANCH"
           if [ $? -ne 0 ]; then print_error "Failed to fetch origin for frontend branch '$FRONTEND_BRANCH'."; exit 1; fi
       fi
 
       print_info "Checking out and resetting frontend branch '$FRONTEND_BRANCH' to 'origin/$FRONTEND_BRANCH'..."
-      # Using -f for frontend too, for consistency, though less likely to be an issue here.
       git checkout -f -B "$FRONTEND_BRANCH" "refs/remotes/origin/$FRONTEND_BRANCH"
       if [ $? -ne 0 ]; then print_error "Failed to checkout/reset frontend branch '$FRONTEND_BRANCH' to 'origin/$FRONTEND_BRANCH'."; exit 1; fi
       
-      git reset --hard "refs/remotes/origin/$FRONTEND_BRANCH" # Ensures working directory is pristine
+      git reset --hard "refs/remotes/origin/$FRONTEND_BRANCH"
       if [ $? -ne 0 ]; then
         print_error "Failed to hard reset frontend branch '$FRONTEND_BRANCH'."
         exit 1
@@ -260,26 +357,72 @@ if [ "$NEEDS_CLONE" = true ]; then
   print_success "Frontend repository cloned successfully into $FRONTEND_FULL_PATH."
 fi
 
-# 4. Setup .env file (in the root of BACKEND_PROJECT_DIR_NAME)
+# 4. Environment Detection and Configuration
+ENV_TYPE=$(detect_environment)
+print_info "Environment detected: $ENV_TYPE"
+
 if [ -f "$ENV_FILE" ]; then
   print_info ".env file already exists. Ensuring production settings are applied."
 else
   print_info "Creating .env file..."
   touch "$ENV_FILE"
   print_warning "A new .env file has been created. Please ensure all necessary production variables are set."
-  print_warning "You will be prompted for some essential variables if they are not found."
 fi
 
-print_info "Configuring production environment variables in .env..."
+print_info "Configuring environment variables for $ENV_TYPE environment..."
+
+if [ "$ENV_TYPE" = "server" ]; then
+    # Server mode
+    if [ -z "$DOMAIN" ]; then
+        read -rp "Enter your domain name (e.g., srv658540.hstgr.cloud): " DOMAIN
+    fi
+    if [ -z "$CERTBOT_EMAIL" ]; then
+        read -rp "Enter email for SSL certificates: " CERTBOT_EMAIL
+    fi
+    
+    update_env_var "DOMAIN" "$DOMAIN" "$ENV_FILE"
+    update_env_var "CERTBOT_EMAIL" "$CERTBOT_EMAIL" "$ENV_FILE"
+    
+    # Use HTTPS URLs for production
+    update_env_var "NEXT_PUBLIC_BACKEND_URL" "https://${DOMAIN}:8443" "$ENV_FILE"
+    update_env_var "NEXT_PUBLIC_API_URL" "https://${DOMAIN}:8443/api" "$ENV_FILE"
+    update_env_var "NEXT_PUBLIC_AI_API_URL" "https://${DOMAIN}:8443/ai-api" "$ENV_FILE"
+    update_env_var "NEXTAUTH_URL" "https://${DOMAIN}:8443" "$ENV_FILE"
+    update_env_var "NEXTAUTH_BACKEND_URL" "https://${DOMAIN}:8443" "$ENV_FILE"
+    
+    print_info "Server mode configured for domain: $DOMAIN"
+    
+else
+    # Localhost mode
+    DOMAIN="localhost"
+    CERTBOT_EMAIL="admin@localhost"
+    
+    update_env_var "DOMAIN" "$DOMAIN" "$ENV_FILE"
+    update_env_var "CERTBOT_EMAIL" "$CERTBOT_EMAIL" "$ENV_FILE"
+    
+    # Use HTTP URLs for localhost (port 880)
+    update_env_var "NEXT_PUBLIC_BACKEND_URL" "http://localhost:880" "$ENV_FILE"
+    update_env_var "NEXT_PUBLIC_API_URL" "http://localhost:880/api" "$ENV_FILE"
+    update_env_var "NEXT_PUBLIC_AI_API_URL" "http://localhost:880/ai-api" "$ENV_FILE"
+    update_env_var "NEXTAUTH_URL" "http://localhost:880" "$ENV_FILE"
+    update_env_var "NEXTAUTH_BACKEND_URL" "http://localhost:880" "$ENV_FILE"
+    
+    print_info "Localhost mode configured - using HTTP on port 880"
+fi
+
+# Set common variables
 update_env_var "NODE_ENV" "production" "$ENV_FILE"
 update_env_var "DEBUG" "0" "$ENV_FILE"
 update_env_var "PYTHONUNBUFFERED" "1" "$ENV_FILE"
 
+# Critical variables validation
 critical_vars=(
   "DJANGO_SECRET_KEY" "POSTGRES_USER" "POSTGRES_PASSWORD" "POSTGRES_DB"
-  "NEXTAUTH_SECRET" "NEXTAUTH_URL" "GOOGLE_CLIENT_ID" "GOOGLE_CLIENT_SECRET"
+  "NEXTAUTH_SECRET" "GOOGLE_CLIENT_ID" "GOOGLE_CLIENT_SECRET"
   "GOOGLE_API_KEY" "LANGCHAIN_API_KEY" "EMAIL_HOST_PASSWORD"
 )
+
+print_info "Checking critical environment variables..."
 for var in "${critical_vars[@]}"; do
   if ! grep -q "^${var}=" "$ENV_FILE"; then
     read -rp "Enter value for ${var}: " value
@@ -291,16 +434,20 @@ for var in "${critical_vars[@]}"; do
   fi
 done
 
-print_info "Please review the $ENV_FILE and ensure all other necessary production variables are correctly set."
-read -p "Press [Enter] to continue after reviewing/editing the $ENV_FILE file..."
+# 5. Setup SSL and Nginx
+setup_nginx_config "$DOMAIN"
+setup_ssl "$DOMAIN" "$CERTBOT_EMAIL"
 
-# 5. Build Docker images
+# 6. Build Docker images
 print_info "Building Docker images (this may take some time)..."
 docker compose -f "$DOCKER_COMPOSE_FILE" build
-if [ $? -ne 0 ]; then print_error "Docker build failed."; exit 1; fi
+if [ $? -ne 0 ]; then 
+    print_error "Docker build failed."
+    exit 1
+fi
 print_success "Docker images built successfully."
 
-# 6. Run Django Migrations
+# 7. Database setup
 print_info "Ensuring database service is up for migrations..."
 docker compose -f "$DOCKER_COMPOSE_FILE" up -d db
 print_info "Waiting for database to initialize (15 seconds)..."
@@ -317,11 +464,28 @@ docker compose -f "$DOCKER_COMPOSE_FILE" run --rm django python manage.py migrat
 if [ $? -ne 0 ]; then print_error "Django migrate failed."; exit 1; fi
 print_success "Django migrations completed successfully."
 
-# 7. Start all services in detached mode
+# 8. Start all services
 print_info "Starting all services..."
 docker compose -f "$DOCKER_COMPOSE_FILE" up -d
 if [ $? -ne 0 ]; then print_error "Failed to start services with docker compose."; exit 1; fi
 
-print_success "Deployment completed successfully!"
-print_info "Your application should be accessible shortly."
+# 9. Setup auto-renewal for production (simplified without profile)
+if [ "$DOMAIN" != "localhost" ]; then
+    print_info "Setting up automatic SSL renewal..."
+    (crontab -l 2>/dev/null; echo "0 2 * * * cd $(pwd) && docker compose run --rm certbot renew --quiet && docker compose restart nginx") | crontab -
+    print_success "SSL auto-renewal configured (runs daily at 2 AM)"
+fi
+
+# 10. Final status
+print_success "🎉 Deployment completed successfully!"
+print_info "Your application is accessible at:"
+if [ "$DOMAIN" = "localhost" ]; then
+    print_info "  📱 HTTP:  http://localhost:880"
+    print_info "  🔒 HTTPS: https://localhost:8443 (accept certificate warning)"
+else
+    print_info "  📱 HTTP:  http://$DOMAIN:880"
+    print_info "  🔒 HTTPS: https://$DOMAIN:8443"
+fi
+
+print_info "Service status:"
 docker compose -f "$DOCKER_COMPOSE_FILE" ps
