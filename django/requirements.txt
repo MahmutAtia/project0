@@ -21,3 +21,4 @@ gunicorn
 celery
 pdf2docx
 weasyprint
+django-payments

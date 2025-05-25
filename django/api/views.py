@@ -46,6 +46,11 @@ from celery.result import AsyncResult
 import httpx  # Add httpx for async requests
 from asgiref.sync import sync_to_async  # For wrapping sync code if needed
 
+from rest_framework import permissions
+from django.core.cache import cache
+
+from plans.decorators import require_feature
+
 ORDER_MAP = {
     "resume": [
         "personal_information",
@@ -150,6 +155,7 @@ class ResumeRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
             )
             
 @api_view(["POST"])
+@require_feature('resume_generation')
 def generate_resume(request):
     # Test Redis connection
     try:
@@ -243,6 +249,7 @@ def generate_resume(request):
 
 
 @api_view(["POST"])
+@require_feature('resume_section_edit') 
 def generate_resume_section(request):
     input_data = request.data
     prompt, section_data = input_data.get("prompt"), input_data.get("sectionData")
@@ -276,6 +283,7 @@ def generate_resume_section(request):
 
 
 @api_view(["POST"])
+@require_feature('resume_generation')  # Add this decorator
 def generate_from_job_desc(request):
     try:
 
@@ -367,6 +375,7 @@ def generate_from_job_desc(request):
 
 
 @api_view(["POST"])
+@require_feature('pdf_generation')
 def generate_pdf(request):
     """
     API endpoint to trigger background PDF generation.
@@ -491,6 +500,7 @@ def get_pdf_generation_status(request, task_id):
 
 
 @api_view(["POST"])
+@require_feature('website_generation') 
 def generate_personal_website(request):
     """
     API endpoint to generate and save a personal website.
@@ -577,6 +587,7 @@ def generate_personal_website(request):
 
 
 @api_view(["POST"])
+@require_feature('website_generation')  # Add this decorator
 def generate_personal_website_bloks(request):
     """
     API endpoint to generate and save a personal website using Bloks.
@@ -719,6 +730,7 @@ def update_website_yaml(request, unique_id):
 
 
 @api_view(["POST"])
+@require_feature('website_generation')  # Add this decorator
 def edit_website_block(request):
     data = json.loads(request.body)
     resume_id = data.get("resumeId")
@@ -784,6 +796,7 @@ def edit_website_block(request):
 ############################# Documents ##############################
 
 @api_view(["POST"])
+@require_feature('document_generation')  # Add this decorator
 def generate_document_bloks(request):
     """
     API endpoint to generate a document using Bloks.
@@ -927,6 +940,7 @@ def get_document_bloks(request, document_id):
 
 
 @api_view(["POST"])
+@require_feature('resume_section_edit')  # Add this decorator
 def edit_document_blok(request):
     input_data = request.data
     prompt, section_data, document_type = (
@@ -1083,6 +1097,7 @@ logger = logging.getLogger(__name__)  # Setup logger for the view
 
 
 @api_view(["POST"])
+@require_feature('ats_checker')  # Add this decorator
 def ats_checker(request):
     """
     Checks resume against a job description using an ATS service.
@@ -1224,10 +1239,6 @@ def ats_checker(request):
 
 
 ###### Saving Resume After AUTH ########
-from rest_framework import permissions  # Import permissions
-from django.core.cache import cache  # Import cache
-
-# ... other views ...
 
 
 @api_view(["POST"])

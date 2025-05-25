@@ -56,10 +56,15 @@ INSTALLED_APPS = [
     "dj_rest_auth",
     "dj_rest_auth.registration",
     "drf_yasg",
+    
+    # third-party apps
+        'payments',
+
+
     # custom apps
     "api",
     "accounts",
-]
+    'plans',]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -323,3 +328,20 @@ CELERY_RESULT_EXPIRES = 3600  # Results expire after 1 hour
 
 # Rate limiting for tasks
 CELERY_TASK_DEFAULT_RATE_LIMIT = '10/m'  # Default to max 10 tasks per minute
+
+
+# Payment settings
+PAYMENT_HOST = 'localhost:8000'  # Your domain
+PAYMENT_USES_SSL = False  # Set to True in production
+PAYMENT_MODEL = 'plans.PlanPayment'
+# Payment variants (providers)
+PAYMENT_VARIANTS = {
+    'default': ('payments.dummy.DummyProvider', {}),  # For testing
+    
+    'paypal': ('payments.paypal.PaypalProvider', {
+        'client_id': 'your_paypal_client_id',
+        'secret': 'your_paypal_secret',
+        'endpoint': 'https://api.sandbox.paypal.com',  # sandbox for testing
+    }),
+}
+
