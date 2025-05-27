@@ -447,6 +447,225 @@
            </section>
            {% endif %}
 
+          {% if certifications %}
+          <section class="resume-section certifications-section">
+               <h2><i class="fas fa-certificate"></i> Certifications</h2>
+               {% for cert in certifications %}
+               <article class="item">
+                   <div class="item-header">
+                       <div class="item-title-org">
+                            {% if cert.name %}<span class="title">{{ cert.name }}</span>{% endif %}
+                            {% if cert.issuing_authority %}<span class="organization">{{ cert.issuing_authority }}</span>{% endif %}
+                       </div>
+                       <div class="item-date-location">
+                           {% if cert.date_obtained %}
+                           <span class="date">{{ cert.date_obtained }}{% if cert.expiry_date %} - {{ cert.expiry_date }}{% endif %}</span>
+                           {% endif %}
+                       </div>
+                   </div>
+                   {% if cert.description %}
+                        <div class="description"><p>{{ cert.description }}</p></div>
+                   {% endif %}
+               </article>
+               {% endfor %}
+           </section>
+           {% endif %}
+
+          {% if awards_and_recognition %}
+          <section class="resume-section awards-section">
+               <h2><i class="fas fa-trophy"></i> Awards & Recognition</h2>
+               {% for award in awards_and_recognition %}
+               <article class="item">
+                   <div class="item-header">
+                       <div class="item-title-org">
+                            {% if award.title %}<span class="title">{{ award.title }}</span>{% endif %}
+                            {% if award.issuing_organization %}<span class="organization">{{ award.issuing_organization }}</span>{% endif %}
+                       </div>
+                       <div class="item-date-location">
+                           {% if award.date_received %}
+                           <span class="date">{{ award.date_received }}</span>
+                           {% endif %}
+                       </div>
+                   </div>
+                   {% if award.description %}
+                        <div class="description"><p>{{ award.description }}</p></div>
+                   {% endif %}
+               </article>
+               {% endfor %}
+           </section>
+           {% endif %}
+
+          {% if publications %}
+          <section class="resume-section publications-section">
+               <h2><i class="fas fa-book"></i> Publications</h2>
+               {% for pub in publications %}
+               <article class="item">
+                   <div class="item-header">
+                       <div class="item-title-org">
+                            {% if pub.title %}<span class="title">{{ pub.title }}</span>{% endif %}
+                            {% if pub.publisher %}<span class="organization">{{ pub.publisher }}</span>{% endif %}
+                       </div>
+                       <div class="item-date-location">
+                           {% if pub.publication_date %}
+                           <span class="date">{{ pub.publication_date }}</span>
+                           {% endif %}
+                       </div>
+                   </div>
+                   {% if pub.authors %}
+                        <div class="description">
+                            <p><strong>Authors:</strong> {{ pub.authors | join(', ') }}</p>
+                        </div>
+                   {% endif %}
+                   {% if pub.description %}
+                        <div class="description"><p>{{ pub.description }}</p></div>
+                   {% endif %}
+                   {% if pub.link %}
+                        <div class="description" style="font-size: 0.85em;">
+                            <p><i class="fas fa-link"></i> <a href="{{ pub.link }}" target="_blank">View Publication</a></p>
+                        </div>
+                   {% endif %}
+               </article>
+               {% endfor %}
+           </section>
+           {% endif %}
+
+          {% if courses %}
+          <section class="resume-section courses-section">
+               <h2><i class="fas fa-chalkboard-teacher"></i> Relevant Courses</h2>
+               {% for course in courses %}
+               <article class="item">
+                   <div class="item-header">
+                       <div class="item-title-org">
+                            {% if course.title %}<span class="title">{{ course.title }}</span>{% endif %}
+                            {% if course.institution %}<span class="organization">{{ course.institution }}</span>{% endif %}
+                       </div>
+                       <div class="item-date-location">
+                           {% if course.completion_date %}
+                           <span class="date">{{ course.completion_date }}</span>
+                           {% endif %}
+                       </div>
+                   </div>
+                   {% if course.description %}
+                        <div class="description"><p>{{ course.description }}</p></div>
+                   {% endif %}
+                   {% if course.link %}
+                        <div class="description" style="font-size: 0.85em;">
+                            <p><i class="fas fa-link"></i> <a href="{{ course.link }}" target="_blank">Course Link</a></p>
+                        </div>
+                   {% endif %}
+               </article>
+               {% endfor %}
+           </section>
+           {% endif %}
+          {% if languages %}
+          <section class="resume-section languages-section">
+               <h2><i class="fas fa-language"></i> Languages</h2>
+               <p>
+                   {% for lang in languages %}
+                   {{ lang.language }}{% if lang.proficiency %} ({{ lang.proficiency }}){% endif %}{% if not loop.last %}, {% endif %}
+                   {% endfor %}
+               </p>
+           </section>
+           {% endif %}
+
+          {% if interests %}
+          <section class="resume-section interests-section">
+               <h2><i class="fas fa-heart"></i> Interests</h2>
+               <p>
+                   {% for interest in interests %}
+                   {% if interest.keywords %}
+                       {% for keyword in interest.keywords %}{{ keyword }}{% if not loop.last %}, {% endif %}{% endfor %}
+                   {% elif interest.name %}
+                       {{ interest.name }}
+                   {% endif %}
+                   {% if not loop.last and (interest.keywords or interest.name) %}, {% endif %}
+                   {% endfor %}
+               </p>
+           </section>
+           {% endif %}
+
+          {% if professional_memberships %}
+          <section class="resume-section memberships-section">
+               <h2><i class="fas fa-users"></i> Professional Memberships</h2>
+               {% for membership in professional_memberships %}
+               <article class="item">
+                   <div class="item-header">
+                       <div class="item-title-org">
+                            {% if membership.role %}<span class="title">{{ membership.role }}</span>{% endif %}
+                            {% if membership.organization %}<span class="organization">{{ membership.organization }}</span>{% endif %}
+                       </div>
+                       <div class="item-date-location">
+                           {% if membership.start_date or membership.end_date %}
+                           <span class="date">{{ membership.start_date }}{% if membership.start_date and membership.end_date %} – {% endif %}{{ membership.end_date | default('Present') }}</span>
+                           {% endif %}
+                       </div>
+                   </div>
+                   {% if membership.description %}
+                        <div class="description"><p>{{ membership.description }}</p></div>
+                   {% endif %}
+               </article>
+               {% endfor %}
+           </section>
+           {% endif %}
+
+          {% if conferences %}
+          <section class="resume-section conferences-section">
+               <h2><i class="fas fa-users"></i> Conferences</h2>
+               {% for conf in conferences %}
+               <article class="item">
+                   <div class="item-header">
+                       <div class="item-title-org">
+                            {% if conf.name %}<span class="title">{{ conf.name }}</span>{% endif %}
+                       </div>
+                       <div class="item-date-location">
+                           {% if conf.date %}
+                           <span class="date">{{ conf.date }}</span>
+                           {% endif %}
+                           {% if conf.location %}<span class="location"> | {{ conf.location }}</span>{% endif %}
+                       </div>
+                   </div>
+                   {% if conf.description %}
+                        <div class="description"><p>{{ conf.description }}</p></div>
+                   {% endif %}
+                   {% if conf.link %}
+                        <div class="description" style="font-size: 0.85em;">
+                            <p><i class="fas fa-link"></i> <a href="{{ conf.link }}" target="_blank">Conference Link</a></p>
+                        </div>
+                   {% endif %}
+               </article>
+               {% endfor %}
+           </section>
+           {% endif %}
+
+          {% if references %}
+          <section class="resume-section references-section">
+               <h2><i class="fas fa-user-friends"></i> References</h2>
+               {% for ref in references %}
+               <article class="item">
+                   <div class="item-header">
+                       <div class="item-title-org">
+                            {% if ref.name %}<span class="title">{{ ref.name }}</span>{% endif %}
+                            {% if ref.position and ref.company_or_institution %}<span class="organization">{{ ref.position }}, {{ ref.company_or_institution }}</span>{% endif %}
+                       </div>
+                   </div>
+                   <div class="description">
+                       {% if ref.email or ref.phone %}
+                       <p>
+                           {% if ref.email %}<i class="fas fa-envelope"></i> {{ ref.email }}{% endif %}
+                           {% if ref.email and ref.phone %} | {% endif %}
+                           {% if ref.phone %}<i class="fas fa-phone"></i> {{ ref.phone }}{% endif %}
+                       </p>
+                       {% endif %}
+                       {% if ref.relationship %}<p><strong>Relationship:</strong> {{ ref.relationship }}</p>{% endif %}
+                       {% if ref.description %}<p>{{ ref.description }}</p>{% endif %}
+                   </div>
+               </article>
+               {% endfor %}
+           </section>
+           {% endif %}
+
+
+
      </main>
 
 </body>
