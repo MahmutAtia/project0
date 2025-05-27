@@ -48,6 +48,7 @@ class ResumeSerializer(serializers.ModelSerializer):
             'is_default',
             'job_search_keywords',
             'sections_sort',
+            'hidden_sections',
             'created_at',
             'updated_at',
             'generated_documents_data', # New field

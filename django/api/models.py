@@ -63,6 +63,11 @@ class Resume(models.Model):
         blank=True,
         help_text="Ordered list of section keys for the resume structure."
     )
+    hidden_sections = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Empty or hidden sections by user"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -85,7 +90,27 @@ class Resume(models.Model):
             # 1. Initialize sections_sort if it's empty or not provided
             if not self.sections_sort: # Handles None or empty list from default=list
                 self.sections_sort = list(DEFAULT_RESUME_SECTION_KEYS) # Ensure it's a new list instance
-
+            
+            # 2. Initialize hidden_sections by checking empty sections in resume JSON
+            if not self.hidden_sections:
+                self.hidden_sections = []
+                
+            # Check for empty sections in resume JSON and add to hidden_sections
+            if self.resume:
+                for section_key in DEFAULT_RESUME_SECTION_KEYS:
+                    # Check if section exists and is empty/None
+                    section_data = self.resume.get(section_key)
+                    
+                    # empty list or emtpty dict or None
+                    if section_data is None or (isinstance(section_data, (list, dict)) and not section_data):
+                        # If section is empty, add to hidden_sections
+                        # Only add if it's not already there to avoid duplicates
+                        if section_key not in self.hidden_sections:
+                            self.hidden_sections.append(section_key)
+                    else:
+                        # If section has data, remove from hidden if it was there
+                        if section_key in self.hidden_sections:
+                            self.hidden_sections.remove(section_key)
         super().save(*args, **kwargs)
 
 
