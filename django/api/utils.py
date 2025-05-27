@@ -84,14 +84,18 @@ def generate_pdf_from_resume_data(
         bytes: The PDF file content as bytes. Returns None on error.
     """
     try:
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        templates_dir = os.path.join(base_dir, "html_templates")
+
+        print(f"Base directory: {base_dir}")
         env = Environment(
-            loader=FileSystemLoader("./html_templates"),
+            loader=FileSystemLoader(templates_dir),
             autoescape=select_autoescape(["html", "xml"]),
         )
         template = env.get_template(template_theme)
         # Pass theme_class to the template
         html_out = template.render(theme_class=chosen_theme, **resume_data)
-        html_obj = HTML(string=html_out, base_url=".")  # added base_url
+        html_obj = HTML(string=html_out, base_url=base_dir)
         pdf_file = html_obj.write_pdf()
 
         # Save the PDF to a file (optional)
