@@ -365,6 +365,23 @@
         </section>
         {% endif %}
 
+        {% if skills %}
+        <section class="sidebar-section skills-section">
+            <h3><i class="fas fa-cogs icon"></i> Skills</h3>
+            <ul class="skills-list">
+                {% for skill_group in skills[:3] %}
+                    {% if skill_group.category %}
+                        <li class="skill-category">{{ skill_group.category }}</li>
+                    {% endif %}
+                    {% if skill_group.keywords %}
+                        {% for keyword in skill_group.keywords %}<li>{{ keyword }}</li>{% endfor %}
+                    {% elif skill_group.name %}
+                        <li>{{ skill_group.name }}</li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        </section>
+        {% endif %}
 
     </aside>
 
@@ -440,24 +457,6 @@
         </section>
         {% endif %}
 
-        {% if skills %}
-        <section class="skills-section"> {# Note: Removed sidebar-section class #}
-             <h2><i class="fas fa-cogs"></i> Skills</h2> {# Changed h3 to h2 to match main content style #}
-              <ul class="skills-list main-content-skills"> {# Added a new class for potential main-content specific styling #}
-                {% for skill_group in skills %}
-                     {% if skill_group.category %}
-                         <li class="skill-category">{{ skill_group.category }}</li>
-                     {% endif %}
-                     {% if skill_group.keywords %}
-                         {% for keyword in skill_group.keywords %}<li>{{ keyword }}</li>{% endfor %}
-                     {% elif skill_group.name %}
-                          <li>{{ skill_group.name }}</li>
-                     {% endif %}
-                {% endfor %}
-             </ul>
-        </section>
-        {% endif %}
-
          {% if projects %}
         <section class="projects-section">
              <h2><i class="fas fa-project-diagram"></i> Projects</h2>
@@ -514,6 +513,41 @@
           </section>
           {% endif %}
 
+        {% if skills and skills|length > 3 %}
+        <section class="other-skills-section">
+            <h2><i class="fas fa-tools"></i> Other Skills</h2>
+            <ul class="skills-list main-content-skills">
+                {% for skill_group in skills[3:] %}
+                    {% if skill_group.category %}
+                        <li class="skill-category">{{ skill_group.category }}</li>
+                    {% endif %}
+                    {% if skill_group.keywords %}
+                        {% for keyword in skill_group.keywords %}<li>{{ keyword }}</li>{% endfor %}
+                    {% elif skill_group.name %}
+                        <li>{{ skill_group.name }}</li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        </section>
+        {% endif %}
+
+        {% if skills|length <= 3 %}
+        <section class="skills-section">
+            <h2><i class="fas fa-cogs"></i> Skills</h2>
+            <ul class="skills-list main-content-skills">
+                {% for skill_group in skills %}
+                    {% if skill_group.category %}
+                        <li class="skill-category">{{ skill_group.category }}</li>
+                    {% endif %}
+                    {% if skill_group.keywords %}
+                        {% for keyword in skill_group.keywords %}<li>{{ keyword }}</li>{% endfor %}
+                    {% elif skill_group.name %}
+                        <li>{{ skill_group.name }}</li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        </section>
+        {% endif %}
     </main>
 
 </div>
