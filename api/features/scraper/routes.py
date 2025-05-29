@@ -69,11 +69,11 @@ async def get_and_scrape_jobs(
     """
     # Use backend defaults for parameters not sent by frontend
     scraping_params = {
-        "site_name": ["google","indeed", "linkedin", "zip_recruiter"], # Default sites
+        "site_name": ["google","indeed", "linkedin"], #"zip_recruiter"], # Default sites
         "search_term": frontend_params.search_term,
         "location": frontend_params.location,
         "results_wanted": 20, # Default results
-        "hours_old": 168, # Default hours_old (1 week)
+        "hours_old": 72, # Default hours_old (1 week)
         "country_indeed": frontend_params.country if frontend_params.country else "USA", # Default for Indeed if country not specified
         "google_search_term": f"{frontend_params.search_term} jobs near {frontend_params.location} since few days" ,
         "country": frontend_params.country,
@@ -101,6 +101,8 @@ async def get_and_scrape_jobs(
                 company=job_dict.get("company"),
                 location=job_dict.get("location"),
                 is_remote=job_dict.get("is_remote"),
+            verbose  =True# suming verbose is a field in the job_dict
+                
             )
         )
     
