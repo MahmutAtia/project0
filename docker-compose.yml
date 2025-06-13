@@ -8,14 +8,10 @@ services:
       - "8443:443"
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./nginx/ssl:/etc/nginx/ssl
+      - ./nginx/ssl:/etc/nginx/ssl  # Mount SSL directory
       - ./django/static:/usr/share/nginx/html/static
-      - ./django/media:/usr/share/nginx/html/media
-      - certbot-etc:/etc/letsencrypt
-      - certbot-var:/var/lib/letsencrypt
       - web-root:/var/www/certbot
     depends_on:
-      - django
       - careerflow
     restart: always
     environment:
