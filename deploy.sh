@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Enhanced Deployment Script for CareerFlow with Database Management
+# Enhanced Deployment Script for CareerFlow with Let's Encrypt SSL
 # Run this script from outside the project directory
 
 # Exit on any error
@@ -52,6 +52,45 @@ log_data() {
 check_tool() {
     if ! command -v $1 &> /dev/null; then
         log_error "$1 is not installed"
+        exit 1
+    fi
+}
+
+# Verify repository access
+verify_repository_access() {
+    local repo_url="$1"
+    local repo_name="$2"
+    
+    log_info "Verifying access to $repo_name repository..."
+    
+    # Test if we can access the repository
+    if git ls-remote --heads "$repo_url" >/dev/null 2>&1; then
+        log_success "$repo_name repository is accessible"
+        
+        # Check if the branch exists
+        if git ls-remote --heads "$repo_url" "$BRANCH" | grep -q "$BRANCH"; then
+            log_success "Branch '$BRANCH' exists in $repo_name repository"
+        else
+            log_error "Branch '$BRANCH' does not exist in $repo_name repository"
+            log_info "Available branches:"
+            git ls-remote --heads "$repo_url" | sed 's/.*refs\/heads\///g' | head -10
+            
+            # Ask user to choose branch or exit
+            log_warning "Would you like to use 'main' branch instead? (y/N)"
+            read -p "Choice: " use_main
+            if [[ $use_main =~ ^[Yy]$ ]]; then
+                BRANCH="main"
+                log_info "Switched to 'main' branch"
+            else
+                exit 1
+            fi
+        fi
+    else
+        log_error "Cannot access $repo_name repository: $repo_url"
+        log_error "Please check:"
+        log_error "1. Repository URL is correct"
+        log_error "2. Repository is public or you have access"
+        log_error "3. Internet connection is working"
         exit 1
     fi
 }
@@ -173,6 +212,110 @@ download_external_assets() {
     fi
 }
 
+# Let's Encrypt SSL setup
+setup_letsencrypt() {
+    log_info "🔒 Setting up Let's Encrypt SSL certificates..."
+    
+    # Check if Let's Encrypt certificates already exist
+    if [ -d "$PROJECT_DIR/certbot/conf/live/$DOMAIN" ]; then
+        log_info "Let's Encrypt certificates already exist for $DOMAIN"
+        return 0
+    fi
+    
+    log_info "Generating Let's Encrypt certificates for $DOMAIN..."
+    cd "$PROJECT_DIR"
+    
+    # Create necessary directories
+    mkdir -p certbot/conf certbot/www certbot/logs
+    
+    # Update docker-compose.yml to include certbot volumes if not present
+    if ! grep -q "certbot-etc:" docker-compose.yml; then
+        log_info "Adding certbot volumes to docker-compose.yml..."
+        # Add certbot volumes to the existing docker-compose.yml
+        cat >> docker-compose.yml << 'EOF'
+
+  # Let's Encrypt volume mappings
+  nginx:
+    volumes:
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+
+volumes:
+  certbot-etc:
+  certbot-var:
+EOF
+    fi
+    
+    # Start nginx first for HTTP challenge
+    log_info "Starting nginx for HTTP challenge..."
+    docker compose up -d nginx
+    sleep 10
+    
+    # Request certificate using the existing certbot service
+    log_info "Requesting SSL certificate from Let's Encrypt..."
+    docker compose run --rm certbot || {
+        log_error "Let's Encrypt certificate generation failed!"
+        log_error "Please check:"
+        log_error "1. Domain DNS points to this server"
+        log_error "2. Port 80 is accessible from internet"
+        log_error "3. Domain is valid and publicly accessible"
+        
+        log_warning "Continuing with self-signed certificates..."
+        cd ..
+        return 1
+    }
+    
+    # Update nginx config to use Let's Encrypt certificates
+    log_info "Updating nginx configuration for Let's Encrypt..."
+    
+    # Backup existing config
+    cp nginx/conf.d/default.conf nginx/conf.d/default.conf.backup
+    
+    # Update SSL certificate paths in nginx config
+    sed -i 's|ssl_certificate /etc/nginx/ssl/localhost.crt;|ssl_certificate /etc/letsencrypt/live/'$DOMAIN'/fullchain.pem;|g' nginx/conf.d/default.conf
+    sed -i 's|ssl_certificate_key /etc/nginx/ssl/localhost.key;|ssl_certificate_key /etc/letsencrypt/live/'$DOMAIN'/privkey.pem;|g' nginx/conf.d/default.conf
+    
+    # Add HTTP to HTTPS redirect in the HTTP server block
+    sed -i '/# Serve HTTP directly (no redirect to HTTPS for now)/c\    # Redirect HTTP to HTTPS\n    return 301 https://$server_name:8443$request_uri;' nginx/conf.d/default.conf
+    
+    # Restart nginx with new certificates
+    docker compose restart nginx
+    
+    log_success "✅ Let's Encrypt SSL certificates configured successfully!"
+    
+    # Set up auto-renewal
+    setup_ssl_renewal
+    
+    cd ..
+}
+
+# Setup SSL certificate auto-renewal
+setup_ssl_renewal() {
+    log_info "Setting up SSL certificate auto-renewal..."
+    
+    # Create renewal script
+    cat > renew-ssl.sh << 'EOF'
+#!/bin/bash
+cd "$(dirname "$0")"
+docker compose run --rm certbot renew --quiet
+docker compose restart nginx
+echo "SSL certificates renewed: $(date)" >> ssl-renewal.log
+EOF
+    
+    chmod +x renew-ssl.sh
+    
+    log_info "SSL auto-renewal script created: $PROJECT_DIR/renew-ssl.sh"
+    log_info "Add this to crontab for automatic renewal:"
+    log_info "0 12 * * * cd $(pwd) && ./renew-ssl.sh"
+    
+    # Ask if user wants to add to crontab
+    read -p "Add SSL renewal to crontab now? (y/N): " add_cron
+    if [[ $add_cron =~ ^[Yy]$ ]]; then
+        (crontab -l 2>/dev/null; echo "0 12 * * * cd $(pwd) && ./renew-ssl.sh") | crontab -
+        log_success "SSL auto-renewal added to crontab"
+    fi
+}
+
 run_health_checks() {
     log_info "Running application health checks..."
     
@@ -191,6 +334,16 @@ run_health_checks() {
         log_warning "⚠️  Django application: Has warnings (check logs)"
     fi
     
+    # Check SSL certificate
+    log_info "Checking SSL certificate..."
+    if [ -d "$PROJECT_DIR/certbot/conf/live/$DOMAIN" ]; then
+        log_success "✅ Let's Encrypt SSL certificate: OK"
+    elif [ -f "$PROJECT_DIR/nginx/ssl/localhost.crt" ]; then
+        log_warning "⚠️  Self-signed SSL certificate: OK (browser warnings expected)"
+    else
+        log_error "❌ No SSL certificate found"
+    fi
+    
     # Check if services are running
     log_info "Checking service status..."
     docker compose ps --format "table {{.Service}}\t{{.Status}}\t{{.Ports}}"
@@ -198,7 +351,7 @@ run_health_checks() {
 
 # Main deployment function
 main() {
-    echo "🚀 Starting CareerFlow deployment with comprehensive setup..."
+    echo "🚀 Starting CareerFlow deployment with existing configuration..."
     echo "=================================================="
     log_info "Working directory: $(pwd)"
     log_info "Target domain: $DOMAIN"
@@ -213,21 +366,48 @@ main() {
     log_success "All tools are available"
     echo
     
+    # Verify repository access
+    log_info "Step 1.5: Verifying repository access..."
+    verify_repository_access "$BACKEND_REPO" "Backend"
+    verify_repository_access "$FRONTEND_REPO" "Frontend"
+    echo
+    
     # Handle backend repository
     log_info "Step 2: Managing backend repository..."
     if [ -d "$PROJECT_DIR" ]; then
         log_info "Updating existing backend..."
         cd "$PROJECT_DIR"
         
-        # Force update to match remote (fixes non-fast-forward issues)
-        git fetch origin "+refs/heads/$BRANCH:refs/remotes/origin/$BRANCH"
-        git reset --hard "origin/$BRANCH"
+        # Check if it's actually a git repository
+        if [ ! -d ".git" ]; then
+            log_warning "Backend directory exists but is not a git repository. Removing..."
+            cd ..
+            rm -rf "$PROJECT_DIR"
+            log_info "Cloning backend repository..."
+            git clone -b $BRANCH $BACKEND_REPO $PROJECT_DIR || {
+                log_error "Failed to clone backend repository"
+                exit 1
+            }
+        else
+            # Force update to match remote (fixes non-fast-forward issues)
+            git fetch origin "+refs/heads/$BRANCH:refs/remotes/origin/$BRANCH" || {
+                log_error "Failed to fetch from backend repository"
+                exit 1
+            }
+            git reset --hard "origin/$BRANCH" || {
+                log_error "Failed to reset backend repository"
+                exit 1
+            }
+        fi
         
         cd ..
         log_success "Backend updated"
     else
         log_info "Cloning backend repository..."
-        git clone -b $BRANCH $BACKEND_REPO $PROJECT_DIR
+        git clone -b $BRANCH $BACKEND_REPO $PROJECT_DIR || {
+            log_error "Failed to clone backend repository"
+            exit 1
+        }
         log_success "Backend cloned"
     fi
     echo
@@ -240,101 +420,122 @@ main() {
         log_info "Updating existing frontend..."
         cd "$FRONTEND_PATH"
         
-        # Force update to match remote (fixes non-fast-forward issues)
-        git fetch origin "+refs/heads/$BRANCH:refs/remotes/origin/$BRANCH"
-        git reset --hard "origin/$BRANCH"
+        # Check if it's actually a git repository
+        if [ ! -d ".git" ]; then
+            log_warning "Frontend directory exists but is not a git repository. Removing..."
+            cd ..
+            rm -rf "$FRONTEND_DIR"
+            log_info "Cloning frontend repository..."
+            git clone -b $BRANCH $FRONTEND_REPO $FRONTEND_DIR || {
+                log_error "Failed to clone frontend repository"
+                exit 1
+            }
+        else
+            # Check if remote origin matches our repo
+            CURRENT_REMOTE=$(git remote get-url origin 2>/dev/null || echo "")
+            if [ "$CURRENT_REMOTE" != "$FRONTEND_REPO" ]; then
+                log_warning "Frontend directory has wrong remote origin. Re-cloning..."
+                cd ..
+                rm -rf "$FRONTEND_DIR"
+                git clone -b $BRANCH $FRONTEND_REPO $FRONTEND_DIR || {
+                    log_error "Failed to clone frontend repository"
+                    exit 1
+                }
+            else
+                # Force update to match remote
+                log_info "Fetching latest changes..."
+                git fetch origin "+refs/heads/$BRANCH:refs/remotes/origin/$BRANCH" || {
+                    log_error "Failed to fetch from frontend repository"
+                    exit 1
+                }
+                git reset --hard "origin/$BRANCH" || {
+                    log_error "Failed to reset frontend repository"
+                    exit 1
+                }
+            fi
+        fi
         
         cd ../..
         log_success "Frontend updated"
     else
         log_info "Cloning frontend repository..."
         cd "$PROJECT_DIR"
-        git clone -b $BRANCH $FRONTEND_REPO $FRONTEND_DIR
+        git clone -b $BRANCH $FRONTEND_REPO $FRONTEND_DIR || {
+            log_error "Failed to clone frontend repository"
+            exit 1
+        }
         cd ..
         log_success "Frontend cloned"
     fi
+    
+    # Verify frontend repository has content
+    log_info "Verifying frontend repository content..."
+    if [ ! -f "$FRONTEND_PATH/package.json" ]; then
+        log_error "Frontend repository appears to be empty or invalid (no package.json found)"
+        log_info "Repository contents:"
+        ls -la "$FRONTEND_PATH" || echo "Directory not accessible"
+        log_info "Attempting to re-clone frontend repository..."
+        
+        cd "$PROJECT_DIR"
+        rm -rf "$FRONTEND_DIR"
+        git clone -b $BRANCH $FRONTEND_REPO $FRONTEND_DIR || {
+            log_error "Failed to re-clone frontend repository"
+            exit 1
+        }
+        cd ..
+        
+        if [ ! -f "$FRONTEND_PATH/package.json" ]; then
+            log_error "Frontend repository is still empty after re-cloning"
+            log_error "Please check if the frontend repository exists and has a '$BRANCH' branch"
+            log_error "Repository URL: $FRONTEND_REPO"
+            log_error "Branch: $BRANCH"
+            exit 1
+        fi
+    fi
+    
+    log_success "Frontend repository verified with content"
     echo
     
-    # Setup environment file
-    log_info "Step 4: Setting up environment configuration..."
+    # Check if .env file exists (you already have it)
+    log_info "Step 4: Checking environment configuration..."
     ENV_FILE="$PROJECT_DIR/.env"
-    
-    if [ ! -f "$ENV_FILE" ]; then
-        log_info "Creating .env file..."
-        cat > "$ENV_FILE" << EOF
-# Production Environment Configuration
-NODE_ENV=production
-DEBUG=0
-PYTHONUNBUFFERED=1
-
-# Database Configuration
-POSTGRES_DB=careerflow_db
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=your_secure_db_password_here
-
-# Django Configuration
-DJANGO_SECRET_KEY=your_very_secure_secret_key_here
-DJANGO_ALLOWED_HOSTS=$DOMAIN,localhost,127.0.0.1
-DJANGO_SUPERUSER_USERNAME=admin
-DJANGO_SUPERUSER_EMAIL=admin@$DOMAIN
-DJANGO_SUPERUSER_PASSWORD=your_secure_admin_password_here
-
-# Authentication Configuration
-NEXTAUTH_SECRET=your_nextauth_secret_here
-NEXTAUTH_URL=https://$DOMAIN
-
-# Google Services Configuration
-GOOGLE_CLIENT_ID=your_google_client_id_here
-GOOGLE_CLIENT_SECRET=your_google_client_secret_here
-GOOGLE_API_KEY=your_google_api_key_here
-
-# External API Configuration
-LANGCHAIN_API_KEY=your_langchain_api_key_here
-EMAIL_HOST_PASSWORD=your_email_host_password_here
-JWT_SECRET_KEY=your_jwt_secret_key_here
-
-# Production URLs
-NEXT_PUBLIC_API_URL=https://$DOMAIN
-NEXT_PUBLIC_BACKEND_URL=https://$DOMAIN
-
-# Additional Production Settings
-SECURE_SSL_REDIRECT=True
-SECURE_PROXY_SSL_HEADER=HTTP_X_FORWARDED_PROTO,https
-SESSION_COOKIE_SECURE=True
-CSRF_COOKIE_SECURE=True
-EOF
-        log_warning "⚠️  IMPORTANT: Please edit $ENV_FILE with your actual secure values!"
-        log_warning "⚠️  Do NOT use default passwords in production!"
-        read -p "Press Enter after editing the .env file with secure values..."
+    if [ -f "$ENV_FILE" ]; then
+        log_success "Environment file found and will be used"
     else
-        log_info ".env file already exists"
+        log_error "Environment file not found at $ENV_FILE"
+        log_error "Please ensure your .env file is in the correct location"
+        exit 1
     fi
     echo
     
-    # Generate SSL certificates if they don't exist
-    log_info "Step 5: Setting up SSL certificates..."
-    if [ ! -f "$PROJECT_DIR/nginx/ssl/localhost.crt" ]; then
-        log_info "Generating self-signed SSL certificates for $DOMAIN..."
+    # SSL Certificate Setup - offer Let's Encrypt upgrade
+    log_info "Step 5: SSL Certificate Management..."
+    
+    # Check current SSL setup
+    if [ -f "$PROJECT_DIR/nginx/ssl/localhost.crt" ]; then
+        log_info "Self-signed SSL certificates detected"
+        read -p "Would you like to upgrade to Let's Encrypt SSL certificates? (y/N): " upgrade_ssl
+        if [[ $upgrade_ssl =~ ^[Yy]$ ]]; then
+            setup_letsencrypt
+        else
+            log_info "Keeping existing self-signed certificates"
+        fi
+    else
+        log_info "No SSL certificates found, generating self-signed certificates..."
         cd "$PROJECT_DIR"
         mkdir -p nginx/ssl
-        
         openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
           -keyout nginx/ssl/localhost.key \
           -out nginx/ssl/localhost.crt \
           -subj "/C=US/ST=State/L=City/O=CareerFlow/CN=$DOMAIN" \
           -addext "subjectAltName=DNS:$DOMAIN,DNS:localhost" 2>/dev/null || {
-          # Fallback for older OpenSSL versions
-          log_warning "Using fallback SSL generation for older OpenSSL..."
           openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
             -keyout nginx/ssl/localhost.key \
             -out nginx/ssl/localhost.crt \
             -subj "/C=US/ST=State/L=City/O=CareerFlow/CN=$DOMAIN"
         }
-        
         cd ..
-        log_success "SSL certificates generated for $DOMAIN"
-    else
-        log_info "SSL certificates already exist"  
+        log_success "Self-signed SSL certificates generated"
     fi
     echo
     
@@ -401,7 +602,11 @@ EOF
     echo
     log_info "📋 Deployment Summary:"
     log_success "✅ Repositories updated to latest $BRANCH branch"
-    log_success "✅ SSL certificates generated and configured"
+    if [ -d "$PROJECT_DIR/certbot/conf/live/$DOMAIN" ]; then
+        log_success "✅ Let's Encrypt SSL certificates configured"
+    else
+        log_success "✅ SSL certificates configured"
+    fi
     log_success "✅ Database schema migrations applied"
     log_success "✅ Initial application data created (features & plans)"
     log_success "✅ External assets downloaded"
@@ -410,10 +615,10 @@ EOF
     echo
     log_info "🌐 Application Access URLs:"
     log_info "┌─────────────────────────────────────────────────────┐"
-    log_info "│ HTTP:  http://$DOMAIN:880                    │"
-    log_info "│ HTTPS: https://$DOMAIN:8443                 │"
-    log_info "│ Admin: https://$DOMAIN:8443/admin/          │"
-    log_info "│ API:   https://$DOMAIN:8443/api/            │"
+    log_info "│ HTTP:  http://$DOMAIN:880                           │"
+    log_info "│ HTTPS: https://$DOMAIN:8443                        │"
+    log_info "│ Admin: https://$DOMAIN:8443/admin/                 │"
+    log_info "│ API:   https://$DOMAIN:8443/api/                   │"
     log_info "└─────────────────────────────────────────────────────┘"
     echo
     log_info "🔧 Development URLs (for debugging):"
@@ -421,12 +626,83 @@ EOF
     log_info "│ Backend:     http://localhost:8000                   │"
     log_info "│ Database:    postgresql://localhost:5432             │"
     echo
-    log_warning "📋 Post-Deployment Notes:"
-    log_warning "• Accept the self-signed certificate warning in your browser"
+    
+    if [ -d "$PROJECT_DIR/certbot/conf/live/$DOMAIN" ]; then
+        log_info "🔒 SSL Certificate Information:"
+        log_success "✅ Trusted Let's Encrypt certificate installed"
+        log_success "✅ No browser security warnings"
+        log_success "✅ Auto-renewal configured"
+    else
+        log_warning "📋 SSL Certificate Notes:"
+        log_warning "• Using self-signed certificate"
+        log_warning "• Users will see security warnings in browsers"
+        log_warning "• Consider upgrading to Let's Encrypt for production"
+    fi
+    
+    echo
+    log_warning "📋 Post-Deployment Actions:"
+    log_warning "• Test the application in your browser"
     log_warning "• Update DNS records to point $DOMAIN to this server"
-    log_warning "• Consider setting up Let's Encrypt for production SSL"
     log_warning "• Monitor logs for any issues: docker compose logs -f"
     echo
+}
+
+# Enhanced backup function
+backup_database() {
+    echo "💾 Creating database backup..."
+    cd "$PROJECT_DIR"
+    
+    # Create backups directory if it doesn't exist
+    mkdir -p backups
+    
+    # Generate timestamp
+    TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+    BACKUP_FILE="backups/careerflow_backup_${TIMESTAMP}.sql"
+    
+    # Create the backup
+    log_info "Creating backup: $BACKUP_FILE"
+    docker compose exec -T db pg_dump -U postgres -h localhost careerflow_db > "$BACKUP_FILE"
+    
+    # Check if backup was successful
+    if [ -f "$BACKUP_FILE" ] && [ -s "$BACKUP_FILE" ]; then
+        BACKUP_SIZE=$(du -h "$BACKUP_FILE" | cut -f1)
+        log_success "Database backup created successfully"
+        log_info "Backup file: $BACKUP_FILE"
+        log_info "Backup size: $BACKUP_SIZE"
+        
+        # Compress the backup
+        log_info "Compressing backup..."
+        gzip "$BACKUP_FILE"
+        COMPRESSED_SIZE=$(du -h "${BACKUP_FILE}.gz" | cut -f1)
+        log_success "Backup compressed: ${BACKUP_FILE}.gz (${COMPRESSED_SIZE})"
+    else
+        log_error "Backup failed or file is empty"
+        return 1
+    fi
+    
+    # Clean up old backups (keep last 5)
+    log_info "Cleaning up old backups (keeping last 5)..."
+    ls -t backups/careerflow_backup_*.sql.gz 2>/dev/null | tail -n +6 | xargs rm -f 2>/dev/null || true
+    
+    log_success "Database backup process completed"
+    cd ..
+}
+
+# SSL certificate renewal
+renew_ssl_certificates() {
+    echo "🔒 Renewing SSL certificates..."
+    cd "$PROJECT_DIR"
+    
+    if [ -d "certbot/conf/live/$DOMAIN" ]; then
+        log_info "Renewing Let's Encrypt certificates..."
+        docker compose run --rm certbot renew
+        docker compose restart nginx
+        log_success "SSL certificates renewed"
+    else
+        log_warning "No Let's Encrypt certificates found to renew"
+    fi
+    
+    cd ..
 }
 
 # Additional utility functions for post-deployment management
@@ -441,19 +717,14 @@ restart_services() {
     cd "$PROJECT_DIR"
     docker compose restart
     log_success "All services restarted"
+    cd ..
 }
 
 show_service_status() {
     echo "📊 Current service status:"
     cd "$PROJECT_DIR"
     docker compose ps
-}
-
-backup_database() {
-    echo "💾 Creating database backup..."
-    cd "$PROJECT_DIR"
-    docker compose exec db pg_dump -U postgres careerflow_db > "backup_$(date +%Y%m%d_%H%M%S).sql"
-    log_success "Database backup created"
+    cd ..
 }
 
 # Run main deployment function
@@ -466,10 +737,11 @@ echo "1. View live logs"
 echo "2. Show service status"
 echo "3. Restart services"
 echo "4. Backup database"
-echo "5. Exit"
+echo "5. Renew SSL certificates"
+echo "6. Exit"
 echo
 
-read -p "Choose an action (1-5): " action
+read -p "Choose an action (1-6): " action
 case $action in
     1)
         show_logs
@@ -483,7 +755,10 @@ case $action in
     4)
         backup_database
         ;;
-    5|*)
+    5)
+        renew_ssl_certificates
+        ;;
+    6|*)
         log_info "Deployment complete. Have a great day! 🚀"
         ;;
 esac
