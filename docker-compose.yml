@@ -4,11 +4,11 @@ services:
   nginx:
     image: nginx:alpine
     ports:
-      - "880:80"
-      - "8443:443"
+      - "${NGINX_HTTP_PORT:-880}:80"
+      - "${NGINX_HTTPS_PORT:-8443}:443"
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./nginx/ssl:/etc/nginx/ssl  # Mount SSL directory
+      - ./nginx/ssl:/etc/nginx/ssl
       - ./django/static:/usr/share/nginx/html/static
       - web-root:/var/www/certbot
     depends_on:
@@ -23,70 +23,87 @@ services:
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
       - web-root:/var/www/certbot
-    command: certonly --webroot --webroot-path=/var/www/certbot --email your-email@example.com --agree-tos --no-eff-email -d ${DOMAIN}
-    profiles: ["ssl"]  # Only run when explicitly called
+    command: certonly --webroot --webroot-path=/var/www/certbot --email ${CERTBOT_EMAIL:-admin@example.com} --agree-tos --no-eff-email -d ${DOMAIN:-localhost}
+    profiles: ["ssl"]
     restart: "no"
+
   api:
     build: ./api
     image: proj0_api_image
     ports:
-      - 580:80
+      - "580:80"
     volumes:
       - ./api:/api
-    # depends_on:
-    #   - chroma
     environment:
-      # Variables sourced from root .env file or shell
-      - DEBUG=${DEBUG:-1} # Example with a default if not set
+      - DEBUG=${DEBUG:-0}
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
-      - LANGCHAIN_TRACING_V2=${LANGCHAIN_TRACING_V2}
+      - LANGCHAIN_TRACING_V2=${LANGCHAIN_TRACING_V2:-false}
       - LANGCHAIN_ENDPOINT=${LANGCHAIN_ENDPOINT}
       - LANGCHAIN_API_KEY=${LANGCHAIN_API_KEY}
       - LANGCHAIN_PROJECT=${LANGCHAIN_PROJECT}
-      # Add any other environment variables your 'api' service needs
     restart: always
 
   django:
     build: ./django
     image: proj0_django_image
     command: gunicorn proj0.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers 4 --log-level info
-    
     volumes:
       - ./django:/app
     expose:
       - "8000"
     ports:
-     - 8000:8000
+      - "8000:8000"
     depends_on:
       - db
+      - redis
     environment:
-      # Variables sourced from root .env file or shell
-      - DEBUG=${DEBUG:-1}
-      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS:-\*} # Default to '*' if not set
+      # Django Core Settings
+      - DEBUG=${DEBUG:-0}
+      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
       - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-proj0.settings}
+      - PYTHONUNBUFFERED=${PYTHONUNBUFFERED:-1}
+      
+      # Database Settings (using corrected variable names)
       - DJANGO_DB_NAME=${DJANGO_DB_NAME}
       - DJANGO_DB_USER=${DJANGO_DB_USER}
       - DJANGO_DB_PASSWORD=${DJANGO_DB_PASSWORD}
       - DJANGO_DB_HOST=${DJANGO_DB_HOST:-db}
       - DJANGO_DB_PORT=${DJANGO_DB_PORT:-5432}
+      
+      # Email Settings
       - EMAIL_HOST=${EMAIL_HOST}
-      - EMAIL_PORT=${EMAIL_PORT}
+      - EMAIL_PORT=${EMAIL_PORT:-587}
       - EMAIL_HOST_USER=${EMAIL_HOST_USER}
       - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID} # Assuming Django uses the same as careerflow
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET} # Assuming Django uses the same
+      - EMAIL_USE_TLS=${EMAIL_USE_TLS:-True}
+      - EMAIL_USE_SSL=${EMAIL_USE_SSL:-False}
+      
+      # Authentication
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
+      
+      # Service URLs
       - AI_SERVICE_URL=${AI_SERVICE_URL:-http://api:80/resumes/}
-      - PYTHONUNBUFFERED=${PYTHONUNBUFFERED:-1}
-      # Add any other environment variables your 'django' service needs
+      
+      # Superuser Settings
+      - DJANGO_SUPERUSER_USERNAME=${DJANGO_SUPERUSER_USERNAME}
+      - DJANGO_SUPERUSER_EMAIL=${DJANGO_SUPERUSER_EMAIL}
+      - DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD}
+      
+      # Security Settings
+      - SECURE_SSL_REDIRECT=${SECURE_SSL_REDIRECT:-True}
+      - SECURE_PROXY_SSL_HEADER=${SECURE_PROXY_SSL_HEADER}
+      - SESSION_COOKIE_SECURE=${SESSION_COOKIE_SECURE:-True}
+      - CSRF_COOKIE_SECURE=${CSRF_COOKIE_SECURE:-True}
     restart: always
 
   db:
     image: postgres:16
     environment:
-      # Variables sourced from root .env file or shell, crucial for PostgreSQL initialization
+      # Fixed: Use POSTGRES_* variables (not DJANGO_DB_*)
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
@@ -95,6 +112,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:6.2-alpine
@@ -102,9 +124,14 @@ services:
       - redis_data:/data
     command: redis-server --appendonly yes
     restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   celery:
-    build: ./django # Assuming celery uses the same Django environment
+    build: ./django
     image: proj0_django_image
     command: celery -A proj0 worker -l info
     volumes:
@@ -113,44 +140,59 @@ services:
       - db
       - redis
     environment:
-      # Variables sourced from root .env file or shell, mirroring Django's needs
-      - DEBUG=${DEBUG:-1}
-      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS:-\*}
+      # Mirror Django's environment but with Celery-specific settings
+      - DEBUG=${DEBUG:-0}
+      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
       - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-proj0.settings}
+      - PYTHONUNBUFFERED=${PYTHONUNBUFFERED:-1}
+      
+      # Database Settings
       - DJANGO_DB_NAME=${DJANGO_DB_NAME}
       - DJANGO_DB_USER=${DJANGO_DB_USER}
       - DJANGO_DB_PASSWORD=${DJANGO_DB_PASSWORD}
       - DJANGO_DB_HOST=${DJANGO_DB_HOST:-db}
       - DJANGO_DB_PORT=${DJANGO_DB_PORT:-5432}
-      - PYTHONUNBUFFERED=${PYTHONUNBUFFERED:-1}
+      
+      # Service URLs
       - AI_SERVICE_URL=${AI_SERVICE_URL:-http://api:80/resumes/}
-      # Add specific Celery variables if any, e.g., C_FORCE_ROOT, BROKER_URL (if not in Django settings)
-      # Ensure all variables needed by your Django settings for Celery are present
+      
+      # Celery-specific
+      - C_FORCE_ROOT=1
     restart: always
 
   careerflow:
     build:
       context: ./careerflow
       args:
+        # Build-time arguments (embedded in static build)
         - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL}
         - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+        - NEXT_PUBLIC_DJANGO_URL=${NEXT_PUBLIC_DJANGO_URL}
         - NEXT_PUBLIC_AI_API_URL=${NEXT_PUBLIC_AI_API_URL}
         - NEXT_PUBLIC_IPDATA_API_KEY=${NEXT_PUBLIC_IPDATA_API_KEY}
+        - NODE_ENV=${NODE_ENV:-production}
         
     environment:
-      # Runtime environment variables sourced from root .env file or shell
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-      - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL} # For runtime
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}         # For runtime
-      - NEXTAUTH_URL=${NEXTAUTH_URL}
-      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      # Runtime environment variables
       - NODE_ENV=${NODE_ENV:-production}
       - NEXT_TELEMETRY_DISABLED=${NEXT_TELEMETRY_DISABLED:-1}
+      
+      # Authentication
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - NEXTAUTH_JWT_SECRET=${NEXTAUTH_JWT_SECRET}
       - NEXTAUTH_BACKEND_URL=${NEXTAUTH_BACKEND_URL}
-      - NEXT_PUBLIC_AI_API_URL=${NEXT_PUBLIC_AI_API_URL:-http://api:80/resumes/}
-      # Add any other environment variables your 'careerflow' service needs at runtime
+      
+      # Public URLs (for runtime)
+      - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+      - NEXT_PUBLIC_DJANGO_URL=${NEXT_PUBLIC_DJANGO_URL}
+      - NEXT_PUBLIC_AI_API_URL=${NEXT_PUBLIC_AI_API_URL}
+      - NEXT_PUBLIC_IPDATA_API_KEY=${NEXT_PUBLIC_IPDATA_API_KEY}
+      
     image: careerflow_frontend_image
     ports:
       - "3000:3000"
