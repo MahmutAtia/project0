@@ -534,34 +534,50 @@ main() {
     echo
     
     # SSL Certificate Setup - offer Let's Encrypt upgrade
-    log_info "Step 5: SSL Certificate Management..."
+# Update the SSL Certificate Management section (around line 526)
+
+# SSL Certificate Setup - offer Let's Encrypt upgrade
+log_info "Step 5: SSL Certificate Management..."
+
+# Check current SSL setup
+if [ -d "$PROJECT_DIR/certbot/conf/live/$DOMAIN" ]; then
+    log_success "Existing Let's Encrypt certificates found - preserving them"
     
-    # Check current SSL setup
-    if [ -f "$PROJECT_DIR/nginx/ssl/localhost.crt" ]; then
-        log_info "Self-signed SSL certificates detected"
-        read -p "Would you like to upgrade to Let's Encrypt SSL certificates? (y/N): " upgrade_ssl
-        if [[ $upgrade_ssl =~ ^[Yy]$ ]]; then
-            setup_letsencrypt
-        else
-            log_info "Keeping existing self-signed certificates"
-        fi
-    else
-        log_info "No SSL certificates found, generating self-signed certificates..."
-        cd "$PROJECT_DIR"
-        mkdir -p nginx/ssl
-        openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-          -keyout nginx/ssl/localhost.key \
-          -out nginx/ssl/localhost.crt \
-          -subj "/C=US/ST=State/L=City/O=CareerFlow/CN=$DOMAIN" \
-          -addext "subjectAltName=DNS:$DOMAIN,DNS:localhost" 2>/dev/null || {
-          openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-            -keyout nginx/ssl/localhost.key \
-            -out nginx/ssl/localhost.crt \
-            -subj "/C=US/ST=State/L=City/O=CareerFlow/CN=$DOMAIN"
-        }
-        cd ..
-        log_success "Self-signed SSL certificates generated"
+    # Ensure nginx config is using Let's Encrypt certificates
+    cd "$PROJECT_DIR"
+    if grep -q "/etc/nginx/ssl/localhost.crt" nginx/conf.d/default.conf; then
+        log_info "Updating nginx config to use existing Let's Encrypt certificates..."
+        cp nginx/conf.d/default.conf nginx/conf.d/default.conf.backup
+        sed -i 's|ssl_certificate /etc/nginx/ssl/localhost.crt;|ssl_certificate /etc/letsencrypt/live/'$DOMAIN'/fullchain.pem;|g' nginx/conf.d/default.conf
+        sed -i 's|ssl_certificate_key /etc/nginx/ssl/localhost.key;|ssl_certificate_key /etc/letsencrypt/live/'$DOMAIN'/privkey.pem;|g' nginx/conf.d/default.conf
+        log_success "Nginx configuration updated for Let's Encrypt"
     fi
+    cd ..
+elif [ -f "$PROJECT_DIR/nginx/ssl/localhost.crt" ]; then
+    log_info "Self-signed SSL certificates detected"
+    read -p "Would you like to upgrade to Let's Encrypt SSL certificates? (y/N): " upgrade_ssl
+    if [[ $upgrade_ssl =~ ^[Yy]$ ]]; then
+        setup_letsencrypt
+    else
+        log_info "Keeping existing self-signed certificates"
+    fi
+else
+    log_info "No SSL certificates found, generating self-signed certificates..."
+    cd "$PROJECT_DIR"
+    mkdir -p nginx/ssl
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+      -keyout nginx/ssl/localhost.key \
+      -out nginx/ssl/localhost.crt \
+      -subj "/C=US/ST=State/L=City/O=CareerFlow/CN=$DOMAIN" \
+      -addext "subjectAltName=DNS:$DOMAIN,DNS:localhost" 2>/dev/null || {
+      openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+        -keyout nginx/ssl/localhost.key \
+        -out nginx/ssl/localhost.crt \
+        -subj "/C=US/ST=State/L=City/O=CareerFlow/CN=$DOMAIN"
+    }
+    cd ..
+    log_success "Self-signed SSL certificates generated"
+fi
     echo
     
     # Build and start services
@@ -713,6 +729,39 @@ backup_database() {
     cd ..
 }
 
+# Backup SSL certificates
+backup_ssl_certificates() {
+    echo "🔒 Backing up SSL certificates..."
+    cd "$PROJECT_DIR"
+    
+    # Create ssl-backups directory if it doesn't exist
+    mkdir -p ssl-backups
+    
+    # Generate timestamp
+    TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+    
+    # Backup Let's Encrypt certificates if they exist
+    if [ -d "certbot/conf/live/$DOMAIN" ]; then
+        log_info "Backing up Let's Encrypt certificates..."
+        tar -czf "ssl-backups/letsencrypt_backup_${TIMESTAMP}.tar.gz" -C certbot/conf live archive renewal
+        log_success "Let's Encrypt certificates backed up"
+    fi
+    
+    # Backup self-signed certificates if they exist
+    if [ -f "nginx/ssl/localhost.crt" ]; then
+        log_info "Backing up self-signed certificates..."
+        tar -czf "ssl-backups/selfsigned_backup_${TIMESTAMP}.tar.gz" -C nginx ssl
+        log_success "Self-signed certificates backed up"
+    fi
+    
+    # Backup nginx configuration
+    if [ -f "nginx/conf.d/default.conf" ]; then
+        cp "nginx/conf.d/default.conf" "ssl-backups/nginx_config_backup_${TIMESTAMP}.conf"
+        log_success "Nginx configuration backed up"
+    fi
+    
+    cd ..
+}
 # SSL certificate renewal
 renew_ssl_certificates() {
     echo "🔒 Renewing SSL certificates..."
