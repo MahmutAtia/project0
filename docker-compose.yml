@@ -11,6 +11,8 @@ services:
       - ./nginx/ssl:/etc/nginx/ssl
       - ./django/static:/usr/share/nginx/html/static
       - web-root:/var/www/certbot
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
     depends_on:
       - careerflow
     restart: always

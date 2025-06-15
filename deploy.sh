@@ -12,7 +12,7 @@ FRONTEND_REPO="https://github.com/MahmutAtia/proj0_front.git"
 PROJECT_DIR="prod"
 FRONTEND_DIR="careerflow"
 BRANCH="prod"
-DOMAIN="srv658540.hstgr.cloud"
+DOMAIN="vbs.attiais.me"
 
 # Colors for output
 RED='\033[0;31m'
@@ -105,15 +105,29 @@ run_django_command() {
 # Database management functions
 check_database_status() {
     log_info "Checking database connection..."
-    if docker compose run --rm django python manage.py dbshell --command="SELECT 1;" > /dev/null 2>&1; then
+    # Use Django's check command but ignore warnings
+    if docker compose run --rm django python manage.py check --database default --quiet > /dev/null 2>&1; then
         log_success "Database is accessible"
         return 0
     else
-        log_warning "Database connection failed"
-        return 1
+        # Try a simpler database test
+        if docker compose run --rm django python -c "
+import os
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'proj0.settings')
+import django
+django.setup()
+from django.db import connection
+connection.ensure_connection()
+print('Database OK')
+" > /dev/null 2>&1; then
+            log_success "Database is accessible"
+            return 0
+        else
+            log_warning "Database connection failed"
+            return 1
+        fi
     fi
 }
-
 create_superuser() {
     log_info "Creating Django superuser..."
     read -p "Do you want to create a superuser? (y/N): " create_user
@@ -228,42 +242,56 @@ setup_letsencrypt() {
     # Create necessary directories
     mkdir -p certbot/conf certbot/www certbot/logs
     
-    # Update docker-compose.yml to include certbot volumes if not present
-    if ! grep -q "certbot-etc:" docker-compose.yml; then
-        log_info "Adding certbot volumes to docker-compose.yml..."
-        # Add certbot volumes to the existing docker-compose.yml
-        cat >> docker-compose.yml << 'EOF'
-
-  # Let's Encrypt volume mappings
-  nginx:
-    volumes:
-      - certbot-etc:/etc/letsencrypt
-      - certbot-var:/var/lib/letsencrypt
-
-volumes:
-  certbot-etc:
-  certbot-var:
-EOF
-    fi
-    
-    # Start nginx first for HTTP challenge
+    # Start nginx first for HTTP challenge - but with basic config
     log_info "Starting nginx for HTTP challenge..."
+    
+    # Create a temporary nginx config for Let's Encrypt challenge
+    cat > nginx/conf.d/letsencrypt.conf << EOF
+server {
+    listen 80;
+    server_name $DOMAIN;
+    
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+        try_files \$uri \$uri/ =404;
+    }
+    
+    location / {
+        return 200 'OK';
+        add_header Content-Type text/plain;
+    }
+}
+EOF
+    
+    # Start only nginx for the challenge
     docker compose up -d nginx
     sleep 10
     
-    # Request certificate using the existing certbot service
+    # Request certificate using certbot
     log_info "Requesting SSL certificate from Let's Encrypt..."
-    docker compose run --rm certbot || {
+    docker compose run --rm certbot certonly \
+        --webroot \
+        --webroot-path=/var/www/certbot \
+        --email admin@$DOMAIN \
+        --agree-tos \
+        --no-eff-email \
+        --force-renewal \
+        -d $DOMAIN || {
         log_error "Let's Encrypt certificate generation failed!"
         log_error "Please check:"
-        log_error "1. Domain DNS points to this server"
+        log_error "1. Domain $DOMAIN DNS points to this server"
         log_error "2. Port 80 is accessible from internet"
         log_error "3. Domain is valid and publicly accessible"
         
+        # Restore original nginx config
+        rm -f nginx/conf.d/letsencrypt.conf
         log_warning "Continuing with self-signed certificates..."
         cd ..
         return 1
     }
+    
+    # Remove temporary config and restore original
+    rm -f nginx/conf.d/letsencrypt.conf
     
     # Update nginx config to use Let's Encrypt certificates
     log_info "Updating nginx configuration for Let's Encrypt..."
@@ -274,9 +302,6 @@ EOF
     # Update SSL certificate paths in nginx config
     sed -i 's|ssl_certificate /etc/nginx/ssl/localhost.crt;|ssl_certificate /etc/letsencrypt/live/'$DOMAIN'/fullchain.pem;|g' nginx/conf.d/default.conf
     sed -i 's|ssl_certificate_key /etc/nginx/ssl/localhost.key;|ssl_certificate_key /etc/letsencrypt/live/'$DOMAIN'/privkey.pem;|g' nginx/conf.d/default.conf
-    
-    # Add HTTP to HTTPS redirect in the HTTP server block
-    sed -i '/# Serve HTTP directly (no redirect to HTTPS for now)/c\    # Redirect HTTP to HTTPS\n    return 301 https://$server_name:8443$request_uri;' nginx/conf.d/default.conf
     
     # Restart nginx with new certificates
     docker compose restart nginx
