@@ -5,7 +5,7 @@ app_name = 'plans'
 
 urlpatterns = [
     # API endpoints
-    path('api/plans/', views.get_plans, name='api-plans'),
+    path('plans/', views.get_plans, name='api-plans'),
     path('subscribe/', views.subscribe_to_plan, name='subscribe'),
     path('complete-payment/', views.complete_payment, name='complete-payment'),
     path('subscription/', views.get_user_subscription, name='user-subscription'),
