@@ -15,13 +15,13 @@ class PlanFeatureLimitSerializer(serializers.ModelSerializer):
         fields = ['id', 'feature', 'feature_id', 'limit']
 
 class PlanSerializer(serializers.ModelSerializer):
-    feature_limits = PlanFeatureLimitSerializer(many=True, read_only=True)
+    features = PlanFeatureLimitSerializer(many=True, read_only=True, source='feature_limits')
     
     class Meta:
         model = Plan
         fields = [
             'id', 'name', 'description', 'price', 'billing_period',
-            'is_active', 'is_free', 'features', 'is_popular', 'feature_limits'
+            'is_active', 'is_free', 'features', 'is_popular'
         ]
 
 class PlanPaymentSerializer(serializers.ModelSerializer):

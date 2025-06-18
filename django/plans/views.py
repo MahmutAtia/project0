@@ -29,21 +29,9 @@ class PlanListView(ListView):
 @api_view(['GET'])
 def get_plans(request):
     """API endpoint to get all active plans"""
-    plans = Plan.objects.filter(is_active=True).order_by('price')
-    plans_data = []
-    
-    for plan in plans:
-        plans_data.append({
-            'id': plan.id,
-            'name': plan.name,
-            'description': plan.description,
-            'price': str(plan.price),
-            'billing_period': plan.billing_period,
-            'features': plan.features,
-            'is_popular': plan.is_popular,
-        })
-    
-    return Response(plans_data)
+    plans = Plan.objects.filter(is_active=True).prefetch_related('feature_limits__feature').order_by('price')
+    serializer = PlanSerializer(plans, many=True)
+    return Response(serializer.data)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -144,7 +132,6 @@ def cancel_subscription(request):
         }, status=status.HTTP_404_NOT_FOUND)
 
 
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_user_subscription(request):
@@ -152,21 +139,16 @@ def get_user_subscription(request):
     subscription = SubscriptionService.get_active_subscription(request.user)
     
     if subscription:
-        # Determine actual subscription state
+        # Use the serializer instead of manual construction
+        plan_serializer = PlanSerializer(subscription.plan)
+        
         is_canceling = subscription.is_in_grace_period if hasattr(subscription, 'is_in_grace_period') else (
             subscription.canceled_at is not None and not subscription.auto_renew
         )
         
         return Response({
             'has_subscription': True,
-            'plan': {
-                'id': subscription.plan.id,
-                'name': subscription.plan.name,
-                'description': subscription.plan.description,
-                'price': str(subscription.plan.price),
-                'billing_period': subscription.plan.billing_period,
-                'features': subscription.plan.features,
-            },
+            'plan': plan_serializer.data,  # Use serialized data
             'start_date': subscription.start_date,
             'end_date': subscription.end_date,
             'is_active': subscription.status == 'active',
@@ -181,9 +163,7 @@ def get_user_subscription(request):
             'has_subscription': False,
             'plan': None
         })
-        
-        
-        
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def complete_payment(request):
