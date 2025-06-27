@@ -3,10 +3,11 @@ from dj_rest_auth.registration.views import RegisterView
 from dj_rest_auth.views import LoginView, LogoutView, UserDetailsView
 from django.urls import path
 from rest_framework_simplejwt.views import TokenVerifyView
-from .views import GoogleLogin
+from .views import GoogleLogin, verify_and_check_limits
 from django.urls import include
 
 urlpatterns = [
+    path("verify-and-check-limits/", verify_and_check_limits, name="verify_and_check_limits"),
     path("register/", RegisterView.as_view(), name="rest_register"),
     path("login/", LoginView.as_view(), name="rest_login"),
     path("logout/", LogoutView.as_view(), name="rest_logout"),

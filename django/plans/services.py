@@ -152,6 +152,33 @@ class UsageService:
         return start, end
     
     @staticmethod
+    def get_current_usage(user: User, feature_code: str) -> int:
+        """Get current usage count for a user and feature in the current period"""
+        try:
+            feature = Feature.objects.get(code=feature_code, is_active=True)
+        except Feature.DoesNotExist:
+            return 0
+        
+        # Get user's current plan to determine billing period
+        plan = PlanService.get_user_plan(user)
+        if not plan:
+            return 0
+        
+        # Get current period dates
+        start_date, end_date = UsageService.get_current_period_dates(plan.billing_period)
+        
+        # Get usage record for current period
+        try:
+            usage_record = UsageRecord.objects.get(
+                user=user,
+                feature=feature,
+                period_start=start_date
+            )
+            return usage_record.count
+        except UsageRecord.DoesNotExist:
+            return 0
+    
+    @staticmethod
     def check_feature_limit(user: User, feature_code: str) -> Dict:
         """Check if user can use a feature based on their plan limits"""
         try:
@@ -225,7 +252,6 @@ class UsageService:
         
         logger.info(f"Recorded usage for user {user.id}, feature {feature_code}, count: {usage_record.count}")
         return True
-
 class SubscriptionService:
     """Service for subscription lifecycle management"""
     

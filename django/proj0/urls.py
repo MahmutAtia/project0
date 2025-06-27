@@ -52,7 +52,6 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
     # path('auth/', include('accounts.urls')),
     path("dj-rest-auth/", include("dj_rest_auth.urls")),
-    path("dj-rest-auth/", include("dj_rest_auth.urls")),
     path("dj-rest-auth/registration/", include("dj_rest_auth.registration.urls")),
     path("accounts/", include("accounts.urls")),
     path('api/', include('plans.urls')),  # Add this if not present
