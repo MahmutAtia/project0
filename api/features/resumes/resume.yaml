@@ -1,0 +1,180 @@
+title: Data Analyst Resume Collection # Title of the resume should be idenified by the candidate's experience or job title of interest 
+dicription: # very brief description of the resume few words maximum 100 characters
+fontawesome_icon: # icon name from fontawesome library. an icon that represents the resume.
+about_candidate: "" # maximum 100 words. A very personalized overview of the candidate and its resume and should contain personal information, career goals, and a brief summary of the resume.
+job_search_keywords: "" # here add a string to be used to search for jobs. For example: "Python,React","Data Analyst R ,Python,SQL" etc. A small string can be used to search for jobs in linkedIn, google, indeed, etc.
+resume:
+  personal_information:
+    name: ""
+    email: ""
+    phone: "" # Phone number can be comma separated for multiple numbers
+    location: 
+      address: "" 
+      city: ""
+      state: ""
+      postal_code: ""
+    profiles:
+      linkedin: ""
+      github: ""
+      website: ""
+      portfolio: ""
+  summary: "" 
+  objective: ""
+  experience:
+    - id: 1 # Unique id for each experience
+      company: ""
+      title: ""
+      location: ""
+      start_date: ""
+      end_date: "" # Can be "Present"
+      description: ""
+      technologies: [] # type: array of strings
+  education:
+    - id: 1 # Unique id for each education
+      institution: ""
+      degree: ""
+      major: ""
+      minor: ""
+      gpa: ""
+      graduation_date: ""
+      relevant_courses: [] # type: array of strings
+  skills:
+    - id: 1 # Unique id for each skill
+      name: ""
+      proficiency: ""
+      keywords: [] # type: array of strings
+  languages:
+    - id: 1 # Unique id for each language
+      language: ""
+      proficiency: ""
+  projects:
+    - id: 1 # Unique id for each project
+      name: ""
+      description: ""
+      link: ""
+  awards_and_recognition:
+    - id: 1 
+      title: ""
+      issuing_organization: ""
+      date_received: ""
+      description: ""
+
+  Volunteer_and_social_activities:
+    - id: 1 
+      organization: ""
+      position: ""
+      start_date: ""
+      end_date: ""
+      description: ""
+
+  certifications:
+    - id: 1 # Unique id for each certification
+      name: ""
+      issuing_authority: ""
+      date_obtained: ""
+      expiry_date: ""
+      discription: ""
+  interests: 
+    - id: 1 # Unique id for each interest
+      name: ""
+      keywords: []  # type: array of strings
+  references:
+    - id: 1 # Unique id for each reference
+      name: ""
+      position: ""
+      company_or_institution: ""
+      email: ""
+      phone: ""
+      relationship: ""
+      years_known: ""
+      description: ""
+  publications:
+    - id: 1 # Unique id for each publication
+      title: ""
+      authors: []  # type: array of strings
+      publication_date: ""
+      publisher: ""
+      link: ""
+      description: ""
+  courses:
+    - id: 1 # Unique id for each course
+      title: ""
+      institution: ""
+      completion_date: ""
+      link: ""
+      description: ""
+  conferences:
+    - id: 1 # Unique id for each conference
+      name: ""
+      date: ""
+      location: ""
+      link: ""
+      description: ""
+
+  speaking_engagements:
+    - id: 1
+      title: ""
+      event: ""
+      date: ""
+      location: ""
+      audience_size: ""
+      video_link: ""
+      slides_link: ""
+      description: ""
+
+  patents:
+    - id: 1
+      title: ""
+      patent_number: ""
+      filing_date: ""
+      issue_date: ""
+      status: ""
+      inventors: [] # type: array of strings
+      description: ""
+
+  professional_memberships:
+    - id: 1
+      organization: ""
+      role: ""
+      start_date: ""
+      end_date: ""
+      benefits: [] # type: array of strings
+      description: ""
+
+  military_service:
+    - id: 1
+      branch: ""
+      rank: ""
+      start_date: ""
+      end_date: ""
+      location: ""
+      duties: [] # type: array of strings
+      awards: [] # type: array of strings
+
+  teaching_experience:
+    - id: 1
+      institution: ""
+      position: ""
+      subject: ""
+      start_date: ""
+      end_date: ""
+      description: ""
+      student_level: ""
+      class_size: ""
+      description: ""
+
+  research_experience:
+    - id: 1
+      institution: ""
+      project: ""
+      role: ""
+      start_date: ""
+      end_date: ""
+      description: ""
+      funding_source: ""
+      publications: []  # type: array of strings
+      collaborators: []  # type: array of strings
+      description: ""
+  
+
+

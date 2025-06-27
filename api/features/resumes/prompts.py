@@ -42,9 +42,6 @@ Use primeicons find the icon that best represents the candidate's profession and
 
 Output all in the {language} language.
 
-ATS Evaluation Result For Candidate Current Resume:
-{ats_result}
-
 Input Resume Text: {input_text}
 
 Output YAML:"""
