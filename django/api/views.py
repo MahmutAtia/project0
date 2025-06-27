@@ -1308,16 +1308,22 @@ def save_generated_resume(request):
 
         # 4. Save the Resume object
         is_default = not Resume.objects.filter(user=user).exists()
+        
+        # resume obj
+        resume_obj = {
+            "user": user,
+            "resume": resume_data,
+            "job_search_keywords": job_search_keywords,
+            "is_default": is_default,
+            "title": title,
+            "about": about,
+            "icon": icon,
+            "description": description,
+        }
+        
         new_resume = Resume.objects.create(
-            user=user,
-            resume=resume_data,
-            job_search_keywords=job_search_keywords,
-            is_default=is_default,
-            title=title,
-            about=about,
-            icon=icon,
-            description=description,
-            # generation_task_id=task_id # Store task_id if using the check in step 2
+            **resume_obj
+        
         )
         logger.info(
             f"Successfully saved resume with ID {new_resume.id} for user {user.id} from task {task_id}."
@@ -1329,7 +1335,9 @@ def save_generated_resume(request):
 
         # 6. Return the new resume ID
         return Response(
-            {"resume_id": new_resume.id, "message": "Resume saved successfully."},
+            {"resume_id": new_resume.id,
+             "resume_data": resume_obj,
+             "message": "Resume saved successfully."},
             status=status.HTTP_201_CREATED,
         )
 
