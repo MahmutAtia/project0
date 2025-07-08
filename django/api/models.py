@@ -25,8 +25,9 @@ DEFAULT_RESUME_SECTION_KEYS = [
     "professional_memberships",
     "military_service",
     "teaching_experience",
-    "research_experience"
+    "research_experience",
 ]
+
 
 class Resume(models.Model):
     user = models.ForeignKey(
@@ -58,15 +59,13 @@ class Resume(models.Model):
         null=True,
         help_text="Keywords related to job search (e.g., 'Python, Django')",
     )
-    sections_sort=  models.JSONField(
+    sections_sort = models.JSONField(
         default=list,
         blank=True,
-        help_text="Ordered list of section keys for the resume structure."
+        help_text="Ordered list of section keys for the resume structure.",
     )
     hidden_sections = models.JSONField(
-        default=list,
-        blank=True,
-        help_text="Empty or hidden sections by user"
+        default=list, blank=True, help_text="Empty or hidden sections by user"
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -76,33 +75,39 @@ class Resume(models.Model):
 
     def save(self, *args, **kwargs):
         is_new = not self.pk  # Check if the instance is being created
-        
+
         # Ensure only one resume is marked as default
         if self.is_default:
             # Set is_default=False for all other resumes of the same user
-            Resume.objects.filter(user=self.user, is_default=True).exclude(pk=self.pk).update(is_default=False)
+            Resume.objects.filter(user=self.user, is_default=True).exclude(
+                pk=self.pk
+            ).update(is_default=False)
 
         # If this is the first resume for the user, set it as default
         if is_new and not Resume.objects.filter(user=self.user).exists():
             self.is_default = True
-        
+
         if is_new:
             # 1. Initialize sections_sort if it's empty or not provided
-            if not self.sections_sort: # Handles None or empty list from default=list
-                self.sections_sort = list(DEFAULT_RESUME_SECTION_KEYS) # Ensure it's a new list instance
-            
+            if not self.sections_sort:  # Handles None or empty list from default=list
+                self.sections_sort = list(
+                    DEFAULT_RESUME_SECTION_KEYS
+                )  # Ensure it's a new list instance
+
             # 2. Initialize hidden_sections by checking empty sections in resume JSON
             if not self.hidden_sections:
                 self.hidden_sections = []
-                
+
             # Check for empty sections in resume JSON and add to hidden_sections
             if self.resume:
                 for section_key in DEFAULT_RESUME_SECTION_KEYS:
                     # Check if section exists and is empty/None
                     section_data = self.resume.get(section_key)
-                    
+
                     # empty list or emtpty dict or None
-                    if section_data is None or (isinstance(section_data, (list, dict)) and not section_data):
+                    if section_data is None or (
+                        isinstance(section_data, (list, dict)) and not section_data
+                    ):
                         # If section is empty, add to hidden_sections
                         # Only add if it's not already there to avoid duplicates
                         if section_key not in self.hidden_sections:

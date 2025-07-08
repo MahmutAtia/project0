@@ -107,8 +107,8 @@ class ResumeListCreateView(generics.ListCreateAPIView):
         """
         user = self.request.user
         return Resume.objects.filter(user=user).prefetch_related(
-            'generated_documents',  # Related name from Resume to GeneratedDocument
-            'personal_website'      # Related name from Resume to GeneratedWebsite (OneToOne)
+            "generated_documents",  # Related name from Resume to GeneratedDocument
+            "personal_website",  # Related name from Resume to GeneratedWebsite (OneToOne)
         )
 
     def perform_create(self, serializer):
@@ -117,11 +117,12 @@ class ResumeListCreateView(generics.ListCreateAPIView):
         """
         serializer.save(user=self.request.user)
 
+
 class ResumeRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ResumeSerializer
     permission_classes = [permissions.IsAuthenticated]
     lookup_field = "pk"
-    
+
     def get_object(self):
         """
         Returns the object the view is displaying.
@@ -130,7 +131,7 @@ class ResumeRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         resume_id = self.kwargs.get(self.lookup_field)
         resume = get_object_or_404(Resume, pk=resume_id, user=self.request.user)
         return resume
-        
+
     def update(self, request, *args, **kwargs):
         """
         Update method that handles both PUT and PATCH.
@@ -138,24 +139,27 @@ class ResumeRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         """
         try:
             resume = self.get_object()
-            partial = request.method == 'PATCH'
-            
+            partial = request.method == "PATCH"
+
             # Use the serializer to validate and update the data
             serializer = self.get_serializer(resume, data=request.data, partial=partial)
             serializer.is_valid(raise_exception=True)
             self.perform_update(serializer)
-            
+
             return Response(serializer.data)
-            
+
         except Exception as e:
-            logger.exception(f"Error updating resume {self.kwargs.get(self.lookup_field)}: {e}")
+            logger.exception(
+                f"Error updating resume {self.kwargs.get(self.lookup_field)}: {e}"
+            )
             return Response(
                 {"error": f"Error updating resume: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-            
+
+
 @api_view(["POST"])
-@require_feature('resume_generation')
+@require_feature("resume_generation")
 def generate_resume(request):
     # Test Redis connection
     try:
@@ -178,11 +182,13 @@ def generate_resume(request):
             description = generated_resume_data.get(
                 "description"
             )  # the description of the resume
-            icon = generated_resume_data.get("fontawesome_icon")  # the icon of the resume
+            icon = generated_resume_data.get(
+                "fontawesome_icon"
+            )  # the icon of the resume
             job_search_keywords = generated_resume_data.get(
                 "job_search_keywords"
             )  # the job search keywords of the resume
-            
+
             resume_data = generated_resume_data.get("resume")  # the resume data
             about = generated_resume_data.get("about")  # the about of the resume
 
@@ -249,7 +255,7 @@ def generate_resume(request):
 
 
 @api_view(["POST"])
-@require_feature('resume_section_edit') 
+@require_feature("resume_section_edit")
 def generate_resume_section(request):
     input_data = request.data
     prompt, section_data = input_data.get("prompt"), input_data.get("sectionData")
@@ -283,7 +289,7 @@ def generate_resume_section(request):
 
 
 @api_view(["POST"])
-@require_feature('resume_generation')  # Add this decorator
+@require_feature("resume_generation")  # Add this decorator
 def generate_from_job_desc(request):
     try:
 
@@ -322,7 +328,7 @@ def generate_from_job_desc(request):
                 title = generated_resume_data.get("title")
                 description = generated_resume_data.get("description")
                 icon = generated_resume_data.get("fontawesome_icon")
-                job_search_keywords= generated_resume_data.get("job_search_keywords")
+                job_search_keywords = generated_resume_data.get("job_search_keywords")
                 resume_data = generated_resume_data.get("resume")
                 about = generated_resume_data.get("about")
 
@@ -375,7 +381,7 @@ def generate_from_job_desc(request):
 
 
 @api_view(["POST"])
-@require_feature('pdf_generation')
+@require_feature("pdf_generation")
 def generate_pdf(request):
     """
     API endpoint to trigger background PDF generation.
@@ -500,7 +506,7 @@ def get_pdf_generation_status(request, task_id):
 
 
 @api_view(["POST"])
-@require_feature('website_generation') 
+@require_feature("website_generation")
 def generate_personal_website(request):
     """
     API endpoint to generate and save a personal website.
@@ -587,7 +593,7 @@ def generate_personal_website(request):
 
 
 @api_view(["POST"])
-@require_feature('website_generation')  # Add this decorator
+@require_feature("website_generation")  # Add this decorator
 def generate_personal_website_bloks(request):
     """
     API endpoint to generate and save a personal website using Bloks.
@@ -730,7 +736,7 @@ def update_website_yaml(request, unique_id):
 
 
 @api_view(["POST"])
-@require_feature('website_generation')  # Add this decorator
+@require_feature("website_generation")  # Add this decorator
 def edit_website_block(request):
     data = json.loads(request.body)
     resume_id = data.get("resumeId")
@@ -795,8 +801,9 @@ def edit_website_block(request):
 
 ############################# Documents ##############################
 
+
 @api_view(["POST"])
-@require_feature('document_generation')  # Add this decorator
+@require_feature("document_generation")  # Add this decorator
 def generate_document_bloks(request):
     """
     API endpoint to generate a document using Bloks.
@@ -818,7 +825,9 @@ def generate_document_bloks(request):
         personal_info = resume.resume.get("personal_information", {})
 
         generated_document = async_to_sync(
-            GeneratedDocument.objects.filter(resume=resume, document_type=document_type).afirst
+            GeneratedDocument.objects.filter(
+                resume=resume, document_type=document_type
+            ).afirst
         )()
 
         if generated_document:
@@ -861,7 +870,6 @@ def generate_document_bloks(request):
             "language": language,
             "about_candidate": about,
             "personal_info": personal_info,
-            
         }
     }
 
@@ -900,7 +908,12 @@ def generate_document_bloks(request):
             e.response.json() if e.response.content else {"error": "AI service error"},
             status=e.response.status_code,
         )
-    except (yaml.YAMLError, AttributeError, TypeError, KeyError) as e:  # Added TypeError, KeyError for robustness
+    except (
+        yaml.YAMLError,
+        AttributeError,
+        TypeError,
+        KeyError,
+    ) as e:  # Added TypeError, KeyError for robustness
         logger.error(
             f"Error processing AI service response (generate_document_bloks): {e}. YAML: {generated_yaml[:500] if 'generated_yaml' in locals() else 'N/A'}"
         )
@@ -909,15 +922,15 @@ def generate_document_bloks(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
     except Exception as e:  # Catch any other unexpected errors
-        logger.exception(f"Unexpected error in generate_document_bloks after AI call: {e}")
+        logger.exception(
+            f"Unexpected error in generate_document_bloks after AI call: {e}"
+        )
         return Response(
             {"error": f"An unexpected error occurred: {str(e)}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
-        
-        
-        
-        
+
+
 @api_view(["GET"])
 def get_document_bloks(request, document_id):
     """
@@ -940,7 +953,7 @@ def get_document_bloks(request, document_id):
 
 
 @api_view(["POST"])
-@require_feature('resume_section_edit')  # Add this decorator
+@require_feature("resume_section_edit")  # Add this decorator
 def edit_document_blok(request):
     input_data = request.data
     prompt, section_data, document_type = (
@@ -1097,7 +1110,7 @@ logger = logging.getLogger(__name__)  # Setup logger for the view
 
 
 @api_view(["POST"])
-@require_feature('ats_checker')  # Add this decorator
+@require_feature("ats_checker")  # Add this decorator
 def ats_checker(request):
     """
     Checks resume against a job description using an ATS service.
@@ -1308,7 +1321,7 @@ def save_generated_resume(request):
 
         # 4. Save the Resume object
         is_default = not Resume.objects.filter(user=user).exists()
-        
+
         # resume obj
         resume_obj = {
             "user": user,
@@ -1320,11 +1333,8 @@ def save_generated_resume(request):
             "icon": icon,
             "description": description,
         }
-        
-        new_resume = Resume.objects.create(
-            **resume_obj
-        
-        )
+
+        new_resume = Resume.objects.create(**resume_obj)
         logger.info(
             f"Successfully saved resume with ID {new_resume.id} for user {user.id} from task {task_id}."
         )
@@ -1335,9 +1345,11 @@ def save_generated_resume(request):
 
         # 6. Return the new resume ID
         return Response(
-            {"resume_id": new_resume.id,
-             "resume_data": resume_obj,
-             "message": "Resume saved successfully."},
+            {
+                "resume_id": new_resume.id,
+                "resume_data": resume_obj,
+                "message": "Resume saved successfully.",
+            },
             status=status.HTTP_201_CREATED,
         )
 
@@ -1349,4 +1361,3 @@ def save_generated_resume(request):
             {"error": "An unexpected error occurred while saving the resume."},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
-

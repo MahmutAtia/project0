@@ -29,9 +29,9 @@ SECRET_KEY = "django-insecure-u$04p_1&)e*=o+scbzp4x()8w2er8g1l28_$hep47p&fx5&#wp
 DEBUG = True
 
 # filepath: /home/e-kalite/Documents/careerflow/django/proj0/settings.py
-ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
-if 'django' not in ALLOWED_HOSTS:
-    ALLOWED_HOSTS.append('django')
+ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+if "django" not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append("django")
 
 # Application definition
 
@@ -56,15 +56,13 @@ INSTALLED_APPS = [
     "dj_rest_auth",
     "dj_rest_auth.registration",
     "drf_yasg",
-    
     # third-party apps
-        'payments',
-
-
+    "payments",
     # custom apps
     "api",
     "accounts",
-    'plans',]
+    "plans",
+]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -154,7 +152,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = "static/"
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')  # Add this line
+STATIC_ROOT = os.path.join(BASE_DIR, "static")  # Add this line
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -205,8 +203,7 @@ ACCOUNT_AUTHENTICATION_METHOD = "username_email"
 # CORS configuration
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # Your Next.js frontend URL
-    "http://localhost:880",   # <-- Add this line
-
+    "http://localhost:880",  # <-- Add this line
 ]
 CORS_ALLOW_CREDENTIALS = True  # Allow cookies to be sent+
 
@@ -245,7 +242,7 @@ SIMPLE_JWT = {
 # Email Settings
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = os.getenv("EMAIL_HOST")
-EMAIL_PORT = int(os.getenv("EMAIL_PORT",587))
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
@@ -320,29 +317,30 @@ BROKER_CONNECTION_TIMEOUT = 30  # Seconds
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 CELERY_BROKER_CONNECTION_MAX_RETRIES = 10
 CELERY_BROKER_TRANSPORT_OPTIONS = {
-    'visibility_timeout': 3600,  # 1 hour, prevent task duplication on connection loss
-    'socket_timeout': 30,        # Socket timeout for Redis operations
-    'socket_connect_timeout': 30,  # Connection timeout
+    "visibility_timeout": 3600,  # 1 hour, prevent task duplication on connection loss
+    "socket_timeout": 30,  # Socket timeout for Redis operations
+    "socket_connect_timeout": 30,  # Connection timeout
 }
 # More conservative Redis visibility
 CELERY_RESULT_EXPIRES = 3600  # Results expire after 1 hour
 
 # Rate limiting for tasks
-CELERY_TASK_DEFAULT_RATE_LIMIT = '10/m'  # Default to max 10 tasks per minute
+CELERY_TASK_DEFAULT_RATE_LIMIT = "10/m"  # Default to max 10 tasks per minute
 
 
 # Payment settings
-PAYMENT_HOST = 'localhost:8000'  # Your domain
+PAYMENT_HOST = "localhost:8000"  # Your domain
 PAYMENT_USES_SSL = False  # Set to True in production
-PAYMENT_MODEL = 'plans.PlanPayment'
+PAYMENT_MODEL = "plans.PlanPayment"
 # Payment variants (providers)
 PAYMENT_VARIANTS = {
-    'default': ('payments.dummy.DummyProvider', {}),  # For testing
-    
-    'paypal': ('payments.paypal.PaypalProvider', {
-        'client_id': 'your_paypal_client_id',
-        'secret': 'your_paypal_secret',
-        'endpoint': 'https://api.sandbox.paypal.com',  # sandbox for testing
-    }),
+    "default": ("payments.dummy.DummyProvider", {}),  # For testing
+    "paypal": (
+        "payments.paypal.PaypalProvider",
+        {
+            "client_id": "your_paypal_client_id",
+            "secret": "your_paypal_secret",
+            "endpoint": "https://api.sandbox.paypal.com",  # sandbox for testing
+        },
+    ),
 }
-
