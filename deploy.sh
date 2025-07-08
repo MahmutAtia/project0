@@ -50,7 +50,7 @@ log_data() {
 
 # Check if command exists
 check_tool() {
-    if ! command -v $1 &> /dev/null; then
+    if ! command -v "$1" &> /dev/null; then
         log_error "$1 is not installed"
         exit 1
     fi
@@ -99,7 +99,7 @@ verify_repository_access() {
 run_django_command() {
     local command="$1"
     log_info "Running Django command: $command"
-    docker compose run --rm django python manage.py $command
+    docker compose run --rm django python manage.py "$command"
 }
 
 # Database management functions
@@ -128,6 +128,7 @@ print('Database OK')
         fi
     fi
 }
+
 create_superuser() {
     log_info "Creating Django superuser..."
     read -p "Do you want to create a superuser? (y/N): " create_user
@@ -246,14 +247,14 @@ setup_letsencrypt() {
     log_info "Starting nginx for HTTP challenge..."
     
     # Create a temporary nginx config for Let's Encrypt challenge
-    cat > nginx/conf.d/letsencrypt.conf << EOF
+    cat > nginx/conf.d/letsencrypt.conf << 'EOF'
 server {
     listen 80;
-    server_name $DOMAIN;
+    server_name DOMAIN_PLACEHOLDER;
     
     location /.well-known/acme-challenge/ {
         root /var/www/certbot;
-        try_files \$uri \$uri/ =404;
+        try_files $uri $uri/ =404;
     }
     
     location / {
@@ -262,6 +263,9 @@ server {
     }
 }
 EOF
+    
+    # Replace placeholder with actual domain
+    sed -i "s/DOMAIN_PLACEHOLDER/$DOMAIN/g" nginx/conf.d/letsencrypt.conf
     
     # Start only nginx for the challenge
     docker compose up -d nginx
@@ -272,11 +276,11 @@ EOF
     docker compose run --rm certbot certonly \
         --webroot \
         --webroot-path=/var/www/certbot \
-        --email admin@$DOMAIN \
+        --email "admin@$DOMAIN" \
         --agree-tos \
         --no-eff-email \
         --force-renewal \
-        -d $DOMAIN || {
+        -d "$DOMAIN" || {
         log_error "Let's Encrypt certificate generation failed!"
         log_error "Please check:"
         log_error "1. Domain $DOMAIN DNS points to this server"
@@ -300,8 +304,8 @@ EOF
     cp nginx/conf.d/default.conf nginx/conf.d/default.conf.backup
     
     # Update SSL certificate paths in nginx config
-    sed -i 's|ssl_certificate /etc/nginx/ssl/localhost.crt;|ssl_certificate /etc/letsencrypt/live/'$DOMAIN'/fullchain.pem;|g' nginx/conf.d/default.conf
-    sed -i 's|ssl_certificate_key /etc/nginx/ssl/localhost.key;|ssl_certificate_key /etc/letsencrypt/live/'$DOMAIN'/privkey.pem;|g' nginx/conf.d/default.conf
+    sed -i "s|ssl_certificate /etc/nginx/ssl/localhost.crt;|ssl_certificate /etc/letsencrypt/live/$DOMAIN/fullchain.pem;|g" nginx/conf.d/default.conf
+    sed -i "s|ssl_certificate_key /etc/nginx/ssl/localhost.key;|ssl_certificate_key /etc/letsencrypt/live/$DOMAIN/privkey.pem;|g" nginx/conf.d/default.conf
     
     # Restart nginx with new certificates
     docker compose restart nginx
@@ -409,7 +413,7 @@ main() {
             cd ..
             rm -rf "$PROJECT_DIR"
             log_info "Cloning backend repository..."
-            git clone -b $BRANCH $BACKEND_REPO $PROJECT_DIR || {
+            git clone -b "$BRANCH" "$BACKEND_REPO" "$PROJECT_DIR" || {
                 log_error "Failed to clone backend repository"
                 exit 1
             }
@@ -429,7 +433,7 @@ main() {
         log_success "Backend updated"
     else
         log_info "Cloning backend repository..."
-        git clone -b $BRANCH $BACKEND_REPO $PROJECT_DIR || {
+        git clone -b "$BRANCH" "$BACKEND_REPO" "$PROJECT_DIR" || {
             log_error "Failed to clone backend repository"
             exit 1
         }
@@ -451,7 +455,7 @@ main() {
             cd ..
             rm -rf "$FRONTEND_DIR"
             log_info "Cloning frontend repository..."
-            git clone -b $BRANCH $FRONTEND_REPO $FRONTEND_DIR || {
+            git clone -b "$BRANCH" "$FRONTEND_REPO" "$FRONTEND_DIR" || {
                 log_error "Failed to clone frontend repository"
                 exit 1
             }
@@ -462,7 +466,7 @@ main() {
                 log_warning "Frontend directory has wrong remote origin. Re-cloning..."
                 cd ..
                 rm -rf "$FRONTEND_DIR"
-                git clone -b $BRANCH $FRONTEND_REPO $FRONTEND_DIR || {
+                git clone -b "$BRANCH" "$FRONTEND_REPO" "$FRONTEND_DIR" || {
                     log_error "Failed to clone frontend repository"
                     exit 1
                 }
@@ -485,7 +489,7 @@ main() {
     else
         log_info "Cloning frontend repository..."
         cd "$PROJECT_DIR"
-        git clone -b $BRANCH $FRONTEND_REPO $FRONTEND_DIR || {
+        git clone -b "$BRANCH" "$FRONTEND_REPO" "$FRONTEND_DIR" || {
             log_error "Failed to clone frontend repository"
             exit 1
         }
@@ -503,7 +507,7 @@ main() {
         
         cd "$PROJECT_DIR"
         rm -rf "$FRONTEND_DIR"
-        git clone -b $BRANCH $FRONTEND_REPO $FRONTEND_DIR || {
+        git clone -b "$BRANCH" "$FRONTEND_REPO" "$FRONTEND_DIR" || {
             log_error "Failed to re-clone frontend repository"
             exit 1
         }
@@ -521,7 +525,7 @@ main() {
     log_success "Frontend repository verified with content"
     echo
     
-    # Check if .env file exists (you already have it)
+    # Check if .env file exists
     log_info "Step 4: Checking environment configuration..."
     ENV_FILE="$PROJECT_DIR/.env"
     if [ -f "$ENV_FILE" ]; then
@@ -533,187 +537,181 @@ main() {
     fi
     echo
     
-    # SSL Certificate Setup - offer Let's Encrypt upgrade
-# Update the SSL Certificate Management section (around line 526)
-
-# SSL Certificate Setup - Enhanced logic to handle config/certificate mismatches
-log_info "Step 5: SSL Certificate Management..."
-
-cd "$PROJECT_DIR"
-
-# Check what certificates actually exist and what nginx is configured for
-NGINX_CONF="nginx/conf.d/default.conf"
-LETSENCRYPT_CERT_EXISTS=false
-SELFSIGNED_CERT_EXISTS=false
-NGINX_USES_LETSENCRYPT=false
-NGINX_USES_SELFSIGNED=false
-
-# Check if certificates exist
-if [ -d "certbot/conf/live/$DOMAIN" ] && [ -f "certbot/conf/live/$DOMAIN/fullchain.pem" ]; then
-    LETSENCRYPT_CERT_EXISTS=true
-fi
-
-if [ -f "nginx/ssl/localhost.crt" ] && [ -f "nginx/ssl/localhost.key" ]; then
-    SELFSIGNED_CERT_EXISTS=true
-fi
-
-# Check nginx configuration
-if [ -f "$NGINX_CONF" ]; then
-    if grep -q "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" "$NGINX_CONF"; then
-        NGINX_USES_LETSENCRYPT=true
-    elif grep -q "/etc/nginx/ssl/localhost.crt" "$NGINX_CONF"; then
-        NGINX_USES_SELFSIGNED=true
+    # SSL Certificate Setup
+    log_info "Step 5: SSL Certificate Management..."
+    
+    cd "$PROJECT_DIR"
+    
+    # Check what certificates actually exist and what nginx is configured for
+    NGINX_CONF="nginx/conf.d/default.conf"
+    LETSENCRYPT_CERT_EXISTS=false
+    SELFSIGNED_CERT_EXISTS=false
+    NGINX_USES_LETSENCRYPT=false
+    NGINX_USES_SELFSIGNED=false
+    
+    # Check if certificates exist
+    if [ -d "certbot/conf/live/$DOMAIN" ] && [ -f "certbot/conf/live/$DOMAIN/fullchain.pem" ]; then
+        LETSENCRYPT_CERT_EXISTS=true
     fi
-fi
-
-log_info "SSL Status Analysis:"
-log_info "• Let's Encrypt certificates exist: $LETSENCRYPT_CERT_EXISTS"
-log_info "• Self-signed certificates exist: $SELFSIGNED_CERT_EXISTS"
-log_info "• Nginx configured for Let's Encrypt: $NGINX_USES_LETSENCRYPT"
-log_info "• Nginx configured for self-signed: $NGINX_USES_SELFSIGNED"
-
-# Handle different scenarios
-if [ "$LETSENCRYPT_CERT_EXISTS" = true ] && [ "$NGINX_USES_LETSENCRYPT" = true ]; then
-    log_success "✅ Let's Encrypt certificates exist and nginx is properly configured"
     
-elif [ "$LETSENCRYPT_CERT_EXISTS" = true ] && [ "$NGINX_USES_SELFSIGNED" = true ]; then
-    log_info "🔄 Let's Encrypt certificates exist but nginx is configured for self-signed"
-    log_info "Updating nginx to use Let's Encrypt certificates..."
-    cp "$NGINX_CONF" "${NGINX_CONF}.backup_$(date +%Y%m%d_%H%M%S)"
-    sed -i 's|ssl_certificate /etc/nginx/ssl/localhost.crt;|ssl_certificate /etc/letsencrypt/live/'$DOMAIN'/fullchain.pem;|g' "$NGINX_CONF"
-    sed -i 's|ssl_certificate_key /etc/nginx/ssl/localhost.key;|ssl_certificate_key /etc/letsencrypt/live/'$DOMAIN'/privkey.pem;|g' "$NGINX_CONF"
-    log_success "✅ Nginx configuration updated to use Let's Encrypt certificates"
+    if [ -f "nginx/ssl/localhost.crt" ] && [ -f "nginx/ssl/localhost.key" ]; then
+        SELFSIGNED_CERT_EXISTS=true
+    fi
     
-elif [ "$SELFSIGNED_CERT_EXISTS" = true ] && [ "$NGINX_USES_LETSENCRYPT" = true ]; then
-    log_warning "⚠️  Nginx expects Let's Encrypt certificates but only self-signed certificates exist"
-    echo
-    echo "Available options:"
-    echo "1. Generate Let's Encrypt certificates (recommended for production)"
-    echo "2. Switch nginx to use existing self-signed certificates"
-    echo "3. Generate new self-signed certificates"
-    echo
-    read -p "Choose option (1-3): " cert_option
-    
-    case $cert_option in
-        1)
-            log_info "Setting up Let's Encrypt certificates..."
-            cd ..
-            setup_letsencrypt
-            if [ $? -eq 0 ]; then
-                log_success "✅ Let's Encrypt certificates generated and configured"
-            else
-                log_warning "Let's Encrypt setup failed, falling back to self-signed certificates"
-                cd "$PROJECT_DIR"
-                cp "$NGINX_CONF" "${NGINX_CONF}.backup_$(date +%Y%m%d_%H%M%S)"
-                sed -i 's|ssl_certificate /etc/letsencrypt/live/'$DOMAIN'/fullchain.pem;|ssl_certificate /etc/nginx/ssl/localhost.crt;|g' "$NGINX_CONF"
-                sed -i 's|ssl_certificate_key /etc/letsencrypt/live/'$DOMAIN'/privkey.pem;|ssl_certificate_key /etc/nginx/ssl/localhost.key;|g' "$NGINX_CONF"
-                log_success "✅ Nginx switched to use self-signed certificates"
-            fi
-            ;;
-        2)
-            log_info "Switching nginx to use existing self-signed certificates..."
-            cp "$NGINX_CONF" "${NGINX_CONF}.backup_$(date +%Y%m%d_%H%M%S)"
-            sed -i 's|ssl_certificate /etc/letsencrypt/live/'$DOMAIN'/fullchain.pem;|ssl_certificate /etc/nginx/ssl/localhost.crt;|g' "$NGINX_CONF"
-            sed -i 's|ssl_certificate_key /etc/letsencrypt/live/'$DOMAIN'/privkey.pem;|ssl_certificate_key /etc/nginx/ssl/localhost.key;|g' "$NGINX_CONF"
-            log_success "✅ Nginx configuration updated to use self-signed certificates"
-            ;;
-        3)
-            log_info "Generating new self-signed certificates..."
-            mkdir -p nginx/ssl
-            openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-              -keyout nginx/ssl/localhost.key \
-              -out nginx/ssl/localhost.crt \
-              -subj "/C=US/ST=State/L=City/O=CareerFlow/CN=$DOMAIN" \
-              -addext "subjectAltName=DNS:$DOMAIN,DNS:localhost" 2>/dev/null || {
-              openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-                -keyout nginx/ssl/localhost.key \
-                -out nginx/ssl/localhost.crt \
-                -subj "/C=US/ST=State/L=City/O=CareerFlow/CN=$DOMAIN"
-            }
-            
-            cp "$NGINX_CONF" "${NGINX_CONF}.backup_$(date +%Y%m%d_%H%M%S)"
-            sed -i 's|ssl_certificate /etc/letsencrypt/live/'$DOMAIN'/fullchain.pem;|ssl_certificate /etc/nginx/ssl/localhost.crt;|g' "$NGINX_CONF"
-            sed -i 's|ssl_certificate_key /etc/letsencrypt/live/'$DOMAIN'/privkey.pem;|ssl_certificate_key /etc/nginx/ssl/localhost.key;|g' "$NGINX_CONF"
-            log_success "✅ New self-signed certificates generated and nginx configured"
-            ;;
-        *)
-            log_error "Invalid option selected"
-            exit 1
-            ;;
-    esac
-    
-elif [ "$SELFSIGNED_CERT_EXISTS" = true ] && [ "$NGINX_USES_SELFSIGNED" = true ]; then
-    log_success "✅ Self-signed certificates exist and nginx is properly configured"
-    echo
-    read -p "Would you like to upgrade to Let's Encrypt certificates for production? (y/N): " upgrade_ssl
-    if [[ $upgrade_ssl =~ ^[Yy]$ ]]; then
-        cd ..
-        setup_letsencrypt
-        if [ $? -ne 0 ]; then
-            log_warning "Let's Encrypt setup failed, keeping existing self-signed certificates"
+    # Check nginx configuration
+    if [ -f "$NGINX_CONF" ]; then
+        if grep -q "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" "$NGINX_CONF"; then
+            NGINX_USES_LETSENCRYPT=true
+        elif grep -q "/etc/nginx/ssl/localhost.crt" "$NGINX_CONF"; then
+            NGINX_USES_SELFSIGNED=true
         fi
-        cd "$PROJECT_DIR"
-    else
-        log_info "Keeping existing self-signed certificates"
     fi
     
-elif [ "$LETSENCRYPT_CERT_EXISTS" = false ] && [ "$SELFSIGNED_CERT_EXISTS" = false ]; then
-    log_info "No SSL certificates found"
-    echo
-    echo "SSL Certificate Options:"
-    echo "1. Generate Let's Encrypt certificates (recommended for production)"
-    echo "2. Generate self-signed certificates (for development/testing)"
-    echo
-    read -p "Choose option (1-2): " ssl_choice
+    log_info "SSL Status Analysis:"
+    log_info "• Let's Encrypt certificates exist: $LETSENCRYPT_CERT_EXISTS"
+    log_info "• Self-signed certificates exist: $SELFSIGNED_CERT_EXISTS"
+    log_info "• Nginx configured for Let's Encrypt: $NGINX_USES_LETSENCRYPT"
+    log_info "• Nginx configured for self-signed: $NGINX_USES_SELFSIGNED"
     
-    case $ssl_choice in
-        1)
-            cd ..
-            setup_letsencrypt
-            if [ $? -ne 0 ]; then
-                log_warning "Let's Encrypt setup failed, generating self-signed certificates as fallback"
-                cd "$PROJECT_DIR"
+    # Handle different scenarios
+    if [ "$LETSENCRYPT_CERT_EXISTS" = true ] && [ "$NGINX_USES_LETSENCRYPT" = true ]; then
+        log_success "✅ Let's Encrypt certificates exist and nginx is properly configured"
+        
+    elif [ "$LETSENCRYPT_CERT_EXISTS" = true ] && [ "$NGINX_USES_SELFSIGNED" = true ]; then
+        log_info "🔄 Let's Encrypt certificates exist but nginx is configured for self-signed"
+        log_info "Updating nginx to use Let's Encrypt certificates..."
+        cp "$NGINX_CONF" "${NGINX_CONF}.backup_$(date +%Y%m%d_%H%M%S)"
+        sed -i "s|ssl_certificate /etc/nginx/ssl/localhost.crt;|ssl_certificate /etc/letsencrypt/live/$DOMAIN/fullchain.pem;|g" "$NGINX_CONF"
+        sed -i "s|ssl_certificate_key /etc/nginx/ssl/localhost.key;|ssl_certificate_key /etc/letsencrypt/live/$DOMAIN/privkey.pem;|g" "$NGINX_CONF"
+        log_success "✅ Nginx configuration updated to use Let's Encrypt certificates"
+        
+    elif [ "$SELFSIGNED_CERT_EXISTS" = true ] && [ "$NGINX_USES_LETSENCRYPT" = true ]; then
+        log_warning "⚠️  Nginx expects Let's Encrypt certificates but only self-signed certificates exist"
+        echo
+        echo "Available options:"
+        echo "1. Generate Let's Encrypt certificates (recommended for production)"
+        echo "2. Switch nginx to use existing self-signed certificates"
+        echo "3. Generate new self-signed certificates"
+        echo
+        read -p "Choose option (1-3): " cert_option
+        
+        case $cert_option in
+            1)
+                log_info "Setting up Let's Encrypt certificates..."
+                cd ..
+                setup_letsencrypt
+                if [ $? -eq 0 ]; then
+                    log_success "✅ Let's Encrypt certificates generated and configured"
+                else
+                    log_warning "Let's Encrypt setup failed, falling back to self-signed certificates"
+                    cd "$PROJECT_DIR"
+                    cp "$NGINX_CONF" "${NGINX_CONF}.backup_$(date +%Y%m%d_%H%M%S)"
+                    sed -i "s|ssl_certificate /etc/letsencrypt/live/$DOMAIN/fullchain.pem;|ssl_certificate /etc/nginx/ssl/localhost.crt;|g" "$NGINX_CONF"
+                    sed -i "s|ssl_certificate_key /etc/letsencrypt/live/$DOMAIN/privkey.pem;|ssl_certificate_key /etc/nginx/ssl/localhost.key;|g" "$NGINX_CONF"
+                    log_success "✅ Nginx switched to use self-signed certificates"
+                fi
+                ;;
+            2)
+                log_info "Switching nginx to use existing self-signed certificates..."
+                cp "$NGINX_CONF" "${NGINX_CONF}.backup_$(date +%Y%m%d_%H%M%S)"
+                sed -i "s|ssl_certificate /etc/letsencrypt/live/$DOMAIN/fullchain.pem;|ssl_certificate /etc/nginx/ssl/localhost.crt;|g" "$NGINX_CONF"
+                sed -i "s|ssl_certificate_key /etc/letsencrypt/live/$DOMAIN/privkey.pem;|ssl_certificate_key /etc/nginx/ssl/localhost.key;|g" "$NGINX_CONF"
+                log_success "✅ Nginx configuration updated to use self-signed certificates"
+                ;;
+            3)
+                log_info "Generating new self-signed certificates..."
                 mkdir -p nginx/ssl
                 openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
                   -keyout nginx/ssl/localhost.key \
                   -out nginx/ssl/localhost.crt \
                   -subj "/C=US/ST=State/L=City/O=CareerFlow/CN=$DOMAIN" \
-                  -addext "subjectAltName=DNS:$DOMAIN,DNS:localhost" 2>/dev/null || {
-                  openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-                    -keyout nginx/ssl/localhost.key \
-                    -out nginx/ssl/localhost.crt \
-                    -subj "/C=US/ST=State/L=City/O=CareerFlow/CN=$DOMAIN"
-                }
-                log_success "✅ Self-signed certificates generated as fallback"
+                  -addext "subjectAltName=DNS:$DOMAIN,DNS:localhost" 2>/dev/null || \
+                openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+                  -keyout nginx/ssl/localhost.key \
+                  -out nginx/ssl/localhost.crt \
+                  -subj "/C=US/ST=State/L=City/O=CareerFlow/CN=$DOMAIN"
+                
+                cp "$NGINX_CONF" "${NGINX_CONF}.backup_$(date +%Y%m%d_%H%M%S)"
+                sed -i "s|ssl_certificate /etc/letsencrypt/live/$DOMAIN/fullchain.pem;|ssl_certificate /etc/nginx/ssl/localhost.crt;|g" "$NGINX_CONF"
+                sed -i "s|ssl_certificate_key /etc/letsencrypt/live/$DOMAIN/privkey.pem;|ssl_certificate_key /etc/nginx/ssl/localhost.key;|g" "$NGINX_CONF"
+                log_success "✅ New self-signed certificates generated and nginx configured"
+                ;;
+            *)
+                log_error "Invalid option selected"
+                exit 1
+                ;;
+        esac
+        
+    elif [ "$SELFSIGNED_CERT_EXISTS" = true ] && [ "$NGINX_USES_SELFSIGNED" = true ]; then
+        log_success "✅ Self-signed certificates exist and nginx is properly configured"
+        echo
+        read -p "Would you like to upgrade to Let's Encrypt certificates for production? (y/N): " upgrade_ssl
+        if [[ $upgrade_ssl =~ ^[Yy]$ ]]; then
+            cd ..
+            setup_letsencrypt
+            if [ $? -ne 0 ]; then
+                log_warning "Let's Encrypt setup failed, keeping existing self-signed certificates"
             fi
-            ;;
-        2)
-            log_info "Generating self-signed certificates..."
-            mkdir -p nginx/ssl
-            openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-              -keyout nginx/ssl/localhost.key \
-              -out nginx/ssl/localhost.crt \
-              -subj "/C=US/ST=State/L=City/O=CareerFlow/CN=$DOMAIN" \
-              -addext "subjectAltName=DNS:$DOMAIN,DNS:localhost" 2>/dev/null || {
-              openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-                -keyout nginx/ssl/localhost.key \
-                -out nginx/ssl/localhost.crt \
-                -subj "/C=US/ST=State/L=City/O=CareerFlow/CN=$DOMAIN"
-            }
-            log_success "✅ Self-signed certificates generated"
-            ;;
-        *)
-            log_error "Invalid option selected"
-            exit 1
-            ;;
-    esac
-else
-    log_error "Unexpected SSL certificate configuration state"
-    exit 1
-fi
-
-cd ..
-echo
+            cd "$PROJECT_DIR"
+        else
+            log_info "Keeping existing self-signed certificates"
+        fi
+        
+    elif [ "$LETSENCRYPT_CERT_EXISTS" = false ] && [ "$SELFSIGNED_CERT_EXISTS" = false ]; then
+        log_info "No SSL certificates found"
+        echo
+        echo "SSL Certificate Options:"
+        echo "1. Generate Let's Encrypt certificates (recommended for production)"
+        echo "2. Generate self-signed certificates (for development/testing)"
+        echo
+        read -p "Choose option (1-2): " ssl_choice
+        
+        case $ssl_choice in
+            1)
+                cd ..
+                setup_letsencrypt
+                if [ $? -ne 0 ]; then
+                    log_warning "Let's Encrypt setup failed, generating self-signed certificates as fallback"
+                    cd "$PROJECT_DIR"
+                    mkdir -p nginx/ssl
+                    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+                      -keyout nginx/ssl/localhost.key \
+                      -out nginx/ssl/localhost.crt \
+                      -subj "/C=US/ST=State/L=City/O=CareerFlow/CN=$DOMAIN" \
+                      -addext "subjectAltName=DNS:$DOMAIN,DNS:localhost" 2>/dev/null || \
+                    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+                      -keyout nginx/ssl/localhost.key \
+                      -out nginx/ssl/localhost.crt \
+                      -subj "/C=US/ST=State/L=City/O=CareerFlow/CN=$DOMAIN"
+                    log_success "✅ Self-signed certificates generated as fallback"
+                fi
+                ;;
+            2)
+                log_info "Generating self-signed certificates..."
+                mkdir -p nginx/ssl
+                openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+                  -keyout nginx/ssl/localhost.key \
+                  -out nginx/ssl/localhost.crt \
+                  -subj "/C=US/ST=State/L=City/O=CareerFlow/CN=$DOMAIN" \
+                  -addext "subjectAltName=DNS:$DOMAIN,DNS:localhost" 2>/dev/null || \
+                openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+                  -keyout nginx/ssl/localhost.key \
+                  -out nginx/ssl/localhost.crt \
+                  -subj "/C=US/ST=State/L=City/O=CareerFlow/CN=$DOMAIN"
+                log_success "✅ Self-signed certificates generated"
+                ;;
+            *)
+                log_error "Invalid option selected"
+                exit 1
+                ;;
+        esac
+    else
+        log_error "Unexpected SSL certificate configuration state"
+        exit 1
+    fi
+    
+    cd ..
+    echo
     
     # Build and start services
     log_info "Step 6: Building Docker images..."
@@ -897,6 +895,7 @@ backup_ssl_certificates() {
     
     cd ..
 }
+
 # SSL certificate renewal
 renew_ssl_certificates() {
     echo "🔒 Renewing SSL certificates..."
