@@ -441,7 +441,7 @@ main() {
     fi
     echo
     
-    # Handle frontend repository
+     # Handle frontend repository
     log_info "Step 3: Managing frontend repository..."
     FRONTEND_PATH="$PROJECT_DIR/$FRONTEND_DIR"
     
@@ -452,24 +452,28 @@ main() {
         # Check if it's actually a git repository
         if [ ! -d ".git" ]; then
             log_warning "Frontend directory exists but is not a git repository. Removing..."
-            cd ..
-            rm -rf "$FRONTEND_DIR"
+            cd ../..
+            rm -rf "$FRONTEND_PATH"
+            cd "$PROJECT_DIR"
             log_info "Cloning frontend repository..."
             git clone -b "$BRANCH" "$FRONTEND_REPO" "$FRONTEND_DIR" || {
                 log_error "Failed to clone frontend repository"
                 exit 1
             }
+            cd ..
         else
             # Check if remote origin matches our repo
             CURRENT_REMOTE=$(git remote get-url origin 2>/dev/null || echo "")
             if [ "$CURRENT_REMOTE" != "$FRONTEND_REPO" ]; then
                 log_warning "Frontend directory has wrong remote origin. Re-cloning..."
-                cd ..
-                rm -rf "$FRONTEND_DIR"
+                cd ../..
+                rm -rf "$FRONTEND_PATH"
+                cd "$PROJECT_DIR"
                 git clone -b "$BRANCH" "$FRONTEND_REPO" "$FRONTEND_DIR" || {
                     log_error "Failed to clone frontend repository"
                     exit 1
                 }
+                cd ..
             else
                 # Force update to match remote
                 log_info "Fetching latest changes..."
@@ -481,10 +485,10 @@ main() {
                     log_error "Failed to reset frontend repository"
                     exit 1
                 }
+                cd ../..
             fi
         fi
         
-        cd ../..
         log_success "Frontend updated"
     else
         log_info "Cloning frontend repository..."
@@ -502,11 +506,11 @@ main() {
     if [ ! -f "$FRONTEND_PATH/package.json" ]; then
         log_error "Frontend repository appears to be empty or invalid (no package.json found)"
         log_info "Repository contents:"
-        ls -la "$FRONTEND_PATH" || echo "Directory not accessible"
+        ls -la "$FRONTEND_PATH" 2>/dev/null || echo "Directory not accessible"
         log_info "Attempting to re-clone frontend repository..."
         
+        rm -rf "$FRONTEND_PATH"
         cd "$PROJECT_DIR"
-        rm -rf "$FRONTEND_DIR"
         git clone -b "$BRANCH" "$FRONTEND_REPO" "$FRONTEND_DIR" || {
             log_error "Failed to re-clone frontend repository"
             exit 1
