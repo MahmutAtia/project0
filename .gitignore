@@ -55,6 +55,7 @@ pg_data/
 
 # Environments
 .env
+.env.dev
 .venv
 env/
 venv/
