@@ -1,0 +1,182 @@
+version: "3.8"
+
+services:
+  api:
+    build: 
+      context: ./api
+      dockerfile: Dockerfile
+    image: proj0_api_image:dev
+    ports:
+      - "580:80"
+    volumes:
+      - ./api:/api
+    environment:
+      - DEBUG=1
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - LANGCHAIN_TRACING_V2=${LANGCHAIN_TRACING_V2:-true}
+      - LANGCHAIN_ENDPOINT=${LANGCHAIN_ENDPOINT}
+      - LANGCHAIN_API_KEY=${LANGCHAIN_API_KEY}
+      - LANGCHAIN_PROJECT=${LANGCHAIN_PROJECT}
+    restart: unless-stopped
+    command: ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80", "--reload"]
+
+  django:
+    build: 
+      context: ./django
+      dockerfile: dockerfile
+    image: proj0_django_image:dev
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./django:/app
+    expose:
+      - "8000"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    environment:
+      # Django Core Settings (Development)
+      - DEBUG=1
+      - DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-dev-secret-key-change-in-production}
+      - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-proj0.settings}
+      - PYTHONUNBUFFERED=1
+      
+      # Database Settings
+      - DJANGO_DB_NAME=${DJANGO_DB_NAME:-proj0_dev}
+      - DJANGO_DB_USER=${DJANGO_DB_USER:-postgres}
+      - DJANGO_DB_PASSWORD=${DJANGO_DB_PASSWORD:-postgres}
+      - DJANGO_DB_HOST=${DJANGO_DB_HOST:-db}
+      - DJANGO_DB_PORT=${DJANGO_DB_PORT:-5432}
+      
+      # Email Settings (Development - Console backend)
+      - EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+      
+      # Authentication (Development)
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-dev-jwt-secret}
+      - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
+      
+      # Service URLs
+      - AI_SERVICE_URL=${AI_SERVICE_URL:-http://api:80/resumes/}
+      
+      # Security Settings (Development - Relaxed)
+      - SECURE_SSL_REDIRECT=False
+      - SESSION_COOKIE_SECURE=False
+      - CSRF_COOKIE_SECURE=False
+    restart: unless-stopped
+
+  db:
+    image: postgres:16
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-proj0_dev}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-proj0_dev}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:6.2-alpine
+    volumes:
+      - redis_data_dev:/data
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  celery:
+    build: 
+      context: ./django
+      dockerfile: dockerfile
+    image: proj0_django_image:dev
+    command: celery -A proj0 worker -l debug
+    volumes:
+      - ./django:/app
+    depends_on:
+      - db
+      - redis
+    environment:
+      # Mirror Django's development environment
+      - DEBUG=1
+      - DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-dev-secret-key-change-in-production}
+      - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-proj0.settings}
+      - PYTHONUNBUFFERED=1
+      
+      # Database Settings
+      - DJANGO_DB_NAME=${DJANGO_DB_NAME:-proj0_dev}
+      - DJANGO_DB_USER=${DJANGO_DB_USER:-postgres}
+      - DJANGO_DB_PASSWORD=${DJANGO_DB_PASSWORD:-postgres}
+      - DJANGO_DB_HOST=${DJANGO_DB_HOST:-db}
+      - DJANGO_DB_PORT=${DJANGO_DB_PORT:-5432}
+      
+      # Service URLs
+      - AI_SERVICE_URL=${AI_SERVICE_URL:-http://api:80/resumes/}
+      
+      # Celery-specific
+      - C_FORCE_ROOT=1
+    restart: unless-stopped
+
+  careerflow:
+    build:
+      context: ./careerflow
+      args:
+        # Build-time arguments for development
+        - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8000}
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:580}
+        - NEXT_PUBLIC_DJANGO_URL=${NEXT_PUBLIC_DJANGO_URL:-http://localhost:8000}
+        - NEXT_PUBLIC_AI_API_URL=${NEXT_PUBLIC_AI_API_URL:-http://localhost:580}
+        - NEXT_PUBLIC_IPDATA_API_KEY=${NEXT_PUBLIC_IPDATA_API_KEY}
+        - NODE_ENV=development
+        
+    environment:
+      # Runtime environment variables for development
+      - NODE_ENV=development
+      - NEXT_TELEMETRY_DISABLED=1
+      
+      # Authentication
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-dev-nextauth-secret}
+      - NEXTAUTH_JWT_SECRET=${NEXTAUTH_JWT_SECRET:-dev-jwt-secret}
+      - NEXTAUTH_BACKEND_URL=${NEXTAUTH_BACKEND_URL:-http://localhost:8000}
+      
+      # Public URLs (for runtime)
+      - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8000}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:580}
+      - NEXT_PUBLIC_DJANGO_URL=${NEXT_PUBLIC_DJANGO_URL:-http://localhost:8000}
+      - NEXT_PUBLIC_AI_API_URL=${NEXT_PUBLIC_AI_API_URL:-http://localhost:580}
+      - NEXT_PUBLIC_IPDATA_API_KEY=${NEXT_PUBLIC_IPDATA_API_KEY}
+      
+    image: careerflow_frontend_image:dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./careerflow:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - api
+      - django
+    restart: unless-stopped
+    command: ["npm", "run", "dev"]
+
+volumes:
+  postgres_data_dev:
+  redis_data_dev:
