@@ -124,6 +124,14 @@ setup_ssl_certificates() {
     log_info "🔒 Setting up SSL certificates..."
     
     cd "$PROJECT_DIR"
+
+    # Check if we already have valid Let's Encrypt certificates
+    if check_certificate_status; then
+        log_success "✅ Found existing Let's Encrypt certificates"
+        log_info "Using existing certificates without changes"
+        cd ..
+        return 0
+    fi
     
     # Always generate self-signed certificates first to ensure nginx can start
     generate_self_signed_certificates || {
@@ -392,6 +400,18 @@ download_external_assets() {
     fi
 }
 
+
+check_certificate_status() {
+    # Check if certificates exist in the Docker volume
+    if docker compose run --rm certbot certificates 2>/dev/null | grep -q "$DOMAIN"; then
+        return 0  # Certificate exists
+    else
+        return 1  # No certificate found
+    fi
+}
+
+# Replace ONLY the SSL certificate check part in run_health_checks() function:
+
 run_health_checks() {
     log_info "Running application health checks..."
     
@@ -410,9 +430,10 @@ run_health_checks() {
         log_warning "⚠️  Django application: Has warnings"
     fi
     
-    # Check SSL certificates
+    # Check SSL certificates - REPLACE THIS SECTION ONLY
     log_info "Checking SSL certificate..."
-    if [ -d "$PROJECT_DIR/certbot/conf/live/$DOMAIN" ]; then
+    cd "$PROJECT_DIR"
+    if check_certificate_status; then
         log_success "✅ Let's Encrypt SSL certificate: OK"
     elif [ -f "$PROJECT_DIR/nginx/ssl/localhost.crt" ]; then
         log_warning "⚠️  Self-signed SSL certificate: OK (browser warnings expected)"
@@ -423,6 +444,15 @@ run_health_checks() {
     # Check service status
     log_info "Checking service status..."
     docker compose ps --format "table {{.Service}}\t{{.Status}}\t{{.Ports}}"
+}
+
+# Add this function after restart_services() but before the main function call:
+
+check_certificates() {
+    cd "$PROJECT_DIR"
+    log_info "Checking SSL certificates..."
+    docker compose run --rm certbot certificates
+    cd ..
 }
 
 # Main deployment function
@@ -581,7 +611,7 @@ main() {
     log_info "• Admin: https://$DOMAIN:8443/admin/"
     echo
     
-    if [ -d "$PROJECT_DIR/certbot/conf/live/$DOMAIN" ]; then
+    if check_certificate_status; then
         log_success "✅ Using trusted Let's Encrypt certificates"
     else
         log_warning "⚠️  Using self-signed certificates (browser warnings expected)"
@@ -616,11 +646,13 @@ echo
 log_info "Additional actions:"
 echo "1. View logs"
 echo "2. Restart services"
-echo "3. Exit"
+echo "3. Check certificates"
+echo "4. Exit"
 echo
-read -p "Choose (1-3): " action
+read -p "Choose (1-4): " action
 case $action in
     1) show_logs ;;
     2) restart_services ;;
+    3) check_certificates ;;
     *) log_info "Deployment complete! 🚀" ;;
 esac
