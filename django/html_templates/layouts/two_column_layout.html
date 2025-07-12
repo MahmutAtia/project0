@@ -1,0 +1,14 @@
+<!-- Two Column Layout - for templates with sidebar -->
+<div class="resume-container two-column">
+    <aside class="sidebar">
+        {% include 'base/dynamic_sidebar_sections.html' %}
+    </aside>
+    
+    <main class="main-content">
+        <header class="resume-header">
+            {% include 'section_templates/personal_info_header.html' %}
+        </header>
+        
+        {% include 'base/dynamic_main_sections.html' %}
+    </main>
+</div>

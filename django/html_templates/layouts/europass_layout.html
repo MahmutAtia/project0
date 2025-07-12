@@ -22,9 +22,9 @@
                     {% if personal_information.location.countryCode %}<br>{{ personal_information.location.countryCode }}{% endif %}
                 </li>
                 {% endif %}
-                {% if personal_information.profiles.website %}<li><i class="fas fa-globe icon"></i><a href="{{ personal_information.profiles.website }}" target="_blank">{{ personal_information.profiles.website | replace("https://","") | replace("http://","") }}</a></li>{% endif %}
-                {% if personal_information.profiles.linkedin %}<li><i class="fab fa-linkedin icon"></i><a href="{{ personal_information.profiles.linkedin }}" target="_blank">LinkedIn Profile</a></li>{% endif %}
-                {% if personal_information.profiles.github %}<li><i class="fab fa-github icon"></i><a href="{{ personal_information.profiles.github }}" target="_blank">GitHub Profile</a></li>{% endif %}
+                {% if personal_information.profiles and personal_information.profiles.website %}<li><i class="fas fa-globe icon"></i><a href="{{ personal_information.profiles.website }}" target="_blank">{{ personal_information.profiles.website | replace("https://","") | replace("http://","") }}</a></li>{% endif %}
+                {% if personal_information.profiles and personal_information.profiles.linkedin %}<li><i class="fab fa-linkedin icon"></i><a href="{{ personal_information.profiles.linkedin }}" target="_blank">LinkedIn Profile</a></li>{% endif %}
+                {% if personal_information.profiles and personal_information.profiles.github %}<li><i class="fab fa-github icon"></i><a href="{{ personal_information.profiles.github }}" target="_blank">GitHub Profile</a></li>{% endif %}
             </ul>
             {% endif %}
         </section>

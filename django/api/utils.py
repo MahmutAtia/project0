@@ -13,6 +13,8 @@ import io
 import re
 import json
 from django.conf import settings
+from django.template.loader import get_template, render_to_string
+from django.template import Context
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from weasyprint import HTML, CSS
 from collections import OrderedDict
@@ -71,11 +73,11 @@ def generate_pdf_from_resume_data(
     resume_data, template_theme="resume_template_2.html", chosen_theme="theme-default", sections_sort=None, hidden_sections=None
 ):
     """
-    Generates a PDF from resume data.
+    Generates a PDF from resume data using a universal Jinja2 template.
 
     Args:
         resume_data (dict): The resume data as a dictionary.
-        template_theme (str, optional): The name of the HTML template file.
+        template_theme (str, optional): The name of the HTML template file, used to determine style and layout.
             Defaults to 'resume_template_2.html'.
         chosen_theme (str, optional): The name of the CSS theme to apply.
             Defaults to 'theme-default'.
@@ -89,34 +91,27 @@ def generate_pdf_from_resume_data(
     """
     try:
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        
+        # Use Jinja2 for all templates
         templates_dir = os.path.join(base_dir, "html_templates")
-
-        print(f"Base directory: {base_dir}")
         env = Environment(
             loader=FileSystemLoader(templates_dir),
             autoescape=select_autoescape(["html", "xml"]),
         )
         
-        # Get template configuration
+        # Get template configuration based on the selected theme
         template_config = get_template_config(template_theme)
         
-        # Use universal template if supported, otherwise use original template
-        if template_config.get('use_universal', False):
-            template = env.get_template('universal_template.html')
-            # Add template configuration to context
-            template_context = {
-                "theme_class": chosen_theme,
-                "template_style": template_config['template_style'],
-                "layout_type": template_config['layout_type'],
-                **resume_data
-            }
-        else:
-            template = env.get_template(template_theme)
-            # Prepare template context with sorted sections
-            template_context = {
-                "theme_class": chosen_theme,
-                **resume_data
-            }
+        # All our templates now use the universal system
+        template = env.get_template('universal_template.html')
+        
+        # Prepare template context
+        template_context = {
+            "theme_class": chosen_theme,
+            "style": template_config.get('template_style', 'default'),
+            "layout": template_config.get('layout_type', 'single_column'),
+            **resume_data
+        }
         
         # If sections_sort is provided, add it to the template context
         if sections_sort:
@@ -127,12 +122,15 @@ def generate_pdf_from_resume_data(
             template_context["hidden_sections"] = hidden_sections
         
         html_out = template.render(**template_context)
+        
         html_obj = HTML(string=html_out, base_url=base_dir)
         pdf_file = html_obj.write_pdf()
 
         return pdf_file
     except Exception as e:
         print(f"Error generating PDF: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
 
@@ -472,7 +470,72 @@ def get_template_config(template_name):
         },
         'template2.html': {
             'template_style': 'modern',
+            'layout_type': 'single_column',
+            'use_universal': True
+        },
+        'template3.html': {
+            'template_style': 'classic',
+            'layout_type': 'single_column',
+            'use_universal': True
+        },
+        'template4.html': {
+            'template_style': 'creative',
             'layout_type': 'two_column',
+            'use_universal': True
+        },
+        'template5.html': {
+            'template_style': 'creative',
+            'layout_type': 'single_column',
+            'use_universal': True
+        },
+        'template6.html': {
+            'template_style': 'minimal',
+            'layout_type': 'single_column',
+            'use_universal': True
+        },
+        'template7.html': {
+            'template_style': 'minimal',
+            'layout_type': 'single_column',
+            'use_universal': True
+        },
+        'template8.html': {
+            'template_style': 'creative',
+            'layout_type': 'two_column',
+            'use_universal': True
+        },
+        'template9.html': {
+            'template_style': 'classic',
+            'layout_type': 'single_column',
+            'use_universal': True
+        },
+        'template10.html': {
+            'template_style': 'tech',
+            'layout_type': 'single_column',
+            'use_universal': True
+        },
+        'template11.html': {
+            'template_style': 'tech',
+            'layout_type': 'single_column',
+            'use_universal': True
+        },
+        'template12.html': {
+            'template_style': 'creative',
+            'layout_type': 'two_column',
+            'use_universal': True
+        },
+        'template13.html': {
+            'template_style': 'minimal',
+            'layout_type': 'single_column',
+            'use_universal': True
+        },
+        'template14.html': {
+            'template_style': 'classic',
+            'layout_type': 'single_column',
+            'use_universal': True
+        },
+        'template15.html': {
+            'template_style': 'tech',
+            'layout_type': 'single_column',
             'use_universal': True
         },
         'default.html': {

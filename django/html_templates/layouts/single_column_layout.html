@@ -17,9 +17,9 @@
                     {{ personal_information.location.city }}{% if personal_information.location.state %}, {{ personal_information.location.state }}{% endif %}
                 </li>
                 {% endif %}
-                {% if personal_information.profiles.linkedin %}<li><i class="fab fa-linkedin"></i><a href="{{ personal_information.profiles.linkedin }}" target="_blank">LinkedIn</a></li>{% endif %}
-                {% if personal_information.profiles.github %}<li><i class="fab fa-github"></i><a href="{{ personal_information.profiles.github }}" target="_blank">GitHub</a></li>{% endif %}
-                {% if personal_information.profiles.website %}<li><i class="fas fa-globe"></i><a href="{{ personal_information.profiles.website }}" target="_blank">Portfolio/Website</a></li>{% endif %}
+                {% if personal_information.profiles and personal_information.profiles.linkedin %}<li><i class="fab fa-linkedin"></i><a href="{{ personal_information.profiles.linkedin }}" target="_blank">LinkedIn</a></li>{% endif %}
+                {% if personal_information.profiles and personal_information.profiles.github %}<li><i class="fab fa-github"></i><a href="{{ personal_information.profiles.github }}" target="_blank">GitHub</a></li>{% endif %}
+                {% if personal_information.profiles and personal_information.profiles.website %}<li><i class="fas fa-globe"></i><a href="{{ personal_information.profiles.website }}" target="_blank">Portfolio/Website</a></li>{% endif %}
             </ul>
             {% endif %}
         </div>

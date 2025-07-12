@@ -54,6 +54,81 @@ def download_assets():
     else:
         print("⏭️  Google Fonts for template1 already exists, skipping...")
 
+    # Google Fonts CSS for modern theme (Lato + Roboto)
+    gf_modern_path = "static/css/google-fonts-modern.css"
+    if not os.path.exists(gf_modern_path):
+        print("Downloading Google Fonts CSS for modern theme...")
+        gf_url = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Roboto:wght@400;500;700&display=swap"
+        gf_response = requests.get(gf_url)
+        with open(gf_modern_path, "w", encoding="utf-8") as f:
+            f.write(gf_response.text)
+
+        # Download font files for modern theme
+        download_font_files_from_css(gf_response.text, "modern")
+        print("✅ Google Fonts for modern theme downloaded")
+    else:
+        print("⏭️  Google Fonts for modern theme already exists, skipping...")
+
+    # Google Fonts CSS for classic theme (EB Garamond + Lato)
+    gf_classic_path = "static/css/google-fonts-classic.css"
+    if not os.path.exists(gf_classic_path):
+        print("Downloading Google Fonts CSS for classic theme...")
+        gf_url = "https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;700&family=Lato:wght@300;400;700&display=swap"
+        gf_response = requests.get(gf_url)
+        with open(gf_classic_path, "w", encoding="utf-8") as f:
+            f.write(gf_response.text)
+
+        # Download font files for classic theme
+        download_font_files_from_css(gf_response.text, "classic")
+        print("✅ Google Fonts for classic theme downloaded")
+    else:
+        print("⏭️  Google Fonts for classic theme already exists, skipping...")
+
+    # Google Fonts CSS for creative theme (Poppins + Merriweather)
+    gf_creative_path = "static/css/google-fonts-creative.css"
+    if not os.path.exists(gf_creative_path):
+        print("Downloading Google Fonts CSS for creative theme...")
+        gf_url = "https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Merriweather:wght@400;700&display=swap"
+        gf_response = requests.get(gf_url)
+        with open(gf_creative_path, "w", encoding="utf-8") as f:
+            f.write(gf_response.text)
+
+        # Download font files for creative theme
+        download_font_files_from_css(gf_response.text, "creative")
+        print("✅ Google Fonts for creative theme downloaded")
+    else:
+        print("⏭️  Google Fonts for creative theme already exists, skipping...")
+
+    # Google Fonts CSS for tech theme (Roboto Mono + VT323)
+    gf_tech_path = "static/css/google-fonts-tech.css"
+    if not os.path.exists(gf_tech_path):
+        print("Downloading Google Fonts CSS for tech theme...")
+        gf_url = "https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500&family=VT323&display=swap"
+        gf_response = requests.get(gf_url)
+        with open(gf_tech_path, "w", encoding="utf-8") as f:
+            f.write(gf_response.text)
+
+        # Download font files for tech theme
+        download_font_files_from_css(gf_response.text, "tech")
+        print("✅ Google Fonts for tech theme downloaded")
+    else:
+        print("⏭️  Google Fonts for tech theme already exists, skipping...")
+
+    # Google Fonts CSS for minimal theme (Inter + Source Serif Pro)
+    gf_minimal_path = "static/css/google-fonts-minimal.css"
+    if not os.path.exists(gf_minimal_path):
+        print("Downloading Google Fonts CSS for minimal theme...")
+        gf_url = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+Pro:wght@400;600&display=swap"
+        gf_response = requests.get(gf_url)
+        with open(gf_minimal_path, "w", encoding="utf-8") as f:
+            f.write(gf_response.text)
+
+        # Download font files for minimal theme
+        download_font_files_from_css(gf_response.text, "minimal")
+        print("✅ Google Fonts for minimal theme downloaded")
+    else:
+        print("⏭️  Google Fonts for minimal theme already exists, skipping...")
+
     # Download Font Awesome font files
     fa_fonts = ["fa-solid-900.woff2", "fa-brands-400.woff2", "fa-regular-400.woff2"]
 

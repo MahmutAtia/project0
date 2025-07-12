@@ -1,0 +1,313 @@
+<style>
+        /* --- Classic Academic Theme (Template 3 Style) --- */
+        
+        /* --- Base Variables --- */
+        :root {
+            --font-serif: 'EB Garamond', Georgia, Times, serif;
+            --font-sans: 'Lato', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            --base-font-size: 10.5pt;
+            --line-height: 1.5;
+            --text-color-base: #333333;
+            --heading-color-base: #111111;
+            --subtle-color-base: #555555;
+            --border-color-base: #cccccc;
+            --page-bg-color: #ffffff;
+        }
+
+        /* --- Theme Definitions --- */
+        /* Classic Navy Theme (Default) */
+        body.theme-navy, :root {
+            --accent-color: #003366;
+            --heading-color: #003366;
+            --text-color: var(--text-color-base);
+            --subtle-color: var(--subtle-color-base);
+            --border-color: var(--border-color-base);
+        }
+        
+        /* Grey Theme */
+        body.theme-grey {
+            --accent-color: #505050;
+            --heading-color: #222222;
+            --text-color: var(--text-color-base);
+            --subtle-color: var(--subtle-color-base);
+            --border-color: var(--border-color-base);
+        }
+        
+        /* Maroon Theme */
+        body.theme-maroon {
+            --accent-color: #800000;
+            --heading-color: #400000;
+            --text-color: var(--text-color-base);
+            --subtle-color: var(--subtle-color-base);
+            --border-color: var(--border-color-base);
+        }
+        
+        /* Dark Green Theme */
+        body.theme-darkgreen {
+            --accent-color: #006400;
+            --heading-color: #004d00;
+            --text-color: var(--text-color-base);
+            --subtle-color: var(--subtle-color-base);
+            --border-color: var(--border-color-base);
+        }
+
+        @page {
+            size: A4;
+            margin: 1.8cm 1.5cm;
+            orphans: 3;
+            widows: 3;
+        }
+
+        body {
+            font-family: var(--font-serif);
+            font-size: var(--base-font-size);
+            line-height: var(--line-height);
+            color: var(--text-color);
+            background-color: var(--page-bg-color);
+            margin: 0;
+            padding: 0;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        /* --- Layout --- */
+        .resume-container {
+            max-width: 18cm;
+            margin: 0 auto;
+        }
+
+        .resume-container.single-column {
+            display: block;
+        }
+
+        /* --- Header --- */
+        .resume-header {
+            text-align: center;
+            margin-bottom: 1.5em;
+            padding-bottom: 1em;
+            border-bottom: 1px solid var(--border-color);
+            page-break-after: avoid;
+        }
+
+        .resume-header h1 {
+            font-family: var(--font-serif);
+            font-size: 2.2rem;
+            color: var(--heading-color);
+            margin: 0 0 0.15em 0;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .resume-header .headline {
+            font-family: var(--font-sans);
+            font-size: 1.1rem;
+            color: var(--subtle-color);
+            margin: 0 0 0.8em 0;
+            font-weight: 400;
+            font-style: italic;
+        }
+
+        .contact-info {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1.5em;
+            font-size: 0.9rem;
+            font-family: var(--font-sans);
+            color: var(--subtle-color);
+        }
+
+        .contact-info li {
+            display: flex;
+            align-items: center;
+            gap: 0.4em;
+        }
+
+        .contact-info i {
+            color: var(--accent-color);
+            width: 1em;
+            text-align: center;
+        }
+
+        .contact-info a {
+            color: var(--accent-color);
+            text-decoration: none;
+        }
+
+        .contact-info a:hover {
+            text-decoration: underline;
+        }
+
+        /* --- Main Content --- */
+        .main-content {
+            margin: 0;
+        }
+
+        /* --- Section Styling --- */
+        .resume-section {
+            margin-bottom: 1.8em;
+            page-break-inside: avoid;
+        }
+
+        .section-title {
+            font-family: var(--font-serif);
+            font-size: 1.4rem;
+            color: var(--heading-color);
+            font-weight: 700;
+            margin: 0 0 0.8em 0;
+            padding-bottom: 0.2em;
+            border-bottom: 1px solid var(--accent-color);
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+
+        /* --- Experience/Education Items --- */
+        .experience-item, .education-item, .project-item {
+            margin-bottom: 1.4em;
+            page-break-inside: avoid;
+        }
+
+        .item-header {
+            margin-bottom: 0.6em;
+            text-align: center;
+        }
+
+        .item-title {
+            font-family: var(--font-serif);
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-color);
+            margin: 0;
+        }
+
+        .item-subtitle {
+            font-family: var(--font-sans);
+            font-size: 1rem;
+            color: var(--accent-color);
+            font-weight: 600;
+            margin: 0.1em 0;
+            font-style: italic;
+        }
+
+        .item-meta {
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            color: var(--subtle-color);
+            margin: 0.2em 0;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 1em;
+        }
+
+        .item-description {
+            margin: 0.8em 0 0 0;
+            line-height: 1.6;
+            text-align: justify;
+        }
+
+        .item-description ul {
+            margin: 0.4em 0 0 1.2em;
+            padding: 0;
+        }
+
+        .item-description li {
+            margin-bottom: 0.3em;
+        }
+
+        /* --- Skills Section --- */
+        .skills-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8em;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            justify-content: center;
+        }
+
+        .skill-tag {
+            background: transparent;
+            color: var(--text-color);
+            padding: 0.3em 0.6em;
+            border: 1px solid var(--accent-color);
+            border-radius: 0;
+            font-size: 0.85rem;
+            font-weight: 500;
+            font-family: var(--font-sans);
+        }
+
+        /* --- Languages Section --- */
+        .languages-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.6em;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .language-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.4em 0;
+            border-bottom: 1px dotted var(--border-color);
+            font-family: var(--font-sans);
+        }
+
+        .language-name {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .language-level {
+            color: var(--subtle-color);
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+
+        /* --- Summary/Objective --- */
+        .summary-text, .objective-text {
+            text-align: justify;
+            line-height: 1.6;
+            font-size: 1rem;
+            margin: 0;
+        }
+
+        /* --- Print Optimizations --- */
+        @media print {
+            .resume-container {
+                max-width: none;
+                margin: 0;
+            }
+            
+            .contact-info {
+                font-size: 8.5pt;
+            }
+            
+            .skill-tag {
+                font-size: 8pt;
+            }
+        }
+
+        /* --- Responsive Adjustments --- */
+        @media (max-width: 768px) {
+            .contact-info {
+                flex-direction: column;
+                align-items: center;
+                gap: 0.8em;
+            }
+            
+            .item-header {
+                text-align: left;
+            }
+            
+            .section-title {
+                text-align: left;
+            }
+        }
+</style>
