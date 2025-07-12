@@ -387,10 +387,10 @@ def generate_pdf(request):
     API endpoint to trigger background PDF generation.
     Returns a task ID for status checking.
     """
-    resume_id = request.data.get("resumeId")
+    resume_id = request.data.get("resume_id")
     template = request.data.get("templateTheme", "default.html")
     chosen_theme = request.data.get("chosenTheme", "theme-default")
-
+    print(f"DEBUG: Received resume_id: {resume_id}, template: {template}, chosen_theme: {chosen_theme}")
     if not resume_id:
         return Response(
             {"error": "resumeId is required"}, status=status.HTTP_400_BAD_REQUEST
@@ -398,9 +398,12 @@ def generate_pdf(request):
 
     try:
         # Fetch resume data (keep this part)
-        resume = get_object_or_404(Resume, pk=resume_id)
+        resume = get_object_or_404(Resume, pk=resume_id, user=request.user)
         # Ensure resume_data is serializable (it should be if it's from a JSONField)
         resume_data = resume.resume
+        sections_sort = resume.sections_sort  # Get the sections sort order from the resume
+        hidden_sections = resume.hidden_sections  # Get the hidden sections from the resume
+        
         if not isinstance(resume_data, (dict, list)):  # Basic check
             logger.error(
                 f"Resume data for ID {resume_id} is not a dict/list: {type(resume_data)}"
@@ -422,9 +425,17 @@ def generate_pdf(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
+    # Use the sorted template if sections_sort is provided, otherwise use default template
+    if sections_sort and template == "default.html":
+        template = "default_sorted.html"
+
     # Specify the correct template for documents if different from resumes
     pdf_data = generate_pdf_from_resume_data(
-        resume_data=resume_data, template_theme=template, chosen_theme=chosen_theme
+        resume_data=resume_data, 
+        template_theme=template, 
+        chosen_theme=chosen_theme,
+        sections_sort=sections_sort,
+        hidden_sections=hidden_sections
     )
 
     # 3. Handle PDF generation result
@@ -1008,7 +1019,7 @@ def get_document_pdf(request, document_id):
 
         # Convert YAML content to PDF
         pdf_data = generate_pdf_from_resume_data(
-            json_data, template_name, chosen_theme=""
+            json_data, template_name, chosen_theme="", sections_sort=None, hidden_sections=None
         )
 
         if pdf_data:
@@ -1053,7 +1064,7 @@ def get_document_docx(request, document_id):
 
         # Generate DOCX using WeasyPrint PDF conversion
         docx_buffer = generate_docx_from_template(
-            json_data, template_name, chosen_theme=""
+            json_data, template_name, chosen_theme="", sections_sort=None, hidden_sections=None
         )
 
         if docx_buffer:

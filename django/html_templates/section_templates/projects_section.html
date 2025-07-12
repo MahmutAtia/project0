@@ -1,0 +1,38 @@
+{% if projects %}
+<section class="resume-section projects-section">
+    <h2><i class="fas fa-project-diagram"></i> Projects</h2>
+    {% for project in projects %}
+    <article class="item">
+        <div class="item-header">
+            <div class="item-title-org">
+                {% if project.name %}<span class="title">{{ project.name }}</span>{% endif %}
+            </div>
+            {# Optional: Add date/timeline for projects if relevant #}
+        </div>
+        {% if project.description %}
+            <div class="description">
+                {% if '\n' in project.description %}
+                    <ul>
+                    {% for point in project.description.split('\n') if point.strip() %}
+                        <li>{{ point.strip() }}</li>
+                    {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>{{ project.description }}</p>
+                {% endif %}
+            </div>
+        {% endif %}
+        {% if project.link or project.technologies %}
+        <div class="description" style="font-size: 0.85em;">
+            {% if project.link %}
+                <p><i class="fas fa-link"></i> <a href="{{ project.link }}" target="_blank">Link/Repo</a></p>
+            {% endif %}
+            {% if project.technologies %}
+                <p><strong>Technologies:</strong> {{ project.technologies | join(', ') }}</p>
+            {% endif %}
+        </div>
+        {% endif %}
+    </article>
+    {% endfor %}
+</section>
+{% endif %}

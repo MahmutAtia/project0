@@ -68,7 +68,7 @@ def extract_text_from_file(uploaded_file):
 
 
 def generate_pdf_from_resume_data(
-    resume_data, template_theme="resume_template_2.html", chosen_theme="theme-default"
+    resume_data, template_theme="resume_template_2.html", chosen_theme="theme-default", sections_sort=None, hidden_sections=None
 ):
     """
     Generates a PDF from resume data.
@@ -79,6 +79,10 @@ def generate_pdf_from_resume_data(
             Defaults to 'resume_template_2.html'.
         chosen_theme (str, optional): The name of the CSS theme to apply.
             Defaults to 'theme-default'.
+        sections_sort (list, optional): List of section keys in the desired order.
+            If None, uses default order from template.
+        hidden_sections (list, optional): List of section keys to hide.
+            If None, no sections are hidden.
 
     Returns:
         bytes: The PDF file content as bytes. Returns None on error.
@@ -92,16 +96,39 @@ def generate_pdf_from_resume_data(
             loader=FileSystemLoader(templates_dir),
             autoescape=select_autoescape(["html", "xml"]),
         )
-        template = env.get_template(template_theme)
-        # Pass theme_class to the template
-        html_out = template.render(theme_class=chosen_theme, **resume_data)
+        
+        # Get template configuration
+        template_config = get_template_config(template_theme)
+        
+        # Use universal template if supported, otherwise use original template
+        if template_config.get('use_universal', False):
+            template = env.get_template('universal_template.html')
+            # Add template configuration to context
+            template_context = {
+                "theme_class": chosen_theme,
+                "template_style": template_config['template_style'],
+                "layout_type": template_config['layout_type'],
+                **resume_data
+            }
+        else:
+            template = env.get_template(template_theme)
+            # Prepare template context with sorted sections
+            template_context = {
+                "theme_class": chosen_theme,
+                **resume_data
+            }
+        
+        # If sections_sort is provided, add it to the template context
+        if sections_sort:
+            template_context["sections_sort"] = sections_sort
+            
+        # If hidden_sections is provided, add it to the template context
+        if hidden_sections:
+            template_context["hidden_sections"] = hidden_sections
+        
+        html_out = template.render(**template_context)
         html_obj = HTML(string=html_out, base_url=base_dir)
         pdf_file = html_obj.write_pdf()
-
-        # Save the PDF to a file (optional)
-        # pdf_file_path = f"resume.pdf"
-        # with open(pdf_file_path, 'wb') as f:
-        #     f.write(pdf_file)
 
         return pdf_file
     except Exception as e:
@@ -396,7 +423,7 @@ def convert_pdf_to_docx(pdf_content, output_path=None):
 
 
 def generate_docx_from_template(
-    resume_data, template_theme="resume_template_2.html", chosen_theme="theme-default"
+    resume_data, template_theme="resume_template_2.html", chosen_theme="theme-default", sections_sort=None, hidden_sections=None
 ):
     """
     Generates a DOCX document from template data using WeasyPrint to PDF and then converting to DOCX.
@@ -405,6 +432,8 @@ def generate_docx_from_template(
         resume_data (dict): The document data as a dictionary
         template_theme (str): The HTML template to use
         chosen_theme (str): CSS theme class name
+        sections_sort (list, optional): List of section keys in the desired order
+        hidden_sections (list, optional): List of section keys to hide
 
     Returns:
         BytesIO: The DOCX file content as BytesIO object. Returns None on error.
@@ -412,7 +441,7 @@ def generate_docx_from_template(
     try:
         # First generate PDF using existing function
         pdf_content = generate_pdf_from_resume_data(
-            resume_data, template_theme, chosen_theme
+            resume_data, template_theme, chosen_theme, sections_sort, hidden_sections
         )
 
         if pdf_content:
@@ -423,3 +452,43 @@ def generate_docx_from_template(
     except Exception as e:
         print(f"Error generating DOCX: {e}")
         return None
+
+
+def get_template_config(template_name):
+    """
+    Returns template configuration based on template name.
+    
+    Args:
+        template_name (str): Name of the template file
+        
+    Returns:
+        dict: Configuration dictionary with template_style and layout_type
+    """
+    template_configs = {
+        'template1.html': {
+            'template_style': 'europass',
+            'layout_type': 'europass',
+            'use_universal': True
+        },
+        'template2.html': {
+            'template_style': 'modern',
+            'layout_type': 'two_column',
+            'use_universal': True
+        },
+        'default.html': {
+            'template_style': 'default',
+            'layout_type': 'single_column',
+            'use_universal': True
+        },
+        'default_sorted.html': {
+            'template_style': 'default',
+            'layout_type': 'single_column',
+            'use_universal': True
+        }
+    }
+    
+    return template_configs.get(template_name, {
+        'template_style': 'default',
+        'layout_type': 'single_column',
+        'use_universal': False
+    })

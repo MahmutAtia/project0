@@ -1,0 +1,29 @@
+{% if teaching_experience %}
+<section class="resume-section teaching-section">
+    <h2><i class="fas fa-chalkboard-teacher"></i> Teaching Experience</h2>
+    {% for teaching in teaching_experience %}
+    <article class="item">
+        <div class="item-header">
+            <div class="item-title-org">
+                {% if teaching.position %}<span class="title">{{ teaching.position }}</span>{% endif %}
+                {% if teaching.institution %}<span class="organization">{{ teaching.institution }}</span>{% endif %}
+            </div>
+            <div class="item-date-location">
+                {% if teaching.start_date or teaching.end_date %}
+                <span class="date">{{ teaching.start_date }}{% if teaching.start_date and teaching.end_date %} – {% endif %}{{ teaching.end_date | default('Present') }}</span>
+                {% endif %}
+                {% if teaching.location %}<span class="location"> | {{ teaching.location }}</span>{% endif %}
+            </div>
+        </div>
+        {% if teaching.courses %}
+            <div class="description">
+                <p><strong>Courses Taught:</strong> {{ teaching.courses | join(', ') }}</p>
+            </div>
+        {% endif %}
+        {% if teaching.description %}
+            <div class="description"><p>{{ teaching.description }}</p></div>
+        {% endif %}
+    </article>
+    {% endfor %}
+</section>
+{% endif %}

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ personal_information.name | default('Resume') }}</title>
+    <link rel="stylesheet" href="static/css/fontawesome.min.css">
+    <link rel="stylesheet" href="static/css/google-fonts-default.css">
+    
+    {# Include theme-specific styles based on template #}
+    {% if template_style == 'europass' %}
+        {% include 'base/europass_styles.html' %}
+    {% elif template_style == 'modern' %}
+        {% include 'base/modern_styles.html' %}
+    {% else %}
+        {% include 'base/default_styles.html' %}
+    {% endif %}
+</head>
+<body class="{{ theme_class | default('theme-default') }}">
+
+{# Include layout-specific structure #}
+{% if layout_type == 'europass' %}
+    {% include 'layouts/europass_layout.html' %}
+{% elif layout_type == 'two_column' %}
+    {% include 'layouts/two_column_layout.html' %}
+{% else %}
+    {% include 'layouts/single_column_layout.html' %}
+{% endif %}
+
+</body>
+</html>

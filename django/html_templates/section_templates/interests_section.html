@@ -1,0 +1,15 @@
+{% if interests %}
+<section class="resume-section interests-section">
+    <h2><i class="fas fa-heart"></i> Interests</h2>
+    <p>
+        {% for interest in interests %}
+        {% if interest.keywords %}
+            {% for keyword in interest.keywords %}{{ keyword }}{% if not loop.last %}, {% endif %}{% endfor %}
+        {% elif interest.name %}
+            {{ interest.name }}
+        {% endif %}
+        {% if not loop.last and (interest.keywords or interest.name) %}, {% endif %}
+        {% endfor %}
+    </p>
+</section>
+{% endif %}

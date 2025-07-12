@@ -1,0 +1,23 @@
+{% if professional_memberships %}
+<section class="resume-section memberships-section">
+    <h2><i class="fas fa-users"></i> Professional Memberships</h2>
+    {% for membership in professional_memberships %}
+    <article class="item">
+        <div class="item-header">
+            <div class="item-title-org">
+                {% if membership.role %}<span class="title">{{ membership.role }}</span>{% endif %}
+                {% if membership.organization %}<span class="organization">{{ membership.organization }}</span>{% endif %}
+            </div>
+            <div class="item-date-location">
+                {% if membership.start_date or membership.end_date %}
+                <span class="date">{{ membership.start_date }}{% if membership.start_date and membership.end_date %} – {% endif %}{{ membership.end_date | default('Present') }}</span>
+                {% endif %}
+            </div>
+        </div>
+        {% if membership.description %}
+            <div class="description"><p>{{ membership.description }}</p></div>
+        {% endif %}
+    </article>
+    {% endfor %}
+</section>
+{% endif %}

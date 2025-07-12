@@ -1,0 +1,33 @@
+{% if publications %}
+<section class="resume-section publications-section">
+    <h2><i class="fas fa-book"></i> Publications</h2>
+    {% for pub in publications %}
+    <article class="item">
+        <div class="item-header">
+            <div class="item-title-org">
+                {% if pub.title %}<span class="title">{{ pub.title }}</span>{% endif %}
+                {% if pub.publisher %}<span class="organization">{{ pub.publisher }}</span>{% endif %}
+            </div>
+            <div class="item-date-location">
+                {% if pub.publication_date %}
+                <span class="date">{{ pub.publication_date }}</span>
+                {% endif %}
+            </div>
+        </div>
+        {% if pub.authors %}
+            <div class="description">
+                <p><strong>Authors:</strong> {{ pub.authors | join(', ') }}</p>
+            </div>
+        {% endif %}
+        {% if pub.description %}
+            <div class="description"><p>{{ pub.description }}</p></div>
+        {% endif %}
+        {% if pub.link %}
+            <div class="description" style="font-size: 0.85em;">
+                <p><i class="fas fa-link"></i> <a href="{{ pub.link }}" target="_blank">View Publication</a></p>
+            </div>
+        {% endif %}
+    </article>
+    {% endfor %}
+</section>
+{% endif %}

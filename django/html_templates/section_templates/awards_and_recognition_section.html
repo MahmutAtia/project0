@@ -1,0 +1,23 @@
+{% if awards_and_recognition %}
+<section class="resume-section awards-section">
+    <h2><i class="fas fa-trophy"></i> Awards & Recognition</h2>
+    {% for award in awards_and_recognition %}
+    <article class="item">
+        <div class="item-header">
+            <div class="item-title-org">
+                {% if award.title %}<span class="title">{{ award.title }}</span>{% endif %}
+                {% if award.issuing_organization %}<span class="organization">{{ award.issuing_organization }}</span>{% endif %}
+            </div>
+            <div class="item-date-location">
+                {% if award.date_received %}
+                <span class="date">{{ award.date_received }}</span>
+                {% endif %}
+            </div>
+        </div>
+        {% if award.description %}
+            <div class="description"><p>{{ award.description }}</p></div>
+        {% endif %}
+    </article>
+    {% endfor %}
+</section>
+{% endif %}

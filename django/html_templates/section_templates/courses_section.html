@@ -1,0 +1,28 @@
+{% if courses %}
+<section class="resume-section courses-section">
+    <h2><i class="fas fa-chalkboard-teacher"></i> Relevant Courses</h2>
+    {% for course in courses %}
+    <article class="item">
+        <div class="item-header">
+            <div class="item-title-org">
+                {% if course.title %}<span class="title">{{ course.title }}</span>{% endif %}
+                {% if course.institution %}<span class="organization">{{ course.institution }}</span>{% endif %}
+            </div>
+            <div class="item-date-location">
+                {% if course.completion_date %}
+                <span class="date">{{ course.completion_date }}</span>
+                {% endif %}
+            </div>
+        </div>
+        {% if course.description %}
+            <div class="description"><p>{{ course.description }}</p></div>
+        {% endif %}
+        {% if course.link %}
+            <div class="description" style="font-size: 0.85em;">
+                <p><i class="fas fa-link"></i> <a href="{{ course.link }}" target="_blank">Course Link</a></p>
+            </div>
+        {% endif %}
+    </article>
+    {% endfor %}
+</section>
+{% endif %}

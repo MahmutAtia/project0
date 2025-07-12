@@ -1,0 +1,28 @@
+{% if conferences %}
+<section class="resume-section conferences-section">
+    <h2><i class="fas fa-users"></i> Conferences</h2>
+    {% for conf in conferences %}
+    <article class="item">
+        <div class="item-header">
+            <div class="item-title-org">
+                {% if conf.name %}<span class="title">{{ conf.name }}</span>{% endif %}
+            </div>
+            <div class="item-date-location">
+                {% if conf.date %}
+                <span class="date">{{ conf.date }}</span>
+                {% endif %}
+                {% if conf.location %}<span class="location"> | {{ conf.location }}</span>{% endif %}
+            </div>
+        </div>
+        {% if conf.description %}
+            <div class="description"><p>{{ conf.description }}</p></div>
+        {% endif %}
+        {% if conf.link %}
+            <div class="description" style="font-size: 0.85em;">
+                <p><i class="fas fa-link"></i> <a href="{{ conf.link }}" target="_blank">Conference Link</a></p>
+            </div>
+        {% endif %}
+    </article>
+    {% endfor %}
+</section>
+{% endif %}

@@ -1,0 +1,28 @@
+{% if education %}
+<section class="resume-section education-section">
+    <h2><i class="fas fa-graduation-cap"></i> Education</h2>
+    {% for edu in education %}
+    <article class="item">
+        <div class="item-header">
+            <div class="item-title-org">
+                {% if edu.degree %}<span class="title">{{ edu.degree }}{% if edu.major %}, {{ edu.major }}{% endif %}</span>{% endif %}
+                {% if edu.institution %}<span class="organization">{{ edu.institution }}</span>{% endif %}
+            </div>
+            <div class="item-date-location">
+                {% if edu.graduation_date %}
+                <span class="date">Graduated: {{ edu.graduation_date }}</span>
+                {% endif %}
+                {% if edu.location %}<span class="location"> | {{ edu.location }}</span>{% endif %}
+            </div>
+        </div>
+        {% if edu.minor or edu.gpa or edu.description %}
+            <div class="description">
+                {% if edu.minor %} <p><strong>Minor:</strong> {{ edu.minor }}</p> {% endif %}
+                {% if edu.gpa %} <p><strong>GPA:</strong> {{ edu.gpa }}</p> {% endif %}
+                {% if edu.description %} <p>{{ edu.description }}</p> {% endif %}
+            </div>
+        {% endif %}
+    </article>
+    {% endfor %}
+</section>
+{% endif %}

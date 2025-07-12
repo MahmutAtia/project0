@@ -1,0 +1,21 @@
+{# Define all sections that can appear in single column layout #}
+{% set all_sections = ['summary', 'objective', 'skills', 'experience', 'education', 'projects', 'volunteer_and_social_activities', 'certifications', 'awards_and_recognition', 'languages', 'interests', 'publications', 'courses', 'conferences', 'speaking_engagements', 'patents', 'professional_memberships', 'military_service', 'teaching_experience', 'research_experience', 'references'] %}
+
+{# Render sections based on sort order or default order #}
+{% if sections_sort %}
+    {% for section_key in sections_sort %}
+        {# Skip if section is hidden #}
+        {% if hidden_sections and section_key in hidden_sections %}
+            {# Skip hidden section #}
+        {% elif section_key in all_sections %}
+            {% include 'section_templates/' + section_key + '_section.html' ignore missing %}
+        {% endif %}
+    {% endfor %}
+{% else %}
+    {# Default rendering when no sort order is specified #}
+    {% for section_key in all_sections %}
+        {% if not hidden_sections or section_key not in hidden_sections %}
+            {% include 'section_templates/' + section_key + '_section.html' ignore missing %}
+        {% endif %}
+    {% endfor %}
+{% endif %}

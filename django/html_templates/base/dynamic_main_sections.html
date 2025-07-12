@@ -1,0 +1,40 @@
+{# Define sections that should appear in main content for this layout #}
+{% set main_sections = ['summary', 'objective', 'experience', 'education', 'projects', 'volunteer_and_social_activities', 'certifications', 'awards_and_recognition', 'publications', 'courses', 'conferences', 'speaking_engagements', 'patents', 'professional_memberships', 'military_service', 'teaching_experience', 'research_experience', 'interests', 'references'] %}
+
+{# Render sections based on sort order or default order #}
+{% if sections_sort %}
+    {% for section_key in sections_sort %}
+        {# Skip if section is hidden #}
+        {% if hidden_sections and section_key in hidden_sections %}
+            {# Skip hidden section #}
+        {% elif section_key in main_sections %}
+            {% include 'section_templates/' + section_key + '_section.html' ignore missing %}
+        {% endif %}
+    {% endfor %}
+{% else %}
+    {# Default rendering when no sort order is specified #}
+    {% for section_key in main_sections %}
+        {% if not hidden_sections or section_key not in hidden_sections %}
+            {% include 'section_templates/' + section_key + '_section.html' ignore missing %}
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+{# Handle skills section for main content if it has more than 3 skill groups #}
+{% if skills and skills|length > 3 and (not hidden_sections or 'skills' not in hidden_sections) %}
+    <section class="other-skills-section">
+        <h2><i class="fas fa-tools"></i> Other Skills</h2>
+        <ul class="skills-list main-content-skills">
+            {% for skill_group in skills[3:] %}
+                {% if skill_group.category %}
+                    <li class="skill-category">{{ skill_group.category }}</li>
+                {% endif %}
+                {% if skill_group.keywords %}
+                    {% for keyword in skill_group.keywords %}<li>{{ keyword }}</li>{% endfor %}
+                {% elif skill_group.name %}
+                    <li>{{ skill_group.name }}</li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    </section>
+{% endif %}

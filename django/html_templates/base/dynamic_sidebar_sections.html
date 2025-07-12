@@ -1,0 +1,69 @@
+{# Define sections that should appear in sidebar for this layout #}
+{% set sidebar_sections = ['languages', 'skills'] %}
+
+{# Render sections based on sort order or default order #}
+{% if sections_sort %}
+    {% for section_key in sections_sort %}
+        {# Skip if section is hidden #}
+        {% if hidden_sections and section_key in hidden_sections %}
+            {# Skip hidden section #}
+        {% elif section_key in sidebar_sections %}
+            {% if section_key == 'languages' and languages %}
+                <section class="sidebar-section languages-section">
+                    <h3><i class="fas fa-language icon"></i> Languages</h3>
+                    <ul class="contact-info">
+                        {% for lang in languages %}
+                        <li><i class="fas fa-check-circle icon"></i>{{ lang.language }}{% if lang.proficiency %} ({{ lang.proficiency }}){% endif %}</li>
+                        {% endfor %}
+                    </ul>
+                </section>
+            {% elif section_key == 'skills' and skills %}
+                <section class="sidebar-section skills-section">
+                    <h3><i class="fas fa-cogs icon"></i> Skills</h3>
+                    <ul class="skills-list">
+                        {% for skill_group in skills[:3] %}
+                            {% if skill_group.category %}
+                                <li class="skill-category">{{ skill_group.category }}</li>
+                            {% endif %}
+                            {% if skill_group.keywords %}
+                                {% for keyword in skill_group.keywords %}<li>{{ keyword }}</li>{% endfor %}
+                            {% elif skill_group.name %}
+                                <li>{{ skill_group.name }}</li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </section>
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+{% else %}
+    {# Default rendering when no sort order is specified #}
+    {% if languages and (not hidden_sections or 'languages' not in hidden_sections) %}
+        <section class="sidebar-section languages-section">
+            <h3><i class="fas fa-language icon"></i> Languages</h3>
+            <ul class="contact-info">
+                {% for lang in languages %}
+                <li><i class="fas fa-check-circle icon"></i>{{ lang.language }}{% if lang.proficiency %} ({{ lang.proficiency }}){% endif %}</li>
+                {% endfor %}
+            </ul>
+        </section>
+    {% endif %}
+
+    {% if skills and (not hidden_sections or 'skills' not in hidden_sections) %}
+        <section class="sidebar-section skills-section">
+            <h3><i class="fas fa-cogs icon"></i> Skills</h3>
+            <ul class="skills-list">
+                {% for skill_group in skills[:3] %}
+                    {% if skill_group.category %}
+                        <li class="skill-category">{{ skill_group.category }}</li>
+                    {% endif %}
+                    {% if skill_group.keywords %}
+                        {% for keyword in skill_group.keywords %}<li>{{ keyword }}</li>{% endfor %}
+                    {% elif skill_group.name %}
+                        <li>{{ skill_group.name }}</li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        </section>
+    {% endif %}
+{% endif %}

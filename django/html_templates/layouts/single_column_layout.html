@@ -1,0 +1,32 @@
+<header class="resume-header">
+    <div class="header-content-wrapper">
+        {% if personal_information.avatar %}
+            <img src="{{ personal_information.avatar }}" alt="{{ personal_information.name }} Avatar" class="header-avatar-side">
+        {% endif %}
+
+        <div class="header-text-content">
+            {% if personal_information.name %}<h1>{{ personal_information.name }}</h1>{% endif %}
+            {% if personal_information.headline %}<p class="headline">{{ personal_information.headline }}</p>{% endif %}
+
+            {% if personal_information %}
+            <ul class="contact-info">
+                {% if personal_information.phone %}<li><i class="fas fa-phone"></i>{{ personal_information.phone }}</li>{% endif %}
+                {% if personal_information.email %}<li><i class="fas fa-envelope"></i><a href="mailto:{{ personal_information.email }}">{{ personal_information.email }}</a></li>{% endif %}
+                {% if personal_information.location and personal_information.location.city %}
+                <li><i class="fas fa-map-marker-alt"></i>
+                    {{ personal_information.location.city }}{% if personal_information.location.state %}, {{ personal_information.location.state }}{% endif %}
+                </li>
+                {% endif %}
+                {% if personal_information.profiles.linkedin %}<li><i class="fab fa-linkedin"></i><a href="{{ personal_information.profiles.linkedin }}" target="_blank">LinkedIn</a></li>{% endif %}
+                {% if personal_information.profiles.github %}<li><i class="fab fa-github"></i><a href="{{ personal_information.profiles.github }}" target="_blank">GitHub</a></li>{% endif %}
+                {% if personal_information.profiles.website %}<li><i class="fas fa-globe"></i><a href="{{ personal_information.profiles.website }}" target="_blank">Portfolio/Website</a></li>{% endif %}
+            </ul>
+            {% endif %}
+        </div>
+    </div>
+</header>
+
+<main class="resume-body">
+    {# Render all sections dynamically based on sort order and hidden sections #}
+    {% include 'base/dynamic_single_column_sections.html' %}
+</main>

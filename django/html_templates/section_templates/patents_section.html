@@ -1,0 +1,36 @@
+{% if patents %}
+<section class="resume-section patents-section">
+    <h2><i class="fas fa-lightbulb"></i> Patents</h2>
+    {% for patent in patents %}
+    <article class="item">
+        <div class="item-header">
+            <div class="item-title-org">
+                {% if patent.title %}<span class="title">{{ patent.title }}</span>{% endif %}
+                {% if patent.patent_number %}<span class="organization">Patent #{{ patent.patent_number }}</span>{% endif %}
+            </div>
+            <div class="item-date-location">
+                {% if patent.filing_date %}
+                <span class="date">Filed: {{ patent.filing_date }}</span>
+                {% endif %}
+                {% if patent.grant_date %}
+                <span class="date"> | Granted: {{ patent.grant_date }}</span>
+                {% endif %}
+            </div>
+        </div>
+        {% if patent.inventors %}
+            <div class="description">
+                <p><strong>Inventors:</strong> {{ patent.inventors | join(', ') }}</p>
+            </div>
+        {% endif %}
+        {% if patent.description %}
+            <div class="description"><p>{{ patent.description }}</p></div>
+        {% endif %}
+        {% if patent.link %}
+            <div class="description" style="font-size: 0.85em;">
+                <p><i class="fas fa-link"></i> <a href="{{ patent.link }}" target="_blank">View Patent</a></p>
+            </div>
+        {% endif %}
+    </article>
+    {% endfor %}
+</section>
+{% endif %}
