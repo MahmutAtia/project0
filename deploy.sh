@@ -124,14 +124,24 @@ setup_ssl_certificates() {
     log_info "🔒 Setting up SSL certificates..."
     
     cd "$PROJECT_DIR"
+    NGINX_CONF="nginx/conf.d/default.conf"
 
     # Check if we already have valid Let's Encrypt certificates
     if check_certificate_status; then
-        log_success "✅ Found existing Let's Encrypt certificates"
-        log_info "Using existing certificates without changes"
+        log_success "✅ Found existing valid Let's Encrypt certificate."
+        log_info "Ensuring Nginx is configured to use it..."
+        
+        # Directly configure Nginx to use the Let's Encrypt certificate
+        sed -i "s|ssl_certificate /etc/nginx/ssl/localhost.crt;|ssl_certificate /etc/letsencrypt/live/$DOMAIN/fullchain.pem;|g" "$NGINX_CONF"
+        sed -i "s|ssl_certificate_key /etc/nginx/ssl/localhost.key;|ssl_certificate_key /etc/letsencrypt/live/$DOMAIN/privkey.pem;|g" "$NGINX_CONF"
+        
+        log_success "Nginx configuration updated for Let's Encrypt."
         cd ..
         return 0
     fi
+    
+    log_warning "⚠️ No valid Let's Encrypt certificate found. Proceeding with setup..."
+ 
     
     # Always generate self-signed certificates first to ensure nginx can start
     generate_self_signed_certificates || {
@@ -402,18 +412,25 @@ download_external_assets() {
 
 
 check_certificate_status() {
-    # Check if certificates exist in the Docker volume
-    if docker compose run --rm certbot certificates 2>/dev/null | grep -q "$DOMAIN"; then
-        return 0  # Certificate exists
+    # Check if a VALID certificate exists in the Docker volume
+    # This is more reliable than just checking for the domain name
+    if docker compose run --rm certbot certificates 2>/dev/null | grep -A 5 "Certificate Name: $DOMAIN" | grep -q "VALID"; then
+        return 0  # Valid certificate exists
     else
-        return 1  # No certificate found
+        return 1  # No valid certificate found
     fi
 }
 
-# Replace ONLY the SSL certificate check part in run_health_checks() function:
+# Replace your run_health_checks function with this fixed version:
 
 run_health_checks() {
     log_info "Running application health checks..."
+
+    # log pwd 
+    log_info "Current working directory: $(pwd)"
+    
+    # Save current directory
+    CURRENT_DIR=$(pwd)
     
     # Check database connection
     if check_database_status; then
@@ -430,12 +447,12 @@ run_health_checks() {
         log_warning "⚠️  Django application: Has warnings"
     fi
     
-    # Check SSL certificates - REPLACE THIS SECTION ONLY
+    # Check SSL certificates
     log_info "Checking SSL certificate..."
     cd "$PROJECT_DIR"
     if check_certificate_status; then
         log_success "✅ Let's Encrypt SSL certificate: OK"
-    elif [ -f "$PROJECT_DIR/nginx/ssl/localhost.crt" ]; then
+    elif [ -f "nginx/ssl/localhost.crt" ]; then
         log_warning "⚠️  Self-signed SSL certificate: OK (browser warnings expected)"
     else
         log_error "❌ No SSL certificate found"
@@ -444,8 +461,10 @@ run_health_checks() {
     # Check service status
     log_info "Checking service status..."
     docker compose ps --format "table {{.Service}}\t{{.Status}}\t{{.Ports}}"
+    
+    # Return to original directory
+    cd "$CURRENT_DIR"
 }
-
 # Add this function after restart_services() but before the main function call:
 
 check_certificates() {
