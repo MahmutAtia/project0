@@ -22,14 +22,16 @@
                     <h3><i class="fas fa-cogs icon"></i> Skills</h3>
                     <ul class="skills-list">
                         {% for skill_group in skills[:3] %}
-                            {% if skill_group.category %}
-                                <li class="skill-category">{{ skill_group.category }}</li>
-                            {% endif %}
-                            {% if skill_group.keywords %}
-                                {% for keyword in skill_group.keywords %}<li>{{ keyword }}</li>{% endfor %}
-                            {% elif skill_group.name %}
-                                <li>{{ skill_group.name }}</li>
-                            {% endif %}
+                            <li>
+                                {% if skill_group.category %}
+                                    <strong class="skill-category">{{ skill_group.category }}:</strong>
+                                {% endif %}
+                                {% if skill_group.keywords %}
+                                    {{ skill_group.keywords|join(', ') }}
+                                {% elif skill_group.name %}
+                                    {{ skill_group.name }}
+                                {% endif %}
+                            </li>
                         {% endfor %}
                     </ul>
                 </section>
@@ -54,14 +56,16 @@
             <h3><i class="fas fa-cogs icon"></i> Skills</h3>
             <ul class="skills-list">
                 {% for skill_group in skills[:3] %}
-                    {% if skill_group.category %}
-                        <li class="skill-category">{{ skill_group.category }}</li>
-                    {% endif %}
-                    {% if skill_group.keywords %}
-                        {% for keyword in skill_group.keywords %}<li>{{ keyword }}</li>{% endfor %}
-                    {% elif skill_group.name %}
-                        <li>{{ skill_group.name }}</li>
-                    {% endif %}
+                    <li>
+                        {% if skill_group.category %}
+                            <strong class="skill-category">{{ skill_group.category }}:</strong>
+                        {% endif %}
+                        {% if skill_group.keywords %}
+                            {{ skill_group.keywords|join(', ') }}
+                        {% elif skill_group.name %}
+                            {{ skill_group.name }}
+                        {% endif %}
+                    </li>
                 {% endfor %}
             </ul>
         </section>

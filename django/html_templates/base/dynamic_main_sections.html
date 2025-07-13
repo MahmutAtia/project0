@@ -1,5 +1,5 @@
 {# Define sections that should appear in main content for this layout #}
-{% set main_sections = ['summary', 'objective', 'experience', 'education', 'projects', 'volunteer_and_social_activities', 'certifications', 'awards_and_recognition', 'publications', 'courses', 'conferences', 'speaking_engagements', 'patents', 'professional_memberships', 'military_service', 'teaching_experience', 'research_experience', 'interests', 'references'] %}
+{% set main_sections = ['summary', 'objective', 'experience', 'education', 'projects', 'volunteer_and_social_activities', 'certifications', 'awards_and_recognition', 'publications', 'courses', 'conferences', 'speaking_engagements', 'patents', 'professional_memberships', 'military_service', 'teaching_experience', 'research_experience', 'interests', 'references', 'skills'] %}
 
 {# Render sections based on sort order or default order #}
 {% if sections_sort %}
@@ -26,14 +26,16 @@
         <h2><i class="fas fa-tools"></i> Other Skills</h2>
         <ul class="skills-list main-content-skills">
             {% for skill_group in skills[3:] %}
-                {% if skill_group.category %}
-                    <li class="skill-category">{{ skill_group.category }}</li>
-                {% endif %}
-                {% if skill_group.keywords %}
-                    {% for keyword in skill_group.keywords %}<li>{{ keyword }}</li>{% endfor %}
-                {% elif skill_group.name %}
-                    <li>{{ skill_group.name }}</li>
-                {% endif %}
+                <li>
+                    {% if skill_group.category %}
+                        <strong class="skill-category">{{ skill_group.category }}:</strong>
+                    {% endif %}
+                    {% if skill_group.keywords %}
+                        {{ skill_group.keywords|join(', ') }}
+                    {% elif skill_group.name %}
+                        {{ skill_group.name }}
+                    {% endif %}
+                </li>
             {% endfor %}
         </ul>
     </section>
