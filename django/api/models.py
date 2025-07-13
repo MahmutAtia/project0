@@ -1,5 +1,6 @@
 from django.db import models
 from django.db.models import JSONField
+from django.contrib.auth.models import User
 import uuid
 
 
@@ -30,6 +31,17 @@ DEFAULT_RESUME_SECTION_KEYS = [
 
 
 class Resume(models.Model):
+    """
+    Resume model storing user's resume data as JSON.
+    
+    The resume JSON structure includes:
+    - personal_information: Contact details, profiles, and avatar inclusion preference
+    - Various sections: experience, education, skills, etc.
+    
+    Avatar Inclusion:
+    The 'includeAvatarInPDF' field in personal_information controls whether
+    the user's avatar should be included in PDF/website generation.
+    """
     user = models.ForeignKey(
         "auth.User", on_delete=models.CASCADE, related_name="resumes"
     )  # Link to the user
@@ -116,8 +128,38 @@ class Resume(models.Model):
                         # If section has data, remove from hidden if it was there
                         if section_key in self.hidden_sections:
                             self.hidden_sections.remove(section_key)
+                
+                # Set default avatar inclusion preference for new resumes
+                if 'personal_information' in self.resume:
+                    if 'includeAvatarInPDF' not in self.resume['personal_information']:
+                        self.resume['personal_information']['includeAvatarInPDF'] = False
+                elif self.resume:
+                    # Create personal_information section if it doesn't exist
+                    self.resume['personal_information'] = {'includeAvatarInPDF': False}
         super().save(*args, **kwargs)
 
+    def should_include_avatar_in_pdf(self):
+        """
+        Check if avatar should be included in PDF generation.
+        Returns False by default for privacy and professional document standards.
+        """
+        if (self.resume and 
+            'personal_information' in self.resume and 
+            'includeAvatarInPDF' in self.resume['personal_information']):
+            return self.resume['personal_information']['includeAvatarInPDF']
+        return False  # Default to False for professional documents
+
+    def set_avatar_inclusion_preference(self, include=True):
+        """
+        Set the avatar inclusion preference for this resume.
+        """
+        if not self.resume:
+            self.resume = {}
+        if 'personal_information' not in self.resume:
+            self.resume['personal_information'] = {}
+        
+        self.resume['personal_information']['includeAvatarInPDF'] = include
+        self.save()
 
 class GeneratedWebsite(models.Model):
     resume = models.OneToOneField(
@@ -160,3 +202,37 @@ class GeneratedDocument(models.Model):
 
     def __str__(self):
         return f"Document for Resume ID: {self.resume.id}"
+
+
+# User Profile extension for avatar
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    avatar = models.TextField(
+        blank=True, 
+        null=True, 
+        help_text='Base64 encoded avatar image (max ~2MB compressed)'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.username}'s Profile"
+    
+    def save(self, *args, **kwargs):
+        # Validate avatar size (rough base64 size check)
+        if self.avatar and len(self.avatar) > 3000000:  # ~2.2MB after base64 encoding
+            raise ValueError("Avatar image too large. Please use an image smaller than 2MB.")
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def get_or_create_profile(cls, user):
+        """Get or create profile for a user"""
+        profile, created = cls.objects.get_or_create(user=user)
+        return profile
+    
+    @property
+    def avatar_size_kb(self):
+        """Get approximate size of avatar in KB"""
+        if self.avatar:
+            return len(self.avatar) // 1024
+        return 0

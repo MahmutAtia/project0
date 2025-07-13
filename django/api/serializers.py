@@ -1,21 +1,60 @@
 from rest_framework import serializers
-from django.contrib.auth import get_user_model  # Use get_user_model for flexibility
-from .models import Resume
-
-User = get_user_model()  # this is important
-
-
-from rest_framework import serializers
-from .models import Resume
 from django.contrib.auth import get_user_model
+from .models import Resume, GeneratedDocument, GeneratedWebsite, UserProfile
 
 User = get_user_model()
 
-from rest_framework import serializers
-from django.contrib.auth import get_user_model
-from .models import Resume, GeneratedDocument, GeneratedWebsite  # Import related models
 
-User = get_user_model()
+class UserProfileSerializer(serializers.ModelSerializer):
+    """Serializer for user profile with avatar support"""
+    username = serializers.CharField(source='user.username', read_only=True)
+    email = serializers.CharField(source='user.email', read_only=True)
+    first_name = serializers.CharField(source='user.first_name')
+    last_name = serializers.CharField(source='user.last_name')
+    
+    class Meta:
+        model = UserProfile
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'avatar']
+        read_only_fields = ['id', 'username', 'email']
+    
+    def validate_avatar(self, value):
+        """Validate base64 avatar image"""
+        if value:
+            # Basic validation for base64 image
+            if not value.startswith('data:image/'):
+                raise serializers.ValidationError("Avatar must be a valid base64 image data URL")
+            
+            # Check file size (approximate, base64 is ~33% larger than binary)
+            import base64
+            try:
+                # Extract base64 data after comma
+                header, data = value.split(',', 1)
+                decoded = base64.b64decode(data)
+                # Limit to 5MB
+                if len(decoded) > 5 * 1024 * 1024:
+                    raise serializers.ValidationError("Avatar image is too large. Maximum size is 5MB")
+            except Exception:
+                raise serializers.ValidationError("Invalid base64 image format")
+        
+        return value
+    
+    def update(self, instance, validated_data):
+        # Handle nested user data
+        user_data = {}
+        if 'user' in validated_data:
+            user_data = validated_data.pop('user')
+        
+        # Update user fields
+        for attr, value in user_data.items():
+            setattr(instance.user, attr, value)
+        instance.user.save()
+        
+        # Update profile fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        
+        return instance
 
 
 class GeneratedDocumentSerializer(serializers.ModelSerializer):
@@ -100,3 +139,34 @@ class ResumeSerializer(serializers.ModelSerializer):
     # If you had a custom create here, ensure it correctly handles the user from context if needed.
     # The existing create method in your file is not ideal as it doesn't use the request user.
     # It's better to rely on the view's perform_create.
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    """Serializer for user profile with avatar support"""
+
+    class Meta:
+        model = User
+        fields = ["id", "username", "email", "first_name", "last_name", "avatar"]
+        read_only_fields = ["id", "username"]
+
+    def validate_avatar(self, value):
+        """Validate base64 avatar image"""
+        if value:
+            # Basic validation for base64 image
+            if not value.startswith("data:image/"):
+                raise serializers.ValidationError("Avatar must be a valid base64 image data URL")
+
+            # Check file size (approximate, base64 is ~33% larger than binary)
+            import base64
+
+            try:
+                # Extract base64 data after comma
+                header, data = value.split(",", 1)
+                decoded = base64.b64decode(data)
+                # Limit to 5MB
+                if len(decoded) > 5 * 1024 * 1024:
+                    raise serializers.ValidationError("Avatar image is too large. Maximum size is 5MB")
+            except Exception:
+                raise serializers.ValidationError("Invalid base64 image format")
+
+        return value

@@ -2,6 +2,12 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    # User Profile and Avatar endpoints
+    path("user/profile/", views.user_profile, name="user-profile"),
+    path("user/avatar/upload/", views.upload_avatar, name="upload-avatar"),
+    path("user/avatar/remove/", views.remove_avatar, name="remove-avatar"),
+    path("user/avatar/", views.get_avatar, name="get-avatar"),
+    
     # 1. Exact matches first
     path("resumes/", views.ResumeListCreateView.as_view(), name="resume-list-create"),
     path("resumes/generate/", views.generate_resume, name="generate-resume"),

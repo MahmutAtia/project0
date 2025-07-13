@@ -1,6 +1,6 @@
 from rest_framework import generics, permissions, status
 from .models import Resume, GeneratedWebsite, GeneratedDocument
-from .serializers import ResumeSerializer
+from .serializers import ResumeSerializer, UserProfileSerializer
 from django.http import Http404
 from .utils import (
     cleanup_old_sessions,
@@ -387,7 +387,7 @@ def generate_pdf(request):
     API endpoint to trigger background PDF generation.
     Returns a task ID for status checking.
     """
-    resume_id = request.data.get("resumeId")
+    resume_id = request.data.get("resume_id")
     template = request.data.get("templateTheme", "default.html")
     chosen_theme = request.data.get("chosenTheme", "theme-default")
 
@@ -409,6 +409,31 @@ def generate_pdf(request):
                 {"error": "Invalid resume data format."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+        # Add user avatar to resume data for PDF generation
+        try:
+            user_profile = UserProfile.get_or_create_profile(resume.user)
+            
+            # Check if user wants to include avatar in PDF using the resume helper method
+            include_avatar = resume.should_include_avatar_in_pdf()
+            
+            if user_profile.avatar and include_avatar:
+                # Ensure resume_data structure exists
+                if not resume_data:
+                    resume_data = {}
+                if 'personal_information' not in resume_data:
+                    resume_data['personal_information'] = {}
+                
+                # Add avatar to personal_information section for PDF generation
+                resume_data['personal_information']['avatar'] = user_profile.avatar
+                logger.info(f"Avatar added to resume {resume_id} for PDF generation (size: ~{len(user_profile.avatar)//1024}KB)")
+            elif user_profile.avatar and not include_avatar:
+                logger.info(f"Avatar excluded from resume {resume_id} PDF generation per user preference")
+            else:
+                logger.debug(f"No avatar found for user {resume.user.username}")
+        except Exception as avatar_error:
+            logger.warning(f"Could not add avatar to PDF for resume {resume_id}: {avatar_error}")
+            # Continue without avatar - don't fail the entire PDF generation
 
     except Http404:
         return Response(
@@ -522,6 +547,24 @@ def generate_personal_website(request):
         resume = get_object_or_404(Resume, pk=resume_id)
         resume_data = resume.resume
 
+        # Note: We don't add base64 avatar to website generation as it would make HTML too large
+        # Website generation uses a different approach for images
+        try:
+            user_profile = UserProfile.get_or_create_profile(resume.user)
+            
+            # Check if user wants to include avatar (for future website avatar feature)
+            include_avatar = resume.should_include_avatar_in_pdf()
+            
+            if user_profile.avatar and include_avatar:
+                logger.info(f"User has avatar and wants it included - website avatar feature could be implemented later")
+            elif user_profile.avatar and not include_avatar:
+                logger.info(f"Avatar excluded from resume {resume_id} website generation per user preference")
+            else:
+                logger.debug(f"No avatar found for user {resume.user.username}")
+        except Exception as avatar_error:
+            logger.warning(f"Could not process avatar preference for website {resume_id}: {avatar_error}")
+            # Continue without avatar - don't fail the entire website generation
+
         # Check if a website has already been generated for this resume
         generated_website = GeneratedWebsite.objects.filter(resume=resume).first()
         if generated_website:
@@ -609,6 +652,24 @@ def generate_personal_website_bloks(request):
     try:
         resume = get_object_or_404(Resume, pk=resume_id)
         resume_data = resume.resume
+
+        # Note: We don't add base64 avatar to website generation as it would make HTML too large
+        # Website generation uses a different approach for images
+        try:
+            user_profile = UserProfile.get_or_create_profile(resume.user)
+            
+            # Check if user wants to include avatar (for future website avatar feature)
+            include_avatar = resume.should_include_avatar_in_pdf()
+            
+            if user_profile.avatar and include_avatar:
+                logger.info(f"User has avatar and wants it included - website avatar feature could be implemented later")
+            elif user_profile.avatar and not include_avatar:
+                logger.info(f"Avatar excluded from resume {resume_id} website regeneration per user preference")
+            else:
+                logger.debug(f"No avatar found for user {resume.user.username}")
+        except Exception as avatar_error:
+            logger.warning(f"Could not process avatar preference for website {resume_id}: {avatar_error}")
+            # Continue without avatar - don't fail the entire website generation
 
         # Check if a website has already been generated for this resume
         generated_website = GeneratedWebsite.objects.filter(resume=resume).first()
@@ -1361,3 +1422,108 @@ def save_generated_resume(request):
             {"error": "An unexpected error occurred while saving the resume."},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+
+from .serializers import ResumeSerializer, UserProfileSerializer
+from .models import UserProfile
+from django.contrib.auth.models import User
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework import permissions
+
+
+@api_view(['GET', 'PUT', 'PATCH'])
+@permission_classes([permissions.IsAuthenticated])
+def user_profile(request):
+    """
+    Get or update user profile including avatar
+    """
+    user = request.user
+    profile = UserProfile.get_or_create_profile(user)
+    
+    if request.method == 'GET':
+        serializer = UserProfileSerializer(profile)
+        return Response(serializer.data)
+    
+    elif request.method in ['PUT', 'PATCH']:
+        partial = request.method == 'PATCH'
+        serializer = UserProfileSerializer(profile, data=request.data, partial=partial)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def upload_avatar(request):
+    """
+    Upload and crop avatar image
+    """
+    try:
+        avatar_data = request.data.get('avatar')
+        
+        if not avatar_data:
+            return Response(
+                {'error': 'No avatar data provided'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Validate base64 image
+        if not avatar_data.startswith('data:image/'):
+            return Response(
+                {'error': 'Invalid image format'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Save avatar to user profile
+        user = request.user
+        profile = UserProfile.get_or_create_profile(user)
+        profile.avatar = avatar_data
+        profile.save()
+        
+        return Response({
+            'message': 'Avatar uploaded successfully',
+            'avatar': avatar_data
+        })
+        
+    except Exception as e:
+        return Response(
+            {'error': f'Failed to upload avatar: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['DELETE'])
+@permission_classes([permissions.IsAuthenticated])
+def remove_avatar(request):
+    """
+    Remove user avatar
+    """
+    try:
+        user = request.user
+        profile = UserProfile.get_or_create_profile(user)
+        profile.avatar = None
+        profile.save()
+        
+        return Response({'message': 'Avatar removed successfully'})
+        
+    except Exception as e:
+        return Response(
+            {'error': f'Failed to remove avatar: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def get_avatar(request):
+    """
+    Get current user's avatar
+    """
+    user = request.user
+    profile = UserProfile.get_or_create_profile(user)
+    return Response({
+        'avatar': profile.avatar,
+        'hasAvatar': bool(profile.avatar)
+    })
