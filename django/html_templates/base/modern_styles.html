@@ -1,46 +1,46 @@
 <style>
     /* --- Modern Theme Variables --- */
     :root {
-        --font-family-main: 'Inter', 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-        --font-family-heading: 'DM Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-        --base-font-size: 10pt;
-        --line-height: 1.6;
-        --border-color-base: #e0e0e0;
-        --skill-tag-bg-base: #f0f0f0;
-        --text-color-base: #333;
-        --muted-color-base: #6c757d;
+        --font-family-main: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        --font-family-heading: 'Poppins', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        --base-font-size: 10.5pt;
+        --line-height: 1.5;
+        --border-color-base: #e8e8e8;
+        --skill-tag-bg-base: #f8f9fa;
+        --text-color-base: #2d3748;
+        --muted-color-base: #718096;
         --page-bg-color: #ffffff;
-        --header-bg-color-base: transparent;
+        --header-bg-color-base: #fafbfc;
     }
 
     /* --- Theme Definitions --- */
     body.theme-default, :root {
-        --primary-color: #2c3e50;
-        --secondary-color: #3498db;
+        --primary-color: #3182ce;
+        --secondary-color: #4299e1;
         --text-color: var(--text-color-base);
         --muted-color: var(--muted-color-base);
         --border-color: var(--border-color-base);
         --skill-tag-bg: var(--skill-tag-bg-base);
-        --heading-color: #2c3e50;
+        --heading-color: #2d3748;
         --header-bg-color: var(--header-bg-color-base);
     }
     body.theme-blue {
-        --primary-color: #1565c0;
-        --secondary-color: #1e88e5;
-        --skill-tag-bg: #e3f2fd;
-        --heading-color: #1565c0;
+        --primary-color: #2b6cb0;
+        --secondary-color: #3182ce;
+        --skill-tag-bg: #ebf8ff;
+        --heading-color: #2c5282;
     }
     body.theme-green {
-        --primary-color: #2e7d32;
-        --secondary-color: #43a047;
-        --skill-tag-bg: #e8f5e9;
-        --heading-color: #2e7d32;
+        --primary-color: #38a169;
+        --secondary-color: #48bb78;
+        --skill-tag-bg: #f0fff4;
+        --heading-color: #2f855a;
     }
     body.theme-grey {
-        --primary-color: #455a64;
-        --secondary-color: #607d8b;
-        --skill-tag-bg: #eceff1;
-        --heading-color: #37474f;
+        --primary-color: #4a5568;
+        --secondary-color: #718096;
+        --skill-tag-bg: #f7fafc;
+        --heading-color: #2d3748;
     }
 
     @page {
@@ -71,115 +71,163 @@
         page-break-after: avoid;
     }
     h1 {
-        font-size: 2.2rem;
-        text-align: left;
-        margin-bottom: 0.1em;
-        font-weight: 900;
+        font-size: 2rem;
+        text-align: center;
+        margin-bottom: 0.3em;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: var(--heading-color);
     }
     h2 {
         font-size: 1.2rem;
         color: var(--primary-color);
-        border-bottom: 2px solid var(--primary-color);
-        padding-bottom: 0.25em;
-        margin-top: 1.5em;
+        padding: 0.8em 0 0.4em 0;
+        margin-top: 2em;
         margin-bottom: 1em;
-        text-transform: uppercase;
-        letter-spacing: 1px;
+        text-transform: none;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        position: relative;
+        border-left: 4px solid var(--primary-color);
+        padding-left: 1em;
+        background: linear-gradient(90deg, rgba(44, 62, 80, 0.05) 0%, transparent 100%);
     }
     h2:first-of-type { margin-top: 1em; }
-    h2 i { margin-right: 8px; font-size: 0.95em; }
-    html[lang="ar"] h2 i { margin-right: 0; margin-left: 8px; }
+    h2 i { margin-right: 10px; font-size: 1em; color: var(--secondary-color); }
+    html[lang="ar"] h2 { border-left: none; border-right: 4px solid var(--primary-color); padding-left: 0; padding-right: 1em; background: linear-gradient(270deg, rgba(44, 62, 80, 0.05) 0%, transparent 100%); }
+    html[lang="ar"] h2 i { margin-right: 0; margin-left: 10px; }
     h3 {
-        font-size: 1.05rem;
+        font-size: 1rem;
         color: var(--heading-color);
-        margin-bottom: 0.3em;
-        font-weight: 700;
+        margin-bottom: 0.4em;
+        font-weight: 600;
     }
 
-    p { margin: 0 0 0.6em 0; }
+    p { margin: 0 0 0.7em 0; }
     a { color: var(--secondary-color); text-decoration: none; }
     a:hover { text-decoration: underline; }
-    ul { padding-left: 20px; margin-top: 0; margin-bottom: 0.8em; }
-    li { margin-bottom: 0.3em; }
+    ul { padding-left: 18px; margin-top: 0; margin-bottom: 0.8em; }
+    li { margin-bottom: 0.4em; }
 
     /* --- Header Section --- */
     .resume-header {
-        text-align: left;
-        padding-bottom: 1em;
-        margin-bottom: 1em;
-        border-bottom: 4px solid var(--primary-color);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        text-align: center;
+        padding: 2em 0 1.5em 0;
+        margin-bottom: 2em;
+        background: linear-gradient(135deg, var(--primary-color) 0%, #34495e 100%);
+        color: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        position: relative;
     }
-    html[lang="ar"] .resume-header { text-align: right; }
+    html[lang="ar"] .resume-header { text-align: center; }
 
-    .header-main-content { flex-grow: 1; }
-    .resume-header .headline {
-        font-size: 1.15rem;
-        color: var(--muted-color);
-        margin-top: 0.1em;
-        margin-bottom: 0.8em;
-        font-weight: 400;
+    .resume-header h1 {
+        color: white;
+        font-size: 2.5rem;
+        margin-bottom: 0.3em;
+        font-weight: 600;
+        letter-spacing: 0.5px;
     }
+
+    .resume-header .headline {
+        font-size: 1.2rem;
+        color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 1.5em;
+        font-weight: 300;
+        line-height: 1.4;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
     .contact-info {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.6em 1.5em;
+        justify-content: center;
+        gap: 1em 2em;
         list-style: none;
         padding: 0;
         margin: 0;
-        font-size: 0.9rem;
-        color: var(--muted-color);
+        font-size: 0.95rem;
+        color: rgba(255, 255, 255, 0.9);
     }
-    .contact-info li { display: flex; align-items: center; margin-bottom: 0; }
-    .contact-info i { color: var(--secondary-color); margin-right: 6px; width: 14px; text-align: center; }
-    html[lang="ar"] .contact-info i { margin-right: 0; margin-left: 6px; }
-    .contact-info a { color: var(--muted-color); }
-    .contact-info a:hover { color: var(--secondary-color); }
+    .contact-info li { 
+        display: flex; 
+        align-items: center; 
+        margin-bottom: 0;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 0.4em 0.8em;
+        border-radius: 20px;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+    }
+    .contact-info li:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-1px);
+    }
+    .contact-info i { 
+        color: rgba(255, 255, 255, 0.8); 
+        margin-right: 8px; 
+        width: 16px; 
+        text-align: center; 
+        font-size: 0.9em; 
+    }
+    html[lang="ar"] .contact-info i { margin-right: 0; margin-left: 8px; }
+    .contact-info a { 
+        color: rgba(255, 255, 255, 0.9); 
+        font-weight: 400;
+        transition: color 0.3s ease;
+    }
+    .contact-info a:hover { 
+        color: white; 
+        text-decoration: none;
+    }
 
     .header-avatar-side {
-        width: 90px;
-        height: 90px;
+        width: 100px;
+        height: 100px;
         border-radius: 50%;
         object-fit: cover;
         flex-shrink: 0;
-        margin-left: 20px;
-        border: 3px solid var(--border-color);
+        margin-left: 25px;
+        border: 2px solid var(--border-color);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
-    html[lang="ar"] .header-avatar-side { margin-left: 0; margin-right: 20px; }
+    html[lang="ar"] .header-avatar-side { margin-left: 0; margin-right: 25px; }
 
     /* --- Main Content Sections --- */
-    .resume-section { margin-bottom: 1.2em; }
+    .resume-section { margin-bottom: 1.5em; }
 
     .item {
-        margin-bottom: 1rem;
-        padding-bottom: 0.5rem;
+        margin-bottom: 1.2rem;
+        padding-bottom: 0.8rem;
         page-break-inside: avoid;
-        position: relative; /* For timeline */
-        padding-left: 25px; /* For timeline */
-        border-left: 2px solid var(--border-color); /* Timeline */
+        position: relative;
+        padding-left: 30px;
+        border-left: 3px solid var(--border-color);
     }
-    .item::before { /* Timeline dot */
+    .item::before {
         content: '';
         position: absolute;
-        left: -7px;
-        top: 6px;
-        width: 10px;
-        height: 10px;
+        left: -8px;
+        top: 8px;
+        width: 12px;
+        height: 12px;
         background-color: var(--secondary-color);
         border-radius: 50%;
-        border: 2px solid var(--page-bg-color);
+        border: 3px solid var(--page-bg-color);
+        box-shadow: 0 0 0 1px var(--border-color);
     }
     html[lang="ar"] .item {
         padding-left: 0;
-        padding-right: 25px;
+        padding-right: 30px;
         border-left: none;
-        border-right: 2px solid var(--border-color);
+        border-right: 3px solid var(--border-color);
     }
     html[lang="ar"] .item::before {
         left: auto;
-        right: -7px;
+        right: -8px;
     }
 
     .item:last-child {
@@ -196,28 +244,32 @@
         justify-content: space-between;
         align-items: baseline;
         flex-wrap: wrap;
-        margin-bottom: 0.3em;
+        margin-bottom: 0.5em;
     }
     .item-title-org { flex-grow: 1; }
-    .item-title-org .title { font-size: 1.1rem; font-weight: 700; color: var(--heading-color); }
-    .item-title-org .organization { font-size: 1rem; font-weight: normal; color: var(--text-color); margin-left: 0.5em; }
-    html[lang="ar"] .item-title-org .organization { margin-left: 0; margin-right: 0.5em; }
+    .item-title-org .title { font-size: 1.05rem; font-weight: 600; color: var(--heading-color); line-height: 1.3; }
+    .item-title-org .organization { font-size: 0.95rem; font-weight: normal; color: var(--text-color); margin-left: 0.6em; }
+    html[lang="ar"] .item-title-org .organization { margin-left: 0; margin-right: 0.6em; }
 
     .item-date-location {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         color: var(--muted-color);
         text-align: right;
         flex-shrink: 0;
-        margin-left: 1em;
-        font-weight: 700;
+        margin-left: 1.2em;
+        font-weight: 500;
+        background-color: var(--skill-tag-bg);
+        padding: 0.2em 0.6em;
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
     }
-    html[lang="ar"] .item-date-location { text-align: left; margin-left: 0; margin-right: 1em; }
+    html[lang="ar"] .item-date-location { text-align: left; margin-left: 0; margin-right: 1.2em; }
 
-    .item .description { margin-top: 0.5em; font-size: 0.95rem; }
-    .item .description ul { margin-top: 0.4em; margin-bottom: 0; list-style-type: '–  '; }
-    .item .description ul li { margin-bottom: 0.25em; padding-left: 5px; }
-    html[lang="ar"] .item .description ul { list-style-type: '  –'; }
-    html[lang="ar"] .item .description ul li { padding-left: 0; padding-right: 5px; }
+    .item .description { margin-top: 0.6em; font-size: 0.95rem; line-height: 1.5; }
+    .item .description ul { margin-top: 0.5em; margin-bottom: 0; list-style-type: '•  '; }
+    .item .description ul li { margin-bottom: 0.3em; padding-left: 8px; }
+    html[lang="ar"] .item .description ul { list-style-type: '  •'; }
+    html[lang="ar"] .item .description ul li { padding-left: 0; padding-right: 8px; }
 
     /* Skills Section */
     .skills-section ul {
@@ -226,20 +278,22 @@
         margin: 0;
         display: flex;
         flex-wrap: wrap;
-        gap: 8px 12px;
+        gap: 10px 14px;
     }
     .skills-section li {
         background-color: var(--skill-tag-bg);
-        padding: 4px 10px;
-        border-radius: 15px;
+        padding: 6px 12px;
+        border-radius: 20px;
         font-size: 0.9rem;
         margin: 0;
         border: 1px solid var(--border-color);
+        font-weight: 500;
+        transition: background-color 0.2s ease;
     }
     .skills-section .skill-category {
-        font-weight: 700;
+        font-weight: 600;
         width: 100%;
-        margin-bottom: 5px;
+        margin-bottom: 8px;
         font-size: 1rem;
         color: var(--heading-color);
         background-color: transparent;

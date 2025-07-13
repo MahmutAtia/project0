@@ -54,11 +54,11 @@ def download_assets():
     else:
         print("⏭️  Google Fonts for europass template already exists, skipping...")
 
-    # Google Fonts CSS for modern theme (Inter + DM Sans - Contemporary & Readable)
+    # Google Fonts CSS for modern theme (Inter + Poppins - Clean & Professional)
     gf_modern_path = "static/css/google-fonts-modern.css"
     if not os.path.exists(gf_modern_path):
         print("Downloading Google Fonts CSS for modern theme...")
-        gf_url = "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;700&display=swap"
+        gf_url = "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap"
         gf_response = requests.get(gf_url)
         with open(gf_modern_path, "w", encoding="utf-8") as f:
             f.write(gf_response.text)
