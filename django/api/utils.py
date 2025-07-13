@@ -478,76 +478,31 @@ def get_template_config(template_name):
             'layout_type': 'single_column',
             'use_universal': True
         },
-        'template4.html': {
-            'template_style': 'creative',
-            'layout_type': 'two_column',
-            'use_universal': True
-        },
-        'template5.html': {
-            'template_style': 'creative',
-            'layout_type': 'single_column',
-            'use_universal': True
-        },
+
         'template6.html': {
             'template_style': 'minimal',
             'layout_type': 'single_column',
             'use_universal': True
         },
-        'template7.html': {
-            'template_style': 'minimal',
-            'layout_type': 'single_column',
-            'use_universal': True
-        },
-        'template8.html': {
-            'template_style': 'creative',
-            'layout_type': 'two_column',
-            'use_universal': True
-        },
+       
+
         'template9.html': {
             'template_style': 'classic',
             'layout_type': 'single_column',
             'use_universal': True
         },
-        'template10.html': {
-            'template_style': 'tech',
-            'layout_type': 'single_column',
-            'use_universal': True
-        },
-        'template11.html': {
-            'template_style': 'tech',
-            'layout_type': 'single_column',
-            'use_universal': True
-        },
-        'template12.html': {
-            'template_style': 'creative',
-            'layout_type': 'two_column',
-            'use_universal': True
-        },
+
         'template13.html': {
             'template_style': 'minimal',
             'layout_type': 'single_column',
             'use_universal': True
         },
-        'template14.html': {
-            'template_style': 'classic',
-            'layout_type': 'single_column',
-            'use_universal': True
-        },
-        'template15.html': {
-            'template_style': 'tech',
-            'layout_type': 'single_column',
-            'use_universal': True
-        },
+
         'default.html': {
             'template_style': 'default',
             'layout_type': 'single_column',
             'use_universal': True
         },
-        'default_sorted.html': {
-            'template_style': 'default',
-            'layout_type': 'single_column',
-            'use_universal': True
-        }
     }
     
     return template_configs.get(template_name, {

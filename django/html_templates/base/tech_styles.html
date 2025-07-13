@@ -1,383 +1,443 @@
 <style>
-        /* --- Tech/Glitch Theme (Template 10 Style) --- */
-        /* Fonts loaded via CSS import */
+    /* --- Modern Tech Theme --- */
+    /* This file has been completely rewritten for a professional, modern, and clean aesthetic. */
+
+    /* --- Base Variables --- */
+    :root {
+        --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        --font-monospace: 'Roboto Mono', monospace;
+        --base-font-size: 9.5pt;
+        --line-height: 1.6;
+        --section-spacing: 1.5em;
+        --item-spacing: 1.3em;
+        --sidebar-width: 33%;
+        --main-width: 67%;
+        --border-radius: 4px;
+    }
+
+    /* --- Theme Definitions --- */
+    /* Default: "Dracula" Inspired Theme */
+    body.theme-dracula, :root {
+        --color-bg: #282a36;
+        --color-bg-secondary: #343746;
+        --color-text: #f8f8f2;
+        --color-text-medium: #bd93f9;
+        --color-text-light: #d0d0d0;
+        --color-accent: #ff79c6;
+        --color-accent-secondary: #50fa7b;
+        --color-border: #44475a;
+    }
+
+    /* Theme: "Nord" */
+    body.theme-nord {
+        --color-bg: #2E3440;
+        --color-bg-secondary: #3B4252;
+        --color-text: #ECEFF4;
+        --color-text-medium: #88C0D0;
+        --color-text-light: #D8DEE9;
+        --color-accent: #81A1C1;
+        --color-accent-secondary: #A3BE8C;
+        --color-border: #4C566A;
+    }
+
+    /* Theme: "Monokai" */
+    body.theme-monokai {
+        --color-bg: #272822;
+        --color-bg-secondary: #3d3e37;
+        --color-text: #f8f8f2;
+        --color-text-medium: #e6db74;
+        --color-text-light: #cccccc;
+        --color-accent: #f92672;
+        --color-accent-secondary: #a6e22e;
+        --color-border: #555650;
+    }
+    
+    /* Theme: "Cyber" (Kept and refined) */
+    body.theme-cyber {
+        --color-bg: #0a0a0f;
+        --color-text: #00d4ff;
+        --color-text-medium: #0099cc;
+        --color-text-light: #c0c0ff;
+        --color-accent: #00ffff;
+        --color-accent-secondary: #ff00ff;
+        --color-border: rgba(0, 212, 255, 0.3);
+        --color-bg-secondary: #141822;
+    }
+
+
+    @page {
+        size: A4;
+        margin: 0;
+    }
+
+    html {
+        background-color: var(--color-bg);
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    body {
+        font-family: var(--font-primary);
+        font-size: var(--base-font-size);
+        line-height: var(--line-height);
+        color: var(--color-text-light);
+        background-color: var(--color-bg);
+        margin: 0;
+        padding: 0;
+        min-height: 29.7cm;
+        box-sizing: border-box;
+    }
+
+    /* --- Layout --- */
+    .resume-container {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        min-height: 29.7cm;
+    }
+
+    .sidebar {
+        width: var(--sidebar-width);
+        background-color: var(--color-bg-secondary);
+        padding: 1.5cm 0.8cm;
+        color: var(--color-text);
+        box-sizing: border-box;
+        height: 100%;
+    }
+
+    .main-content {
+        width: var(--main-width);
+        padding: 1.2cm;
+        box-sizing: border-box;
+    }
+    
+    /* Single column fallback */
+    .resume-container.single-column .main-content {
+        width: 100%;
+        padding: 1.5cm;
+    }
+    .resume-container.single-column .sidebar {
+        display: none;
+    }
+    .resume-container.single-column .resume-header {
+        padding-bottom: 1em;
+        margin-bottom: 1.5em;
+        border-bottom: 1px solid var(--color-border);
+    }
+
+
+    /* --- Header (for Two-Column Layout in Sidebar) --- */
+    .sidebar .resume-header {
+        text-align: left;
+        padding-bottom: 1.5em;
+        margin-bottom: 1.5em;
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    .resume-header h1 {
+        font-family: var(--font-monospace);
+        font-size: 2rem;
+        color: var(--color-text);
+        margin: 0 0 0.1em 0;
+        font-weight: 500;
+        letter-spacing: 1px;
+    }
+    
+    .resume-header h1 .cursor {
+        display: inline-block;
+        width: 10px;
+        height: 1.8rem;
+        background: var(--color-accent);
+        animation: cursor-blink 1.2s infinite;
+        margin-left: 4px;
+        vertical-align: bottom;
+    }
+
+    .resume-header .headline {
+        font-family: var(--font-primary);
+        font-size: 1rem;
+        color: var(--color-text-medium);
+        margin: 0;
+        font-weight: 400;
+    }
+
+    /* --- Contact Info (Sidebar) --- */
+    .sidebar .contact-info {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        font-size: 0.9em;
+    }
+
+    .sidebar .contact-info li {
+        display: flex;
+        align-items: center;
+        gap: 0.8em;
+        margin-bottom: 0.8em;
+    }
+    
+    .sidebar .contact-info li i {
+        color: var(--color-accent);
+        width: 16px;
+        text-align: center;
+    }
+
+    .sidebar .contact-info a {
+        color: var(--color-text-light);
+        text-decoration: none;
+        border-bottom: 1px dashed transparent;
+        transition: all 0.3s ease;
+    }
+
+    .sidebar .contact-info a:hover {
+        color: var(--color-accent);
+        border-bottom-color: var(--color-accent);
+    }
+
+    /* --- Section Styling --- */
+    .resume-section {
+        margin-bottom: var(--section-spacing);
+        page-break-inside: avoid;
+    }
+
+    .section-title {
+        font-family: var(--font-monospace);
+        font-size: 1.2rem;
+        color: var(--color-accent);
+        font-weight: 500;
+        margin: 0 0 1em 0;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .section-title::before {
+        content: '>';
+        margin-right: 0.5em;
+        font-weight: bold;
+    }
+    
+    .sidebar .section-title {
+        color: var(--color-text-medium);
+        font-size: 1.1rem;
+    }
+    
+    .sidebar .section-title::before {
+        color: var(--color-accent);
+    }
+
+
+    /* --- Experience/Education Items (Main Content) --- */
+    .experience-item, .education-item, .project-item {
+        margin-bottom: var(--item-spacing);
+        page-break-inside: avoid;
+        position: relative;
+        padding-left: 1.5em;
+    }
+    
+    .experience-item::before, .education-item::before, .project-item::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 6px;
+        width: 8px;
+        height: 8px;
+        background-color: var(--color-accent-secondary);
+        border-radius: 50%;
+        border: 2px solid var(--color-bg);
+        box-shadow: 0 0 0 1px var(--color-accent-secondary);
+    }
+
+    .item-header {
+        margin-bottom: 0.4em;
+    }
+
+    .item-title {
+        font-family: var(--font-primary);
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: var(--color-text);
+        margin: 0;
+    }
+
+    .item-subtitle {
+        font-size: 0.95rem;
+        color: var(--color-text-medium);
+        font-weight: 500;
+        margin: 0.1em 0;
+    }
+
+    .item-meta {
+        font-size: 0.85rem;
+        color: var(--color-text-light);
+        opacity: 0.8;
+        margin: 0.2em 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0 1em;
+    }
+
+    .item-description {
+        margin: 0.5em 0 0 0;
+        line-height: 1.6;
+        font-size: 0.9rem;
+    }
+
+    .item-description ul {
+        margin: 0.5em 0 0 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .item-description li {
+        margin-bottom: 0.4em;
+        padding-left: 1.2em;
+        position: relative;
+    }
+
+    .item-description li::before {
+        content: '»';
+        position: absolute;
+        left: 0;
+        top: 0;
+        color: var(--color-accent);
+        font-weight: bold;
+    }
+
+    /* --- Skills Section (Sidebar) --- */
+    .skills-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5em;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .skill-tag {
+        background: var(--color-border);
+        color: var(--color-text);
+        padding: 0.3em 0.7em;
+        border-radius: var(--border-radius);
+        font-size: 0.85rem;
+        font-weight: 500;
+        font-family: var(--font-monospace);
+        transition: all 0.3s ease;
+    }
+
+    .skill-tag:hover {
+        background: var(--color-accent);
+        color: var(--color-bg);
+    }
+
+    /* --- Languages Section (Sidebar) --- */
+    .languages-list {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.8em;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .language-item {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .language-name {
+        font-weight: 500;
+        color: var(--color-text);
+    }
+
+    .language-level {
+        color: var(--color-text-light);
+        opacity: 0.8;
+        font-size: 0.85rem;
+        font-style: italic;
+    }
+
+    /* --- Summary/Objective --- */
+    .summary-text, .objective-text {
+        line-height: 1.7;
+        font-size: 0.95rem;
+        margin: 0;
+        color: var(--color-text-light);
+        padding: 1em;
+        background: var(--color-bg-secondary);
+        border-radius: var(--border-radius);
+        border-left: 3px solid var(--color-accent);
+    }
+    
+    .sidebar .summary-text, .sidebar .objective-text {
+        background: none;
+        padding: 0;
+        border-left: none;
+        font-size: 0.9rem;
+    }
+
+    /* --- Animations --- */
+    @keyframes cursor-blink {
+        0%, 50% { opacity: 1; }
+        51%, 100% { opacity: 0; }
+    }
+
+    /* --- Print Optimizations --- */
+    @media print {
+        html, body {
+            background-color: #ffffff;
+            color: #000000;
+        }
         
-        
-        /* --- Base Variables --- */
         :root {
-            --font-primary: 'Roboto Mono', monospace;
-            --font-heading: 'VT323', monospace;
-            --base-font-size: 9pt;
-            --line-height: 1.5;
-            --section-spacing: 1.8em;
-            --item-spacing: 1.2em;
-            --glitch-offset1: 1px;
-            --glitch-offset2: -1px;
-        }
-
-        /* --- Theme Definitions --- */
-        /* Chromatic Glitch Theme (Default) */
-        body.theme-glitch, :root {
-            --color-bg: #0f0f1a;
-            --color-text: #e0e0ff;
-            --color-text-medium: #8a8aaf;
-            --color-accent-cyan: #00ffff;
-            --color-accent-magenta: #ff00ff;
-            --color-accent-green: #00ff00;
-            --color-border: rgba(0, 255, 255, 0.3);
+            --color-bg: #ffffff;
+            --color-bg-secondary: #f0f0f0;
+            --color-text: #000000;
+            --color-text-medium: #444444;
+            --color-text-light: #555555;
+            --color-accent: #007bff;
+            --color-accent-secondary: #5cb85c;
+            --color-border: #dddddd;
         }
         
-        /* Matrix Theme */
-        body.theme-matrix {
-            --color-bg: #000000;
-            --color-text: #00ff00;
-            --color-text-medium: #008000;
-            --color-accent-cyan: #33ff33;
-            --color-accent-magenta: #66ff66;
-            --color-accent-green: #ffffff;
-            --color-border: rgba(0, 255, 0, 0.3);
+        body.theme-nord {
+            --color-bg-secondary: #ECEFF4;
+            --color-accent: #5E81AC;
+            --color-accent-secondary: #A3BE8C;
         }
         
-        /* Cyber Blue Theme */
+        body.theme-dracula {
+            --color-accent: #6a0dad;
+            --color-accent-secondary: #006400;
+        }
+        
+        body.theme-monokai {
+            --color-accent: #d90051;
+            --color-accent-secondary: #82b414;
+        }
+        
         body.theme-cyber {
-            --color-bg: #0a0a0f;
-            --color-text: #00d4ff;
-            --color-text-medium: #0099cc;
-            --color-accent-cyan: #00ffff;
-            --color-accent-magenta: #0066ff;
-            --color-accent-green: #ffffff;
-            --color-border: rgba(0, 212, 255, 0.3);
+            --color-accent: #007799;
+            --color-accent-secondary: #990099;
         }
 
-        @page {
-            size: A4;
-            margin: 0;
-        }
-
-        html {
-            background-color: var(--color-bg);
-        }
-
-        body {
-            font-family: var(--font-primary);
-            font-size: var(--base-font-size);
-            line-height: var(--line-height);
-            color: var(--color-text);
-            background-color: var(--color-bg);
-            margin: 0;
-            padding: 1.2cm;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-            min-height: calc(29.7cm - 2.4cm);
-            box-sizing: border-box;
-        }
-
-        /* --- Glitch Text Effect --- */
-        .glitch-text {
-            text-shadow:
-                var(--glitch-offset1) var(--glitch-offset1) 0 var(--color-accent-cyan),
-                var(--glitch-offset2) var(--glitch-offset2) 0 var(--color-accent-magenta),
-                0 0 1px var(--color-accent-green);
-            animation: glitch-anim 0.1s infinite alternate;
+        .resume-container {
+            display: flex;
         }
         
-        .glitch-text-light {
-            text-shadow:
-                1px 0 0 var(--color-accent-cyan),
-                -1px 0 0 var(--color-accent-magenta);
-        }
-
-        @keyframes glitch-anim {
-            0% { text-shadow: 1px 0 0 var(--color-accent-cyan), -1px 0 0 var(--color-accent-magenta); }
-            25% { text-shadow: -1px 0 0 var(--color-accent-cyan), 1px 0 0 var(--color-accent-magenta); }
-            50% { text-shadow: 0 1px 0 var(--color-accent-cyan), 0 -1px 0 var(--color-accent-magenta); }
-            75% { text-shadow: 0 -1px 0 var(--color-accent-cyan), 0 1px 0 var(--color-accent-magenta); }
-            100% { text-shadow: 1px 1px 0 var(--color-accent-cyan), -1px -1px 0 var(--color-accent-magenta); }
-        }
-
-        /* --- Layout --- */
-        .resume-container {
-            max-width: 18.6cm;
-            margin: 0 auto;
-            border: 1px solid var(--color-border);
-            padding: 1em;
-            background: var(--color-bg);
-        }
-
-        .resume-container.single-column {
-            display: block;
-        }
-
-        /* --- Header --- */
-        .resume-header {
-            text-align: center;
-            margin-bottom: 2em;
-            padding-bottom: 1em;
-            border-bottom: 1px solid var(--color-border);
-            page-break-after: avoid;
-        }
-
-        .resume-header h1 {
-            font-family: var(--font-heading);
-            font-size: 2.5rem;
-            color: var(--color-text);
-            margin: 0 0 0.3em 0;
-            font-weight: 400;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-
-        .resume-header .headline {
-            font-family: var(--font-primary);
-            font-size: 1rem;
-            color: var(--color-text-medium);
-            margin: 0 0 1em 0;
-            font-weight: 300;
-            letter-spacing: 1px;
-        }
-
-        .contact-info {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 1.5em;
-            font-size: 0.85rem;
-        }
-
-        .contact-info li {
-            display: flex;
-            align-items: center;
-            gap: 0.5em;
-            color: var(--color-text-medium);
-        }
-
-        .contact-info li::before {
-            content: '>';
-            color: var(--color-accent-cyan);
-            font-weight: bold;
-        }
-
-        .contact-info a {
-            color: var(--color-accent-cyan);
-            text-decoration: none;
-        }
-
-        .contact-info a:hover {
-            text-shadow: 0 0 5px var(--color-accent-cyan);
-        }
-
-        /* --- Main Content --- */
-        .main-content {
-            margin: 0;
-        }
-
-        /* --- Section Styling --- */
-        .resume-section {
-            margin-bottom: var(--section-spacing);
-            page-break-inside: avoid;
-        }
-
-        .section-title {
-            font-family: var(--font-heading);
-            font-size: 1.5rem;
-            color: var(--color-accent-cyan);
-            font-weight: 400;
-            margin: 0 0 1em 0;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            border-left: 4px solid var(--color-accent-magenta);
-            padding-left: 0.8em;
-        }
-
-        .section-title::after {
-            content: ' _';
-            animation: cursor-blink 1s infinite;
-        }
-
-        @keyframes cursor-blink {
-            0%, 50% { opacity: 1; }
-            51%, 100% { opacity: 0; }
-        }
-
-        /* --- Experience/Education Items --- */
-        .experience-item, .education-item, .project-item {
-            margin-bottom: var(--item-spacing);
-            page-break-inside: avoid;
-            padding: 1em;
-            border: 1px solid var(--color-border);
-            background: rgba(0, 255, 255, 0.05);
-        }
-
-        .item-header {
-            margin-bottom: 0.8em;
-        }
-
-        .item-title {
-            font-family: var(--font-primary);
-            font-size: 1rem;
-            font-weight: 500;
-            color: var(--color-text);
-            margin: 0;
-            letter-spacing: 0.5px;
-        }
-
-        .item-subtitle {
-            font-size: 0.9rem;
-            color: var(--color-accent-cyan);
-            font-weight: 400;
-            margin: 0.2em 0;
-            letter-spacing: 0.5px;
-        }
-
-        .item-meta {
-            font-size: 0.8rem;
-            color: var(--color-text-medium);
-            margin: 0.3em 0;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1em;
-        }
-
-        .item-meta span::before {
-            content: '[';
-            color: var(--color-accent-magenta);
-        }
-
-        .item-meta span::after {
-            content: ']';
-            color: var(--color-accent-magenta);
-        }
-
-        .item-description {
-            margin: 0.8em 0 0 0;
-            line-height: 1.6;
-        }
-
-        .item-description ul {
-            margin: 0.5em 0 0 1.5em;
-            padding: 0;
-            list-style: none;
-        }
-
-        .item-description li {
-            margin-bottom: 0.4em;
-        }
-
-        .item-description li::before {
-            content: '>> ';
-            color: var(--color-accent-green);
-            font-weight: bold;
-        }
-
-        /* --- Skills Section --- */
-        .skills-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.8em;
-            margin: 0;
-            padding: 0;
-            list-style: none;
+        .sidebar {
+            background-color: var(--color-bg-secondary);
         }
 
         .skill-tag {
-            background: transparent;
-            color: var(--color-text);
-            padding: 0.4em 0.8em;
-            border: 1px solid var(--color-accent-cyan);
-            font-size: 0.8rem;
-            font-weight: 400;
-            font-family: var(--font-primary);
-            letter-spacing: 0.5px;
-            transition: all 0.3s ease;
-        }
-
-        .skill-tag:hover {
-            background: var(--color-accent-cyan);
-            color: var(--color-bg);
-            text-shadow: none;
-        }
-
-        /* --- Languages Section --- */
-        .languages-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 0.8em;
-            margin: 0;
-            padding: 0;
-            list-style: none;
-        }
-
-        .language-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.5em;
+            background: var(--color-bg-secondary);
             border: 1px solid var(--color-border);
-            background: rgba(255, 0, 255, 0.05);
         }
-
-        .language-name {
-            font-weight: 500;
-            color: var(--color-text);
+        
+        .resume-header h1 .cursor {
+            display: none;
         }
-
-        .language-level {
-            color: var(--color-accent-magenta);
-            font-size: 0.8rem;
-            font-weight: 400;
-        }
-
-        /* --- Summary/Objective --- */
-        .summary-text, .objective-text {
-            line-height: 1.7;
-            font-size: 0.9rem;
-            margin: 0;
-            color: var(--color-text);
-            padding: 1em;
-            border: 1px solid var(--color-border);
-            background: rgba(0, 255, 0, 0.05);
-        }
-
-        /* --- Print Optimizations --- */
-        @media print {
-            .resume-container {
-                max-width: none;
-                margin: 0;
-            }
-            
-            .glitch-text {
-                animation: none;
-                text-shadow: 1px 0 0 var(--color-accent-cyan), -1px 0 0 var(--color-accent-magenta);
-            }
-            
-            .section-title::after {
-                animation: none;
-                opacity: 1;
-            }
-            
-            .skill-tag:hover {
-                background: transparent;
-                color: var(--color-text);
-            }
-        }
-
-        /* --- Responsive Adjustments --- */
-        @media (max-width: 768px) {
-            body {
-                padding: 0.8cm;
-            }
-            
-            .contact-info {
-                flex-direction: column;
-                align-items: center;
-                gap: 0.8em;
-            }
-            
-            .resume-header h1 {
-                font-size: 2rem;
-            }
-        }
+    }
 </style>

@@ -425,9 +425,6 @@ def generate_pdf(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
-    # Use the sorted template if sections_sort is provided, otherwise use default template
-    if sections_sort and template == "default.html":
-        template = "default_sorted.html"
 
     # Specify the correct template for documents if different from resumes
     pdf_data = generate_pdf_from_resume_data(
