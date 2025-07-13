@@ -285,6 +285,38 @@
         width: 100%;
     }
 
+    .sidebar .contact-info li {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        text-align: left;
+        margin-bottom: 0.7em;
+        padding: 0;
+    }
+
+    .sidebar .contact-info li::before {
+        display: none;
+    }
+
+    .sidebar .contact-info i {
+        color: rgba(255, 255, 255, 0.9);
+        margin-right: 10px;
+        width: 20px;
+        text-align: center;
+        font-size: 1.1rem;
+    }
+
+    .sidebar .contact-info a {
+        color: var(--color-text-light);
+        text-decoration: none;
+        font-weight: 500;
+        word-break: break-all;
+    }
+
+    .sidebar .contact-info a:hover {
+        text-decoration: underline;
+    }
+
     /* Languages styling for sidebar */
     .languages-list {
         list-style: none;
@@ -316,19 +348,19 @@
     }
 
     .resume-section {
-        margin-bottom: 2.5em;
-        page-break-inside: avoid;
+        margin-bottom: 2em; /* Adjusted margin */
+        page-break-inside: auto; /* Allow sections to break across pages */
     }
 
     /* --- Item Styling (Experience, Education, etc.) --- */
     .item {
-        margin-bottom: 1.8em;
+        margin-bottom: 1.5em; /* Adjusted margin */
         padding: 1em 1.2em;
         border-left: 4px solid var(--color-secondary);
         background-color: #ffffff;
         border-radius: 5px;
         box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
-        page-break-inside: avoid;
+        page-break-inside: auto; /* Allow items to break across pages */
         position: relative;
     }
 
@@ -410,7 +442,7 @@
         margin-bottom: 0.4em;
     }
 
-    .skills-section .skill-list {
+    .main-content .skills-list {
         list-style: none;
         padding: 0;
         margin: 0;
@@ -419,7 +451,7 @@
         gap: 6px 8px;
     }
 
-    .skills-section .skill-list li {
+    .main-content .skills-list li {
         background-color: var(--color-bg-light);
         border: 1px solid var(--color-secondary);
         color: var(--color-text-dark);
@@ -430,7 +462,7 @@
         line-height: 1.4;
     }
 
-    .skills-section .skill-list li::before {
+    .main-content .skills-list li::before {
         display: none;
     }
 
