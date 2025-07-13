@@ -228,7 +228,7 @@ REST_AUTH = {
 
 # JWT Settings
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=100),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=20),  # Increased from 100 to 20 minutes for better balance
     "REFRESH_TOKEN_LIFETIME": timedelta(days=2),
     "ALGORITHM": os.getenv("JWT_ALGORITHM", "HS256"),
     "SIGNING_KEY": os.getenv("JWT_SECRET_KEY"),
