@@ -508,6 +508,11 @@ def get_template_config(template_name):
             'layout_type': 'single_column',
             'use_universal': True
         },
+        'template5': {
+            'template_style': 'creative',
+            'layout_type': 'two_column',
+            'use_universal': True
+        },
 
     }
     

@@ -15,6 +15,8 @@
         <link rel="stylesheet" href="static/css/google-fonts-classic.css">
     {% elif style == 'minimal' %}
         <link rel="stylesheet" href="static/css/google-fonts-minimal.css">
+    {% elif style == 'creative' %}
+        <link rel="stylesheet" href="static/css/google-fonts-creative.css">
     {% else %}
         <link rel="stylesheet" href="static/css/google-fonts-default.css">
     {% endif %}
@@ -28,6 +30,8 @@
         {% include 'base/classic_styles.html' %}
     {% elif style == 'minimal' %}
         {% include 'base/minimal_styles.html' %}
+    {% elif style == 'creative' %}
+        {% include 'base/creative_styles.html' %}
     {% else %}
         {% include 'base/default_styles.html' %}
     {% endif %}

@@ -84,6 +84,35 @@ def download_assets():
     else:
         print("⏭️  Google Fonts for classic theme already exists, skipping...")
 
+    # Google Fonts CSS for minimal theme (Nunito Sans + Source Serif Pro - Clean & Minimal)
+    gf_minimal_path = "static/css/google-fonts-minimal.css"
+    if not os.path.exists(gf_minimal_path):
+        print("Downloading Google Fonts CSS for minimal theme...")
+        gf_url = "https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700&family=Source+Serif+Pro:wght@400;600&display=swap"
+        gf_response = requests.get(gf_url)
+        with open(gf_minimal_path, "w", encoding="utf-8") as f:
+            f.write(gf_response.text)
+
+        # Download font files for minimal theme
+        download_font_files_from_css(gf_response.text, "minimal")
+        print("✅ Google Fonts for minimal theme downloaded")
+    else:
+        print("⏭️  Google Fonts for minimal theme already exists, skipping...")
+
+    # Google Fonts CSS for creative theme (Poppins + Merriweather - Creative & Vibrant)
+    gf_creative_path = "static/css/google-fonts-creative.css"
+    if not os.path.exists(gf_creative_path):
+        print("Downloading Google Fonts CSS for creative theme...")
+        gf_url = "https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Merriweather:wght@400;700&display=swap"
+        gf_response = requests.get(gf_url)
+        with open(gf_creative_path, "w", encoding="utf-8") as f:
+            f.write(gf_response.text)
+
+        # Download font files for creative theme
+        download_font_files_from_css(gf_response.text, "creative")
+        print("✅ Google Fonts for creative theme downloaded")
+    else:
+        print("⏭️  Google Fonts for creative theme already exists, skipping...")
 
     # Download Font Awesome font files
     fa_fonts = ["fa-solid-900.woff2", "fa-brands-400.woff2", "fa-regular-400.woff2"]
