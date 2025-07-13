@@ -463,46 +463,81 @@ def get_template_config(template_name):
         dict: Configuration dictionary with template_style and layout_type
     """
     template_configs = {
-        'template1.html': {
+        'template1': {
             'template_style': 'europass',
             'layout_type': 'europass',
             'use_universal': True
         },
-        'template2.html': {
+        'template2': {
             'template_style': 'modern',
             'layout_type': 'single_column',
             'use_universal': True
         },
-        'template3.html': {
+        'template3': {
             'template_style': 'classic',
             'layout_type': 'single_column',
             'use_universal': True
         },
 
-        'template6.html': {
+        'template6': {
             'template_style': 'minimal',
             'layout_type': 'single_column',
             'use_universal': True
         },
        
 
-        'template9.html': {
+        'template9': {
             'template_style': 'classic',
             'layout_type': 'single_column',
             'use_universal': True
         },
 
-        'template13.html': {
+        'template13': {
             'template_style': 'minimal',
             'layout_type': 'single_column',
             'use_universal': True
         },
 
-        'default.html': {
+        'default': {
             'template_style': 'default',
             'layout_type': 'single_column',
             'use_universal': True
         },
+        'template14': {
+            'template_style': 'executive',
+            'layout_type': 'executive_split',
+            'use_universal': True
+        },
+        'template15': {
+            'template_style': 'creative_pro',
+            'layout_type': 'two_column',
+            'use_universal': True
+        },
+        'template16': {
+            'template_style': 'tech_modern',
+            'layout_type': 'single_column',
+            'use_universal': True
+        },
+        'template17': {
+            'template_style': 'elegant_serif',
+            'layout_type': 'single_column',
+            'use_universal': True
+        },
+        'template18': {
+            'template_style': 'professional_clean',
+            'layout_type': 'two_column',
+            'use_universal': True
+        },
+        'template19': {
+            'template_style': 'luxury_minimal',
+            'layout_type': 'single_column',
+            'use_universal': True
+        },
+        'template20': {
+            'template_style': 'corporate_elite',
+            'layout_type': 'executive_split',
+            'use_universal': True
+        }
     }
     
     return template_configs.get(template_name, {
