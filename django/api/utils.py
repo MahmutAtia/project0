@@ -74,6 +74,7 @@ def generate_pdf_from_resume_data(
 ):
     """
     Generates a PDF from resume data using a universal Jinja2 template.
+    Optimized for fast WeasyPrint rendering with system fonts and efficient CSS.
 
     Args:
         resume_data (dict): The resume data as a dictionary.
@@ -92,11 +93,14 @@ def generate_pdf_from_resume_data(
     try:
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         
-        # Use Jinja2 for all templates
+        # Use Jinja2 for all templates with optimized configuration
         templates_dir = os.path.join(base_dir, "html_templates")
         env = Environment(
             loader=FileSystemLoader(templates_dir),
             autoescape=select_autoescape(["html", "xml"]),
+            # Optimize Jinja2 for performance
+            cache_size=400,
+            auto_reload=False,
         )
         
         # Get template configuration based on the selected theme
@@ -105,11 +109,12 @@ def generate_pdf_from_resume_data(
         # All our templates now use the universal system
         template = env.get_template('universal_template.html')
         
-        # Prepare template context
+        # Prepare template context with optimization flags
         template_context = {
             "theme_class": chosen_theme,
             "style": template_config.get('template_style', 'default'),
             "layout": template_config.get('layout_type', 'single_column'),
+            "optimize_for_print": True,  # Flag for print optimizations
             **resume_data
         }
         
@@ -123,8 +128,21 @@ def generate_pdf_from_resume_data(
         
         html_out = template.render(**template_context)
         
-        html_obj = HTML(string=html_out, base_url=base_dir)
-        pdf_file = html_obj.write_pdf()
+        # Create HTML object with optimized settings for WeasyPrint performance
+        html_obj = HTML(
+            string=html_out, 
+            base_url=base_dir,
+            # Optimizations for faster rendering
+            encoding='utf-8'
+        )
+        
+        # Generate PDF with performance optimizations
+        pdf_file = html_obj.write_pdf(
+            # Optimize for smaller file size and faster generation
+            optimize_images=True,
+            presentational_hints=False,
+            unresolved_references='ignore'
+        )
 
         return pdf_file
     except Exception as e:
@@ -463,6 +481,13 @@ def get_template_config(template_name):
         dict: Configuration dictionary with template_style and layout_type
     """
     template_configs = {
+
+
+        'default': {
+            'template_style': 'default',
+            'layout_type': 'single_column',
+            'use_universal': True
+        },
         'template1': {
             'template_style': 'europass',
             'layout_type': 'europass',
@@ -478,31 +503,61 @@ def get_template_config(template_name):
             'layout_type': 'single_column',
             'use_universal': True
         },
-
-        'template6': {
+        'template4': {
             'template_style': 'minimal',
+            'layout_type': 'single_column',
+            'use_universal': True
+        },
+
+        'template5': {
+            'template_style': 'classic',
+            'layout_type': 'single_column',
+            'use_universal': True
+        },
+                'template6': {
+            'template_style': 'minimal',
+            'layout_type': 'single_column',
+            'use_universal': True
+        },
+        'template7': {
+            'template_style': 'contemporary',
+            'layout_type': 'single_column',
+            'use_universal': True
+        },
+        'template8': {
+            'template_style': 'business',
+            'layout_type': 'single_column',
+            'use_universal': True
+        },
+
+        'template9': {
+            'template_style': 'professional',
+            'layout_type': 'two_column',
+            'use_universal': True
+        },
+        'template10': {
+            'template_style': 'executive',
             'layout_type': 'single_column',
             'use_universal': True
         },
        
 
-        'template9': {
-            'template_style': 'classic',
+        'template11': {
+            'template_style': 'corporate',
             'layout_type': 'single_column',
             'use_universal': True
         },
-
+        'template12': {
+            'template_style': 'modern',
+            'layout_type': 'two_column',
+            'use_universal': True
+        },
         'template13': {
-            'template_style': 'minimal',
-            'layout_type': 'single_column',
+            'template_style': 'business',
+            'layout_type': 'two_column',
             'use_universal': True
         },
 
-        'default': {
-            'template_style': 'default',
-            'layout_type': 'single_column',
-            'use_universal': True
-        },
         'template14': {
             'template_style': 'executive',
             'layout_type': 'executive_split',
