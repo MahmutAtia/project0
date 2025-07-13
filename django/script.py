@@ -114,6 +114,21 @@ def download_assets():
     else:
         print("⏭️  Google Fonts for tech theme already exists, skipping...")
 
+    # Google Fonts CSS for modern gradient theme (Inter + Playfair Display)
+    gf_modern_gradient_path = "static/css/google-fonts-modern-gradient.css"
+    if not os.path.exists(gf_modern_gradient_path):
+        print("Downloading Google Fonts CSS for modern gradient theme...")
+        gf_url = "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;700&display=swap"
+        gf_response = requests.get(gf_url)
+        with open(gf_modern_gradient_path, "w", encoding="utf-8") as f:
+            f.write(gf_response.text)
+
+        # Download font files for modern gradient theme
+        download_font_files_from_css(gf_response.text, "modern_gradient")
+        print("✅ Google Fonts for modern gradient theme downloaded")
+    else:
+        print("⏭️  Google Fonts for modern gradient theme already exists, skipping...")
+
     # Google Fonts CSS for minimal theme (Inter + Source Serif Pro)
     gf_minimal_path = "static/css/google-fonts-minimal.css"
     if not os.path.exists(gf_minimal_path):

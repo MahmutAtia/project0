@@ -6,20 +6,8 @@
     <title>{{ personal_information.name|default('Resume') }}</title>
     <link rel="stylesheet" href="static/css/fontawesome.min.css">
     
-    {# Include theme-specific Google Fonts #}
-    {% if style == 'modern' %}
-        <link rel="stylesheet" href="static/css/google-fonts-modern.css">
-    {% elif style == 'classic' %}
-        <link rel="stylesheet" href="static/css/google-fonts-classic.css">
-    {% elif style == 'creative' %}
-        <link rel="stylesheet" href="static/css/google-fonts-creative.css">
-    {% elif style == 'tech' %}
-        <link rel="stylesheet" href="static/css/google-fonts-tech.css">
-    {% elif style == 'minimal' %}
-        <link rel="stylesheet" href="static/css/google-fonts-minimal.css">
-    {% else %}
-        <link rel="stylesheet" href="static/css/google-fonts-default.css">
-    {% endif %}
+    {# Use optimized system fonts for better WeasyPrint performance #}
+    <link rel="stylesheet" href="static/css/system-fonts-optimized.css">
     
     {# Include theme-specific styles based on template #}
     {% if style == 'europass' %}
@@ -28,12 +16,36 @@
         {% include 'base/modern_styles.html' %}
     {% elif style == 'classic' %}
         {% include 'base/classic_styles.html' %}
+    {% elif style == 'contemporary' %}
+        {% include 'base/contemporary_styles.html' %}
+    {% elif style == 'business' %}
+        {% include 'base/business_styles.html' %}
     {% elif style == 'creative' %}
         {% include 'base/creative_styles.html' %}
     {% elif style == 'tech' %}
         {% include 'base/tech_styles.html' %}
     {% elif style == 'minimal' %}
         {% include 'base/minimal_styles.html' %}
+    {% elif style == 'modern_gradient' %}
+        {% include 'base/modern_gradient_styles.html' %}
+    {% elif style == 'professional' %}
+        {% include 'base/professional_styles.html' %}
+    {% elif style == 'corporate' %}
+        {% include 'base/corporate_styles.html' %}
+    {% elif style == 'executive' %}
+        {% include 'base/executive_styles.html' %}
+    {% elif style == 'creative_pro' %}
+        {% include 'base/creative_pro_styles.html' %}
+    {% elif style == 'tech_modern' %}
+        {% include 'base/tech_modern_styles.html' %}
+    {% elif style == 'elegant_serif' %}
+        {% include 'base/elegant_serif_styles.html' %}
+    {% elif style == 'professional_clean' %}
+        {% include 'base/professional_clean_styles.html' %}
+    {% elif style == 'luxury_minimal' %}
+        {% include 'base/luxury_minimal_styles.html' %}
+    {% elif style == 'corporate_elite' %}
+        {% include 'base/corporate_elite_styles.html' %}
     {% else %}
         {% include 'base/default_styles.html' %}
     {% endif %}
@@ -45,6 +57,10 @@
     {% include 'layouts/europass_layout.html' %}
 {% elif layout == 'two_column' %}
     {% include 'layouts/two_column_layout.html' %}
+{% elif layout == 'executive_split' %}
+    {% include 'layouts/executive_split_layout.html' %}
+{% elif layout == 'modern_gradient' %}
+    {% include 'layouts/modern_gradient_layout.html' %}
 {% else %}
     {% include 'layouts/single_column_layout.html' %}
 {% endif %}
