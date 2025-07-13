@@ -1,14 +1,15 @@
 <!-- Two Column Layout - for templates with sidebar -->
 <div class="resume-container two-column">
     <aside class="sidebar">
+        {# Directly include the personal info section, similar to europass_layout #}
+        {% include 'section_templates/personal_info_sidebar.html' %}
+
+        {# Include other potential sidebar sections like skills or languages if needed #}
         {% include 'base/dynamic_sidebar_sections.html' %}
     </aside>
     
     <main class="main-content">
-        <header class="resume-header">
-            {% include 'section_templates/personal_info_header.html' %}
-        </header>
-        
+        {# Render all sections EXCEPT personal_information, which is in the sidebar #}
         {% include 'base/dynamic_main_sections.html' %}
     </main>
 </div>
