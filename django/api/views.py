@@ -255,40 +255,6 @@ def generate_resume(request):
 
 
 @api_view(["POST"])
-@require_feature("resume_section_edit")
-def generate_resume_section(request):
-    input_data = request.data
-    prompt, section_data = input_data.get("prompt"), input_data.get("sectionData")
-    section_yaml = yaml.dump(section_data)  # Convert to YAML
-
-    # Call the AI service
-    ai_service_url = os.environ.get("AI_SERVICE_URL") + "edit_section/invoke"
-
-    body = {
-        "input": {
-            "prompt": prompt,
-            "section_yaml": section_yaml,
-            "section_title": input_data.get("sectionTitle"),
-        }
-    }
-    response = requests.post(ai_service_url, json=body)
-
-    if response.status_code == 200:
-        try:
-            generated_section_yaml = response.json().get("output")
-            generated_section_data = yaml.safe_load(generated_section_yaml)
-            return Response(generated_section_data)
-
-        except (json.JSONDecodeError, yaml.YAMLError) as e:
-            return Response(
-                {"error": f"Invalid data received from AI service: {e}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-    else:
-        return Response(response.json(), status=response.status_code)
-
-
-@api_view(["POST"])
 @require_feature("resume_generation")  # Add this decorator
 def generate_from_job_desc(request):
     try:

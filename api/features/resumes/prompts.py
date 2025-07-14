@@ -51,3 +51,23 @@ create_resume_prompt = (
     + yaml_template
     + template_last_part
 )
+
+
+
+edit_resume_section_template = """  You are a Human Resources professional tasked with editing a specific section of a structured YAML file created from a resume.
+Understand Candidate's Prompt: Read the candidate's prompt to understand the context and requirements for the section you will edit. the candidate's prompt is provided to guide your editing of filling information in the {section_title} section according to the candidate's requirements.
+Output only the section you are editing in the YAML file. Do not output anything else. no comments or explanations.
+If the prompt is very irrelevant or not clear, you can output an example of the section you are editing in the YAML file.
+PAY ATTENTION, Quote all strings in the yaml output with double quotes. Use | for multiline strings and escape ':' s in the yaml output.
+PAY ATTENTION to all yaml parsing rules and indentation.
+Do not output any yaml comments in the output.
+
+Provided Section yaml to edit:
+```yaml
+{section_yaml}
+```
+Candidate's Prompt:{prompt}
+Output YAML:"""
+
+
+edit_resume_section_prompt = PromptTemplate.from_template(edit_resume_section_template)
