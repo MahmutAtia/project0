@@ -26,7 +26,6 @@ urlpatterns = [
         views.generate_from_job_desc,
         name="generate-resume-from-job-desc",
     ),
-    path("resumes/edit/", views.generate_resume_section, name="edit-resume"),
     # gererate document
     path(
         "resumes/generate_document/",

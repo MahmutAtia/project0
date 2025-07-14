@@ -8,8 +8,7 @@ from .utils import (
 from .chains import chain_instance
 from .prompts import (
     create_resume_prompt,
-    edit_section_prompt,
-    generate_from_job_desc_prompt,
+    edit_resume_section_prompt
 )
 import yaml
 
@@ -22,8 +21,8 @@ class ResumeRequest(BaseModel):
 
 
 class ResumeSectionRequest(BaseModel):
-    section_title: str
-    section_yaml: str
+    sectionTitle: str
+    sectionData: dict
     prompt: str
 
 
@@ -53,11 +52,11 @@ async def edit_section(
     """
     try:
         # Create prompt and call chain
-        chain = chain_instance.build_chain(edit_section_prompt)
+        chain = chain_instance.build_chain(edit_resume_section_prompt)
         result = await chain.ainvoke(
             {
-                "section_title": request.section_title,
-                "section_yaml": request.section_yaml,
+                "section_title": request.sectionTitle,
+                "section_yaml": yaml.dump(request.sectionData),
                 "prompt": request.prompt,
             }
         )
@@ -65,12 +64,8 @@ async def edit_section(
         # Parse result
         section_data = yaml.safe_load(result)
 
-        return {
-            "success": True,
-            "section": section_data,
-            "remaining_uses": auth_data["remaining_uses"] - 1,
-        }
-
+        return section_data
+        
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to edit section: {str(e)}"
