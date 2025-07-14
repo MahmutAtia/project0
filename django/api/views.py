@@ -775,136 +775,43 @@ def edit_website_block(request):
 
 ############################# Documents ##############################
 
-
 @api_view(["POST"])
-@require_feature("document_generation")  # Add this decorator
-def generate_document_bloks(request):
+def create_document(request):
     """
-    API endpoint to generate a document using Bloks.
+    API endpoint to create a new generated document.
     """
-    resume_id = request.data.get("resumeId")
-    other_info = request.data.get("otherInfo", {})
-    document_type = request.data.get("documentType", "")
-    language = request.data.get("language", "en")
-
-    if not resume_id:
-        return Response(
-            {"error": "resumeId is required"}, status=status.HTTP_400_BAD_REQUEST
-        )
-
     try:
-        # Use async ORM methods via async_to_sync
-        resume = async_to_sync(Resume.objects.aget)(pk=resume_id)
-        about = resume.about  # Accessing attribute is fine
-        personal_info = resume.resume.get("personal_information", {})
+        resume_id = request.data.get("resume_id")
+        json_content = request.data.get("json_content")
+        document_type = request.data.get("document_type", "")
+ 
 
-        generated_document = async_to_sync(
-            GeneratedDocument.objects.filter(
-                resume=resume, document_type=document_type
-            ).afirst
-        )()
-
-        if generated_document:
+        if not resume_id or not json_content or not document_type:
             return Response(
-                {"document_uuid": generated_document.unique_id},
-                status=status.HTTP_200_OK,
+                {"error": "Missing required fields."},
+                status=status.HTTP_400_BAD_REQUEST,
             )
-    except Resume.DoesNotExist:  # Specific exception for aget
-        return Response(
-            {"error": f"Resume with ID {resume_id} not found."},
-            status=status.HTTP_404_NOT_FOUND,
-        )
-    except Exception as e:
-        logger.error(
-            f"Error checking for existing document or fetching resume data for resume_id {resume_id}: {e}"
-        )
-        return Response(
-            {"error": f"Error processing request: {str(e)}"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
 
-    document_endpoint_mapping = {
-        "cover_letter": "generate_cover_letter/invoke",
-        "recommendation_letter": "generate_recommendation_letter/invoke",
-        "motivation_letter": "generate_motivation_letter/invoke",
-    }
-
-    document_endpoint = document_endpoint_mapping.get(document_type)
-    if not document_endpoint:  # Check before using document_type in f-string
-        return Response(
-            {"error": f"Unsupported documentType: {document_type}"},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
-    ai_service_url = os.environ.get("AI_SERVICE_URL") + document_endpoint
-
-    body = {
-        "input": {
-            "other_info": other_info,
-            "language": language,
-            "about_candidate": about,
-            "personal_info": personal_info,
-        }
-    }
-
-    try:
-        # Use httpx for sync HTTP request
-        with httpx.Client(timeout=120.0) as client:
-            ai_response = client.post(ai_service_url, json=body)
-            ai_response.raise_for_status()  # Raise an exception for bad status codes
-
-        generated_yaml = ai_response.json().get("output")
-        generated_document_json = yaml.safe_load(generated_yaml)
-
+        resume = get_object_or_404(Resume, pk=resume_id)
         unique_id = str(uuid.uuid4())
-        # Use async ORM create via async_to_sync
-        async_to_sync(GeneratedDocument.objects.acreate)(
+
+
+        generated_document = GeneratedDocument.objects.create(
             resume=resume,
             unique_id=unique_id,
-            json_content=generated_document_json,
+            json_content=json_content,
             document_type=document_type,
         )
+        return Response(
+            {"message": "Document created successfully", "document_id": generated_document.unique_id},
+            status=status.HTTP_201_CREATED,
+        )
 
-        return Response({"document_uuid": unique_id}, status=status.HTTP_201_CREATED)
-    except httpx.RequestError as e:  # Catch httpx specific network errors
-        logger.error(
-            f"AI service request failed for generate_document_bloks ({document_type}): {e}"
-        )
+    except Exception as e:
         return Response(
-            {"error": f"Error communicating with AI service: {str(e)}"},
-            status=status.HTTP_503_SERVICE_UNAVAILABLE,
-        )
-    except httpx.HTTPStatusError as e:  # Catch httpx specific HTTP errors (4xx, 5xx)
-        logger.error(
-            f"AI service HTTP error for generate_document_bloks ({document_type}): {e.response.status_code} - {e.response.text}"
-        )
-        return Response(
-            e.response.json() if e.response.content else {"error": "AI service error"},
-            status=e.response.status_code,
-        )
-    except (
-        yaml.YAMLError,
-        AttributeError,
-        TypeError,
-        KeyError,
-    ) as e:  # Added TypeError, KeyError for robustness
-        logger.error(
-            f"Error processing AI service response (generate_document_bloks): {e}. YAML: {generated_yaml[:500] if 'generated_yaml' in locals() else 'N/A'}"
-        )
-        return Response(
-            {"error": f"Error processing AI service response: {str(e)}"},
+            {"error": f"Error creating document: {e}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
-    except Exception as e:  # Catch any other unexpected errors
-        logger.exception(
-            f"Unexpected error in generate_document_bloks after AI call: {e}"
-        )
-        return Response(
-            {"error": f"An unexpected error occurred: {str(e)}"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
-
-
 @api_view(["GET"])
 def get_document_bloks(request, document_id):
     """
@@ -924,42 +831,6 @@ def get_document_bloks(request, document_id):
         return Response(
             {"error": f"Document not found: {e}"}, status=status.HTTP_404_NOT_FOUND
         )
-
-
-@api_view(["POST"])
-@require_feature("resume_section_edit")  # Add this decorator
-def edit_document_blok(request):
-    input_data = request.data
-    prompt, section_data, document_type = (
-        input_data.get("prompt"),
-        input_data.get("sectionData"),
-        input_data.get("documentType"),
-    )
-    section_yaml = yaml.dump(section_data)
-
-    # Call the AI service
-    ai_service_url = os.environ.get("AI_SERVICE_URL") + "edit_docs_section/invoke"
-    body = {
-        "input": {
-            "prompt": prompt,
-            "section_yaml": section_yaml,
-            "document_type": document_type,
-        }
-    }
-    response = requests.post(ai_service_url, json=body)
-    if response.status_code == 200:
-        try:
-            generated_section_yaml = response.json().get("output")
-            generated_section_data = yaml.safe_load(generated_section_yaml)
-            return Response(generated_section_data)
-
-        except (json.JSONDecodeError, yaml.YAMLError) as e:
-            return Response(
-                {"error": f"Invalid data received from AI service: {e}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-    else:
-        return Response(response.json(), status=response.status_code)
 
 
 @api_view(["GET"])

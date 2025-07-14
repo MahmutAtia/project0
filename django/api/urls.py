@@ -26,12 +26,8 @@ urlpatterns = [
         views.generate_from_job_desc,
         name="generate-resume-from-job-desc",
     ),
-    # gererate document
-    path(
-        "resumes/generate_document/",
-        views.generate_document_bloks,
-        name="generate-document",
-    ),
+
+
     # document bloks
     path(
         "resumes/document_bloks/<uuid:document_id>/",
@@ -48,11 +44,13 @@ urlpatterns = [
         views.get_document_docx,
         name="get-document-docx",
     ),
+    # create_document
     path(
-        "resumes/edit_document_blok/",
-        views.edit_document_blok,
-        name="edit-document-blok",
+        "resumes/document/create/",
+        views.create_document,
+        name="create-document",
     ),
+
     # update_document
     path(
         "resumes/document/<uuid:document_id>/update/",
