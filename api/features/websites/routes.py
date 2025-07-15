@@ -45,7 +45,7 @@ async def edit_website_section(
     """
     try:
         # Create prompt and call chain
-        chain = chain_instance.build_chain(edit_website_block_prompt)
+        chain = chain_instance.build_chain(edit_website_block_prompt, model="gemini-2.5-flash")
         result = await chain.ainvoke(
             {
                "current_name": request.block_name,
