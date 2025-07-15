@@ -1,0 +1,24 @@
+{% if volunteer_and_social_activities %}
+<section class="resume-section volunteer-section">
+    <h2><i class="fas fa-hands-helping"></i> Volunteer Experience</h2>
+    {% for vol in volunteer_and_social_activities %}
+    <article class="item">
+        <div class="item-header">
+            <div class="item-title-org">
+                {% if vol.position %}<span class="title">{{ vol.position }}</span>{% endif %}
+                {% if vol.organization %}<span class="organization">@ {{ vol.organization }}</span>{% endif %}
+            </div>
+            <div class="item-date-location">
+                {% if vol.start_date or vol.end_date %}
+                <span class="date">{{ vol.start_date }}{% if vol.start_date and vol.end_date %} – {% endif %}{{ vol.end_date | default('Present') }}</span>
+                {% endif %}
+                {% if vol.location %}<span class="location"> | {{ vol.location }}</span>{% endif %}
+            </div>
+        </div>
+        {% if vol.description %}
+            <div class="description"><p>{{ vol.description }}</p></div>
+        {% endif %}
+    </article>
+    {% endfor %}
+</section>
+{% endif %}

@@ -1,0 +1,41 @@
+<div class="resume-container">
+    <!-- === Sidebar === -->
+    <aside class="sidebar">
+        {% if personal_information.avatar %}
+            <img src="{{ personal_information.avatar }}" alt="{{ personal_information.name }} Avatar" class="sidebar-avatar">
+        {% endif %}
+
+        {% if personal_information.name %}<h1>{{ personal_information.name }}</h1>{% endif %}
+        {% if personal_information.headline %}<p class="headline">{{ personal_information.headline }}</p>{% endif %}
+
+        <section class="sidebar-section contact-section">
+            <h3><i class="fas fa-address-card icon"></i> Contact Information</h3>
+            {% if personal_information %}
+            <ul class="contact-info">
+                {% if personal_information.phone %}<li><i class="fas fa-phone icon"></i>{{ personal_information.phone }}</li>{% endif %}
+                {% if personal_information.email %}<li><i class="fas fa-envelope icon"></i><a href="mailto:{{ personal_information.email }}">{{ personal_information.email }}</a></li>{% endif %}
+                {% if personal_information.location and (personal_information.location.address or personal_information.location.city) %}
+                <li><i class="fas fa-map-marker-alt icon"></i>
+                    {% if personal_information.location.address %}{{ personal_information.location.address }}<br>{% endif %}
+                    {{ personal_information.location.postalCode | default('') }} {{ personal_information.location.city | default('') }}
+                    {% if personal_information.location.region %}<br>{{ personal_information.location.region }}{% endif %}
+                    {% if personal_information.location.countryCode %}<br>{{ personal_information.location.countryCode }}{% endif %}
+                </li>
+                {% endif %}
+                {% if personal_information.profiles and personal_information.profiles.website %}<li><i class="fas fa-globe icon"></i><a href="{{ personal_information.profiles.website }}" target="_blank">{{ personal_information.profiles.website | replace("https://","") | replace("http://","") }}</a></li>{% endif %}
+                {% if personal_information.profiles and personal_information.profiles.linkedin %}<li><i class="fab fa-linkedin icon"></i><a href="{{ personal_information.profiles.linkedin }}" target="_blank">LinkedIn Profile</a></li>{% endif %}
+                {% if personal_information.profiles and personal_information.profiles.github %}<li><i class="fab fa-github icon"></i><a href="{{ personal_information.profiles.github }}" target="_blank">GitHub Profile</a></li>{% endif %}
+            </ul>
+            {% endif %}
+        </section>
+
+        {# Render sidebar sections dynamically based on sort and hidden sections #}
+        {% include 'base/dynamic_sidebar_sections.html' %}
+    </aside>
+
+    <!-- === Main Content === -->
+    <main class="main-content">
+        {# Render main content sections dynamically #}
+        {% include 'base/dynamic_main_sections.html' %}
+    </main>
+</div>

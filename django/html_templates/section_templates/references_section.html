@@ -1,0 +1,26 @@
+{% if references %}
+<section class="resume-section references-section">
+    <h2><i class="fas fa-user-friends"></i> References</h2>
+    {% for ref in references %}
+    <article class="item">
+        <div class="item-header">
+            <div class="item-title-org">
+                {% if ref.name %}<span class="title">{{ ref.name }}</span>{% endif %}
+                {% if ref.position and ref.company_or_institution %}<span class="organization">{{ ref.position }}, {{ ref.company_or_institution }}</span>{% endif %}
+            </div>
+        </div>
+        <div class="description">
+            {% if ref.email or ref.phone %}
+            <p>
+                {% if ref.email %}<i class="fas fa-envelope"></i> {{ ref.email }}{% endif %}
+                {% if ref.email and ref.phone %} | {% endif %}
+                {% if ref.phone %}<i class="fas fa-phone"></i> {{ ref.phone }}{% endif %}
+            </p>
+            {% endif %}
+            {% if ref.relationship %}<p><strong>Relationship:</strong> {{ ref.relationship }}</p>{% endif %}
+            {% if ref.description %}<p>{{ ref.description }}</p>{% endif %}
+        </div>
+    </article>
+    {% endfor %}
+</section>
+{% endif %}

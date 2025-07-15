@@ -1,0 +1,45 @@
+/* Optimized system fonts for fast WeasyPrint rendering */
+/* No external font loading - using system fonts only for maximum performance */
+
+/* Modern system font stack - optimized for speed */
+@font-face {
+    font-family: 'SystemFonts';
+    src: local('SF Pro Display'), local('-apple-system'), local('BlinkMacSystemFont'), 
+         local('Segoe UI'), local('Roboto'), local('Inter'), local('Helvetica Neue'), 
+         local('Arial'), local(sans-serif);
+    font-weight: 100 900;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'SystemFonts';
+    src: local('SF Pro Display'), local('-apple-system'), local('BlinkMacSystemFont'), 
+         local('Segoe UI'), local('Roboto'), local('Inter'), local('Helvetica Neue'), 
+         local('Arial'), local(sans-serif);
+    font-weight: 100 900;
+    font-style: italic;
+}
+
+/* System serif fonts */
+@font-face {
+    font-family: 'SystemSerif';
+    src: local('Georgia'), local('Times New Roman'), local('Times'), local(serif);
+    font-weight: 100 900;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'SystemSerif';
+    src: local('Georgia'), local('Times New Roman'), local('Times'), local(serif);
+    font-weight: 100 900;
+    font-style: italic;
+}
+
+/* System monospace fonts */
+@font-face {
+    font-family: 'SystemMono';
+    src: local('SF Mono'), local('Monaco'), local('Cascadia Code'), local('Roboto Mono'), 
+         local('Consolas'), local('Courier New'), local(monospace);
+    font-weight: 100 900;
+    font-style: normal;
+}

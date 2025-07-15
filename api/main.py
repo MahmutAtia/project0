@@ -12,6 +12,8 @@ from fastapi.middleware import Middleware
 from features.creator.routes import router as creator_router
 from features.scraper.routes import router as scraper_router
 from features.resumes.routes import router as resumes_router
+from features.documents.routes import router as documents_router
+from features.websites.routes import router as websites_router
 
 # create the fastapi app
 
@@ -36,3 +38,5 @@ app = FastAPI(
 app.include_router(creator_router, prefix="/resumes", tags=["resumes"])
 app.include_router(scraper_router, prefix="/scraper", tags=["scraper"])
 app.include_router(resumes_router, prefix="/resumes-v2", tags=["resumes-v2"])
+app.include_router(documents_router, prefix="/documents", tags=["documents"])
+app.include_router(websites_router, prefix="/websites", tags=["websites"])

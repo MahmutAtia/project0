@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ personal_information.name|default('Resume') }}</title>
+    <link rel="stylesheet" href="static/css/fontawesome.min.css">
+    
+    {# Include theme-specific Google Fonts based on template style #}
+    {% if style == 'europass' %}
+        <link rel="stylesheet" href="static/css/google-fonts-europass.css">
+    {% elif style == 'modern' %}
+        <link rel="stylesheet" href="static/css/google-fonts-modern.css">
+    {% elif style == 'classic' %}
+        <link rel="stylesheet" href="static/css/google-fonts-classic.css">
+    {% elif style == 'minimal' %}
+        <link rel="stylesheet" href="static/css/google-fonts-minimal.css">
+    {% elif style == 'creative' %}
+        <link rel="stylesheet" href="static/css/google-fonts-creative.css">
+    {% else %}
+        <link rel="stylesheet" href="static/css/google-fonts-default.css">
+    {% endif %}
+    
+    {# Include theme-specific styles based on template #}
+    {% if style == 'europass' %}
+        {% include 'base/europass_styles.html' %}
+    {% elif style == 'modern' %}
+        {% include 'base/modern_styles.html' %}
+    {% elif style == 'classic' %}
+        {% include 'base/classic_styles.html' %}
+    {% elif style == 'minimal' %}
+        {% include 'base/minimal_styles.html' %}
+    {% elif style == 'creative' %}
+        {% include 'base/creative_styles.html' %}
+    {% else %}
+        {% include 'base/default_styles.html' %}
+    {% endif %}
+</head>
+<body class="{{ theme_class|default('theme-default') }}">
+
+{# Include layout-specific structure #}
+{% if layout == 'europass' %}
+    {% include 'layouts/europass_layout.html' %}
+{% elif layout == 'two_column' %}
+    {% include 'layouts/two_column_layout.html' %}
+{% else %}
+    {% include 'layouts/single_column_layout.html' %}
+{% endif %}
+
+</body>
+</html>

@@ -1,0 +1,30 @@
+{% if military_service %}
+<section class="resume-section military-section">
+    <h2><i class="fas fa-shield-alt"></i> Military Service</h2>
+    {% for service in military_service %}
+    <article class="item">
+        <div class="item-header">
+            <div class="item-title-org">
+                {% if service.rank %}<span class="title">{{ service.rank }}</span>{% endif %}
+                {% if service.branch %}<span class="organization">{{ service.branch }}</span>{% endif %}
+            </div>
+            <div class="item-date-location">
+                {% if service.start_date or service.end_date %}
+                <span class="date">{{ service.start_date }}{% if service.start_date and service.end_date %} – {% endif %}{{ service.end_date | default('Present') }}</span>
+                {% endif %}
+                {% if service.location %}<span class="location"> | {{ service.location }}</span>{% endif %}
+            </div>
+        </div>
+        {% if service.description %}
+            <div class="description"><p>{{ service.description }}</p></div>
+        {% endif %}
+        {% if service.honors or service.commendations %}
+            <div class="description">
+                {% if service.honors %}<p><strong>Honors:</strong> {{ service.honors | join(', ') }}</p>{% endif %}
+                {% if service.commendations %}<p><strong>Commendations:</strong> {{ service.commendations | join(', ') }}</p>{% endif %}
+            </div>
+        {% endif %}
+    </article>
+    {% endfor %}
+</section>
+{% endif %}

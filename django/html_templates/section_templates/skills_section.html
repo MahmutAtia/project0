@@ -1,0 +1,17 @@
+{% if skills %}
+<section class="resume-section skills-section">
+    <h2><i class="fas fa-cogs"></i> Skills</h2>
+    <ul>
+        {% for skill_group in skills %}
+            {% if skill_group.category %}
+                <li class="skill-category">{{ skill_group.category }}:</li>
+            {% endif %}
+            {% if skill_group.keywords %}
+                {% for keyword in skill_group.keywords %}<li>{{ keyword }}</li>{% endfor %}
+            {% elif skill_group.name %}
+                <li>{{ skill_group.name }}</li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+</section>
+{% endif %}

@@ -1,0 +1,229 @@
+<style>
+    /* --- Minimal Theme V2 --- */
+    /* This file has been completely rewritten for a professional, elegant, and clean aesthetic. */
+
+    /* --- Base Variables --- */
+    :root {
+        --font-family-main: 'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        --font-family-heading: 'Source Serif Pro', 'Georgia', 'Times New Roman', serif;
+        --base-font-size: 9.5pt;
+        --line-height: 1.6;
+        --text-color-base: #333333;
+        --muted-color-base: #777777;
+        --border-color-base: #e5e5e5;
+        --page-bg-color: #ffffff;
+        --section-spacing: 1.6em;
+        --item-spacing: 1.1em;
+    }
+
+    /* --- Theme Definitions --- */
+    body.theme-default, :root {
+        --primary-color: #2c3e50; /* Deep Slate Blue */
+        --secondary-color: #7f8c8d; /* Muted Grey */
+        --heading-color: #2c3e50;
+        --text-color: var(--text-color-base);
+        --muted-color: var(--muted-color-base);
+        --border-color: var(--border-color-base);
+    }
+    body.theme-stone {
+        --primary-color: #4a4a4a;
+        --secondary-color: #9a9a9a;
+        --heading-color: #3a3a3a;
+    }
+    body.theme-forest {
+        --primary-color: #2d5a2d;
+        --secondary-color: #5a8a5a;
+        --heading-color: #2d5a2d;
+    }
+    body.theme-ocean {
+        --primary-color: #3a506b;
+        --secondary-color: #5a7d9b;
+        --heading-color: #3a506b;
+    }
+
+    @page {
+        size: A4;
+        margin: 1.5cm;
+        orphans: 3;
+        widows: 3;
+    }
+    body {
+        font-family: var(--font-family-main);
+        font-size: var(--base-font-size);
+        line-height: var(--line-height);
+        color: var(--text-color);
+        background-color: var(--page-bg-color);
+        margin: 0;
+        padding: 0;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    html[lang="ar"] body { direction: rtl; text-align: right; }
+    html[lang="ar"] ul { padding-left: 0; padding-right: 18px; }
+
+    h1, h2, h3 {
+        margin: 0;
+        color: var(--heading-color);
+        font-family: var(--font-family-heading);
+        page-break-after: avoid;
+    }
+    h1 {
+        font-size: 2.4rem;
+        text-align: center;
+        margin-bottom: 0.1em;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+    h2 {
+        font-size: 1.1rem;
+        color: var(--primary-color);
+        padding-bottom: 0.3em;
+        margin-top: var(--section-spacing);
+        margin-bottom: 1em;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        border-bottom: 1.5px solid var(--primary-color);
+        text-align: left;
+    }
+    h2:first-of-type { margin-top: 1.2em; }
+    html[lang="ar"] h2 { text-align: right; }
+    h2 i { display: none; }
+    h3 {
+        font-size: 1rem;
+        color: var(--heading-color);
+        margin-bottom: 0.2em;
+        font-weight: 600;
+        font-family: var(--font-family-main);
+    }
+
+    p { margin: 0 0 0.5em 0; }
+    a { color: var(--primary-color); text-decoration: none; font-weight: 500; }
+    a:hover { text-decoration: underline; }
+    ul { padding-left: 18px; margin-top: 0; margin-bottom: 0.8em; }
+    li { margin-bottom: 0.3em; }
+
+    /* --- Header Section --- */
+    .resume-header {
+        text-align: center;
+        padding-bottom: 1em;
+        margin-bottom: 1em;
+    }
+    .resume-header .headline {
+        font-size: 1rem;
+        color: var(--muted-color);
+        margin-top: 0.2em;
+        margin-bottom: 1em;
+        font-weight: 400;
+        font-family: var(--font-family-main);
+    }
+    .contact-info {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.5em 1.5em;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        font-size: 0.85rem;
+        color: var(--muted-color);
+    }
+    .contact-info li { display: flex; align-items: center; margin-bottom: 0; }
+    .contact-info i { color: var(--primary-color); margin-right: 6px; opacity: 0.7; }
+    html[lang="ar"] .contact-info i { margin-right: 0; margin-left: 6px; }
+    .contact-info a { color: var(--muted-color); font-weight: 400; }
+    .contact-info a:hover { color: var(--primary-color); }
+
+    /* --- Main Content Sections --- */
+    .resume-section { margin-bottom: var(--section-spacing); }
+    .item {
+        margin-bottom: var(--item-spacing);
+        page-break-inside: avoid;
+    }
+    .item:last-child { margin-bottom: 0; }
+
+    .item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        flex-wrap: wrap;
+        margin-bottom: 0.3em;
+    }
+    .item-title-org { flex-grow: 1; }
+    .item-title-org .title { font-size: 1rem; font-weight: 600; color: var(--heading-color); }
+    .item-title-org .organization { font-size: 0.95rem; font-weight: 400; color: var(--text-color); margin-left: 0.5em; font-style: italic; }
+    html[lang="ar"] .item-title-org .organization { margin-left: 0; margin-right: 0.5em; }
+
+    .item-date-location {
+        font-size: 0.8rem;
+        color: var(--muted-color);
+        text-align: right;
+        flex-shrink: 0;
+        margin-left: 1em;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    html[lang="ar"] .item-date-location { text-align: left; margin-left: 0; margin-right: 1em; }
+
+    .item .description { margin-top: 0.5em; font-size: 0.9rem; }
+    .item .description ul {
+        margin-top: 0.3em;
+        margin-bottom: 0;
+        list-style: none;
+        padding-left: 1em;
+    }
+    .item .description ul li {
+        margin-bottom: 0.25em;
+        padding-left: 0.8em;
+        position: relative;
+    }
+    .item .description ul li::before {
+        content: '-';
+        position: absolute;
+        left: 0;
+        top: 0;
+        color: var(--primary-color);
+        font-weight: bold;
+    }
+    html[lang="ar"] .item .description ul li { padding-left: 0; padding-right: 0.8em; }
+    html[lang="ar"] .item .description ul li::before { left: auto; right: 0; }
+
+
+    /* Skills Section */
+    .skills-section ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 12px;
+    }
+    .skills-section li {
+        background-color: transparent;
+        padding: 3px 0;
+        font-size: 0.9rem;
+        margin: 0;
+    }
+    .skills-section .skill-category {
+        font-weight: 600;
+        width: 100%;
+        margin-bottom: 4px;
+        font-size: 0.95rem;
+        color: var(--heading-color);
+        border: none;
+        padding: 0;
+    }
+    .skills-section .skill-name {
+        font-weight: 500;
+    }
+    .skills-section .skill-level {
+        color: var(--muted-color);
+        font-size: 0.85em;
+        margin-left: 6px;
+    }
+    html[lang="ar"] .skills-section .skill-level {
+        margin-left: 0;
+        margin-right: 6px;
+    }
+</style>

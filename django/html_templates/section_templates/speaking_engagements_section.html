@@ -1,0 +1,29 @@
+{% if speaking_engagements %}
+<section class="resume-section speaking-section">
+    <h2><i class="fas fa-microphone"></i> Speaking Engagements</h2>
+    {% for engagement in speaking_engagements %}
+    <article class="item">
+        <div class="item-header">
+            <div class="item-title-org">
+                {% if engagement.title %}<span class="title">{{ engagement.title }}</span>{% endif %}
+                {% if engagement.event %}<span class="organization">{{ engagement.event }}</span>{% endif %}
+            </div>
+            <div class="item-date-location">
+                {% if engagement.date %}
+                <span class="date">{{ engagement.date }}</span>
+                {% endif %}
+                {% if engagement.location %}<span class="location"> | {{ engagement.location }}</span>{% endif %}
+            </div>
+        </div>
+        {% if engagement.description %}
+            <div class="description"><p>{{ engagement.description }}</p></div>
+        {% endif %}
+        {% if engagement.link %}
+            <div class="description" style="font-size: 0.85em;">
+                <p><i class="fas fa-link"></i> <a href="{{ engagement.link }}" target="_blank">View Recording/Details</a></p>
+            </div>
+        {% endif %}
+    </article>
+    {% endfor %}
+</section>
+{% endif %}
