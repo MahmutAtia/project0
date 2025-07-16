@@ -114,6 +114,21 @@ def download_assets():
     else:
         print("⏭️  Google Fonts for creative theme already exists, skipping...")
 
+    # Google Fonts CSS for professional theme (Inter + Poppins - Modern & Professional)
+    gf_professional_path = "static/css/google-fonts-professional.css"
+    if not os.path.exists(gf_professional_path):
+        print("Downloading Google Fonts CSS for professional theme...")
+        gf_url = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Poppins:wght@600;700&display=swap"
+        gf_response = requests.get(gf_url)
+        with open(gf_professional_path, "w", encoding="utf-8") as f:
+            f.write(gf_response.text)
+
+        # Download font files for professional theme
+        download_font_files_from_css(gf_response.text, "professional")
+        print("✅ Google Fonts for professional theme downloaded")
+    else:
+        print("⏭️  Google Fonts for professional theme already exists, skipping...")
+
     # Download Font Awesome font files
     fa_fonts = ["fa-solid-900.woff2", "fa-brands-400.woff2", "fa-regular-400.woff2"]
 

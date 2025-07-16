@@ -17,6 +17,8 @@
         <link rel="stylesheet" href="static/css/google-fonts-minimal.css">
     {% elif style == 'creative' %}
         <link rel="stylesheet" href="static/css/google-fonts-creative.css">
+    {% elif style == 'professional' %}
+        <link rel="stylesheet" href="static/css/google-fonts-professional.css">
     {% else %}
         <link rel="stylesheet" href="static/css/google-fonts-default.css">
     {% endif %}
@@ -32,6 +34,8 @@
         {% include 'base/minimal_styles.html' %}
     {% elif style == 'creative' %}
         {% include 'base/creative_styles.html' %}
+    {% elif style == 'professional' %}
+        {% include 'base/professional_styles.html' %}
     {% else %}
         {% include 'base/default_styles.html' %}
     {% endif %}
@@ -43,6 +47,8 @@
     {% include 'layouts/europass_layout.html' %}
 {% elif layout == 'two_column' %}
     {% include 'layouts/two_column_layout.html' %}
+{% elif layout == 'professional' %}
+    {% include 'layouts/professional_layout.html' %}
 {% else %}
     {% include 'layouts/single_column_layout.html' %}
 {% endif %}

@@ -513,6 +513,13 @@ def get_template_config(template_name):
             'layout_type': 'two_column',
             'use_universal': True
         },
+        'template6':
+{
+            'template_style': 'professional',
+            'layout_type': 'single_column',
+            'use_universal': True
+}
+        
 
     }
     
