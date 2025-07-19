@@ -190,7 +190,7 @@ def generate_resume(request):
             )  # the job search keywords of the resume
 
             resume_data = generated_resume_data.get("resume")  # the resume data
-            about = generated_resume_data.get("about")  # the about of the resume
+            about = generated_resume_data.get("about_candidate")  # the about of the resume
 
             if not request.user.is_authenticated:
                 timestamp = int(time.time())
