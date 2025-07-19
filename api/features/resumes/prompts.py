@@ -38,8 +38,6 @@ No Fabrication: Do not invent information but enhance and present the candidate'
 
 Simple, Readable, and Impactful Language: Use clear, concise, and professional language throughout.
 
-Use primeicons find the icon that best represents the candidate's profession and include it in the primeicon field.
-
 Output all in the {language} language.
 
 Input Resume Text: {input_text}

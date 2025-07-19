@@ -18,7 +18,7 @@ async def save_resume_to_django(user_id: int, data: dict, authorization: str):
                     "resume": data.get("resume", {}),  # The main resume JSON data
                     "title": data.get("title", "Generated Resume"),
                     "description": data.get("description", ""),
-                    "about": data.get("about", ""),
+                    "about": data.get("about_candidate", ""),
                     "job_search_keywords": data.get("job_search_keywords", ""),
                     "icon": data.get("fontawesome_icon", ""),
                     # Django will automatically set: user, is_default, created_at, updated_at
