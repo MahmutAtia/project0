@@ -4,25 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ personal_information.name|default('Resume') }}</title>
-    <link rel="stylesheet" href="static/css/fontawesome.min.css">
+    <link rel="stylesheet" href="{{ static('css/fontawesome.min.css') }}">
+
+
+
     
     {# Include theme-specific Google Fonts based on template style #}
     {% if style == 'europass' %}
-        <link rel="stylesheet" href="static/css/google-fonts-europass.css">
+        <link rel="stylesheet" href="{{ static('css/google-fonts-europass.css') }}">
     {% elif style == 'modern' %}
-        <link rel="stylesheet" href="static/css/google-fonts-modern.css">
+        <link rel="stylesheet" href="{{ static('css/google-fonts-modern.css') }}">
     {% elif style == 'classic' %}
-        <link rel="stylesheet" href="static/css/google-fonts-classic.css">
+        <link rel="stylesheet" href="{{ static('css/google-fonts-classic.css') }}">
     {% elif style == 'minimal' %}
-        <link rel="stylesheet" href="static/css/google-fonts-minimal.css">
+        <link rel="stylesheet" href="{{ static('css/google-fonts-minimal.css') }}">
     {% elif style == 'creative' %}
-        <link rel="stylesheet" href="static/css/google-fonts-creative.css">
+        <link rel="stylesheet" href="{{ static('css/google-fonts-creative.css') }}">
     {% elif style == 'professional' %}
-        <link rel="stylesheet" href="static/css/google-fonts-professional.css">
+        <link rel="stylesheet" href="{{ static('css/google-fonts-professional.css') }}">
     {% else %}
-        <link rel="stylesheet" href="static/css/google-fonts-default.css">
+        <link rel="stylesheet" href="{{ static('css/google-fonts-default.css') }}">
     {% endif %}
     
+    {# For the browser preview, use Printstrap to simulate pages #}
+   
+
     {# Include theme-specific styles based on template #}
     {% if style == 'europass' %}
         {% include 'base/europass_styles.html' %}
@@ -42,7 +48,7 @@
 </head>
 <body class="{{ theme_class|default('theme-default') }}">
 
-{# Include layout-specific structure #}
+{# The layout is now rendered directly into the body, with no special preview containers #}
 {% if layout == 'europass' %}
     {% include 'layouts/europass_layout.html' %}
 {% elif layout == 'two_column' %}
@@ -52,6 +58,8 @@
 {% else %}
     {% include 'layouts/single_column_layout.html' %}
 {% endif %}
+
+{# All the previous JavaScript for pagination has been removed. #}
 
 </body>
 </html>

@@ -10,6 +10,7 @@ from .utils import (
     parse_custom_format,
     format_data_to_ordered_text,
     generate_docx_from_template,
+    generate_html_from_resume_data
 )
 from rest_framework.response import Response
 from django.contrib.auth.models import User
@@ -27,6 +28,8 @@ from django.http import (
     JsonResponse,
     HttpResponseServerError,
 )
+from django.views.decorators.clickjacking import xframe_options_exempt
+
 from datetime import datetime  # Import datetime class directly
 import textwrap
 import json
@@ -344,8 +347,72 @@ def generate_from_job_desc(request):
 
 
 ################################## genereate_pdf #######s#########################
+@api_view(["GET"])
+@xframe_options_exempt
+def generate_html_preview(request, resume_id):
+    """
+    API endpoint to generate HTML preview for a resume.
+    Accepts template and theme as query parameters.
+    Returns HTML content directly for an iframe preview.
+    """
+    print(f"DEBUG: Generating HTML preview for resume_id: {resume_id}")
+    
+    # Get parameters from query string
+    template_name = request.query_params.get("template", "default")
+    theme_name = request.query_params.get("theme", "theme-default")
+    
+    print(f"DEBUG: Template: {template_name}, Theme: {theme_name}")
 
+    try:
+        # Get the resume without user filtering for preview
+        resume = get_object_or_404(Resume, pk=resume_id)
+        resume_data = resume.resume
+        
+        # Fix: Use the correct field names from your model
+        sections_sort = resume.sections_sort or []  # Not sections_sort_order
+        hidden_sections = resume.hidden_sections or []
+        
+        print(f"DEBUG: Found resume data, sections_sort: {len(sections_sort)}, hidden_sections: {len(hidden_sections)}")
 
+    except Resume.DoesNotExist:
+        print(f"DEBUG: Resume {resume_id} not found")
+        return HttpResponse("Resume not found.", status=404)
+    except Exception as e:
+        print(f"DEBUG: Error fetching resume data: {e}")
+        return HttpResponseServerError(f"An error occurred while fetching resume data: {e}")
+
+    try:
+        # Generate HTML using the utility function
+        html_content = generate_html_from_resume_data(
+            resume_data=resume_data,
+            template_theme=template_name,
+            chosen_theme=theme_name,
+            sections_sort=sections_sort,
+            hidden_sections=hidden_sections,
+            is_preview=True  
+        )
+        print(f"DEBUG: HTML content generated, length: {len(html_content) if html_content else 0}")
+    except Exception as e:
+        print(f"DEBUG: Error generating HTML: {e}")
+        return HttpResponseServerError(f"Failed to generate HTML preview: {e}")
+
+    if html_content:
+        # Return the content as an HTML response with permissive iframe headers
+        response = HttpResponse(html_content, content_type='text/html; charset=utf-8')
+        
+        # Set permissive iframe headers
+        response['X-Frame-Options'] = 'SAMEORIGIN'  # Allow same origin
+        # More permissive CSP that allows your frontend origin
+        response['Content-Security-Policy'] = "frame-ancestors 'self' http://localhost:3000 http://127.0.0.1:3000;"
+        
+        # Alternatively, remove CSP header entirely for preview
+        # del response['Content-Security-Policy']  # Uncomment this if you want to remove CSP
+        
+        print(f"DEBUG: Returning HTML response with permissive headers")
+        return response
+    else:
+        print(f"DEBUG: No HTML content generated")
+        return HttpResponseServerError("Failed to generate HTML preview - no content returned.")
 @api_view(["POST"])
 @require_feature("pdf_generation")
 def generate_pdf(request):
@@ -364,7 +431,7 @@ def generate_pdf(request):
 
     try:
         # Fetch resume data (keep this part)
-        resume = get_object_or_404(Resume, pk=resume_id, user=request.user)
+        resume = get_object_or_404(Resume, pk=resume_id)
         # Ensure resume_data is serializable (it should be if it's from a JSONField)
         resume_data = resume.resume
         sections_sort = resume.sections_sort  # Get the sections sort order from the resume

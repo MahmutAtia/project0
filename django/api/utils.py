@@ -18,9 +18,9 @@ from django.template import Context
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from weasyprint import HTML, CSS
 from collections import OrderedDict
-
+from django.templatetags.static import static # <-- Import the static function
 # from weasyprint.fonts import FontConfiguration # Optional - Not used, so removed
-
+import traceback
 
 def cleanup_old_sessions(request):
     """Remove session data older than 1 hour"""
@@ -91,64 +91,31 @@ def generate_pdf_from_resume_data(
         bytes: The PDF file content as bytes. Returns None on error.
     """
     try:
-        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        
-        # Use Jinja2 for all templates with optimized configuration
-        templates_dir = os.path.join(base_dir, "html_templates")
-        env = Environment(
-            loader=FileSystemLoader(templates_dir),
-            autoescape=select_autoescape(["html", "xml"]),
-            # Optimize Jinja2 for performance
-            cache_size=400,
-            auto_reload=False,
-        )
-        
-        # Get template configuration based on the selected theme
-        template_config = get_template_config(template_theme)
-        
-        # All our templates now use the universal system
-        template = env.get_template('universal_template.html')
-        
-        # Prepare template context with optimization flags
-        template_context = {
-            "theme_class": chosen_theme,
-            "style": template_config.get('template_style', 'default'),
-            "layout": template_config.get('layout_type', 'single_column'),
-            "optimize_for_print": True,  # Flag for print optimizations
-            **resume_data
-        }
-        
-        # If sections_sort is provided, add it to the template context
-        if sections_sort:
-            template_context["sections_sort"] = sections_sort
-            
-        # If hidden_sections is provided, add it to the template context
-        if hidden_sections:
-            template_context["hidden_sections"] = hidden_sections
-        
-        html_out = template.render(**template_context)
-        
-        # Create HTML object with optimized settings for WeasyPrint performance
-        html_obj = HTML(
-            string=html_out, 
-            base_url=base_dir,
-            # Optimizations for faster rendering
-            encoding='utf-8'
-        )
-        
-        # Generate PDF with performance optimizations
-        pdf_file = html_obj.write_pdf(
-            # Optimize for smaller file size and faster generation
-            optimize_images=True,
-            presentational_hints=False,
-            unresolved_references='ignore'
+        # Generate HTML first using the existing, corrected function
+        html_out = generate_html_from_resume_data(
+            resume_data,
+            template_theme,
+            chosen_theme,
+            sections_sort,
+            hidden_sections,
+            is_preview=False  # Important: Set to False for PDF generation
         )
 
+        if not html_out:
+            logger.error("HTML generation failed, cannot create PDF.")
+            return None
+
+        # Convert the generated HTML to PDF
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        static_dir = os.path.join(base_dir, 'static')
+        
+        # Use WeasyPrint to render the PDF from the HTML string
+        pdf_file = HTML(string=html_out, base_url=static_dir).write_pdf()
+        
         return pdf_file
+        
     except Exception as e:
-        print(f"Error generating PDF: {e}")
-        import traceback
-        traceback.print_exc()
+        logger.exception(f"Error in generate_pdf_from_resume_data: {e}")
         return None
 
 
@@ -528,3 +495,85 @@ def get_template_config(template_name):
         'layout_type': 'single_column',
         'use_universal': False
     })
+
+def generate_html_from_resume_data(
+    resume_data, template_theme="resume_template_2.html", chosen_theme="theme-default", sections_sort=None, hidden_sections=None, is_preview=False
+):
+    """
+    Generates HTML from resume data using a universal Jinja2 template.
+    Same as generate_pdf_from_resume_data but returns HTML instead of PDF.
+
+    Args:
+        resume_data (dict): The resume data as a dictionary.
+        template_theme (str, optional): The name of the HTML template file, used to determine style and layout.
+            Defaults to 'resume_template_2.html'.
+        chosen_theme (str, optional): The name of the CSS theme to apply.
+            Defaults to 'theme-default'.
+        sections_sort (list, optional): List of section keys in the desired order.
+            If None, uses default order from template.
+        hidden_sections (list, optional): List of section keys to hide.
+            If None, no sections are hidden.
+        is_preview (bool): If True, injects additional styles for paged preview.
+
+    Returns:
+        str: The HTML content as string. Returns None on error.
+    """
+    try:
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        
+        # Use Jinja2 for all templates with optimized configuration
+        templates_dir = os.path.join(base_dir, "html_templates")
+        env = Environment(
+            loader=FileSystemLoader(templates_dir),
+            autoescape=select_autoescape(["html", "xml"]),
+            cache_size=400,
+            auto_reload=False,
+            
+        )
+
+        # Make Django's 'static' function available in Jinja2
+        env.globals['static'] = static
+
+        
+        # Get template configuration based on the selected theme
+        template_config = get_template_config(template_theme)
+        
+        # All our templates now use the universal system
+        template = env.get_template('universal_template.html')
+        
+        # Prepare template context with optimization flags
+        template_context = {
+            "theme_class": chosen_theme,
+            "style": template_config.get('template_style', 'default'),
+            "layout": template_config.get('layout_type', 'single_column'),
+            "optimize_for_print": False,  # Set to False for HTML preview
+            "is_preview": is_preview,  # Flag for paged preview styles            
+            **resume_data
+        }
+
+
+        # If it's a preview, load and inject the paged preview styles
+        if is_preview:
+            try:
+                # The path is relative to the `templates_dir`
+                paged_styles_template = env.get_template('base/paged_preview_styles.html')
+                template_context['paged_preview_styles'] = paged_styles_template.render()
+            except Exception as style_error:
+                print(f"Could not load paged preview styles: {style_error}")
+
+
+        # If sections_sort is provided, add it to the template context
+        if sections_sort:
+            template_context["sections_sort"] = sections_sort
+            
+        # If hidden_sections is provided, add it to the template context
+        if hidden_sections:
+            template_context["hidden_sections"] = hidden_sections
+        
+        html_out = template.render(**template_context)
+        
+        return html_out
+    except Exception as e:
+        print(f"Error generating HTML: {e}")
+        traceback.print_exc()
+        return None

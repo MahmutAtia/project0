@@ -1,0 +1,37 @@
+<style>
+        /* --- Styles for Browser Preview Simulation --- */
+        @media screen {
+            body {
+                background-color: #e0e0e0; /* Grey background for contrast */
+                display: flex;
+                justify-content: center;
+                align-items: flex-start;
+                padding: 2em 0;
+                margin: 0;
+                min-height: 100vh;
+            }
+
+            .resume-preview-wrapper {
+                background: var(--page-bg-color, #ffffff);
+                width: 210mm; /* A4 width */
+                min-height: 297mm; /* A4 height */
+                padding: 1.3cm 1.6cm; /* Simulate @page margin */
+                margin: 0;
+                box-shadow: 0 0 0.5cm rgba(0,0,0,0.5);
+                box-sizing: border-box;
+            }
+
+            /* Hide the wrapper for actual printing from browser */
+            @media print {
+                body {
+                    background-color: transparent;
+                    padding: 0;
+                }
+                .resume-preview-wrapper {
+                    box-shadow: none;
+                    margin: 0;
+                    padding: 0;
+                }
+            }
+        }
+    </style>
