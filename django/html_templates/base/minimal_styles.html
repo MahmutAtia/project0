@@ -67,43 +67,45 @@
     }
 
     /* --- Enhanced Theme Definitions --- */
-    body.theme-default, :root {
-        --primary-color: #2c3e50; /* Deep Slate Blue */
-        --secondary-color: #7f8c8d; /* Muted Grey */
-        --heading-color: #2c3e50;
-        --text-color: var(--text-color-base);
-        --muted-color: var(--muted-color-base);
-        --border-color: var(--border-color-base);
-        --accent-bg: #f8f9fa;
-    }
-    body.theme-blue {
-        --primary-color: #1a365d; /* Deep Blue */
-        --secondary-color: #4a90a4; /* Ocean Blue */
-        --heading-color: #1a365d;
-        --text-color: var(--text-color-base);
-        --muted-color: #5a7d8b;
-        --border-color: #b3d4e0;
-        --accent-bg: #f0f8ff;
-    }
-    body.theme-green {
-        --primary-color: #1e4d3e; /* Deep Forest */
-        --secondary-color: #4a7c59; /* Forest Green */
-        --heading-color: #1e4d3e;
-        --text-color: var(--text-color-base);
-        --muted-color: #5a7d65;
-        --border-color: #b3d4c0;
-        --accent-bg: #f0f8f4;
-    }
-    body.theme-grey {
-        --primary-color: #2d3748; /* Charcoal */
-        --secondary-color: #718096; /* Cool Grey */
-        --heading-color: #2d3748;
-        --text-color: var(--text-color-base);
-        --muted-color: #718096;
-        --border-color: #e2e8f0;
-        --accent-bg: #f7fafc;
-    }
+body.theme-default, :root {
+    --primary-color: #2c3e50;           /* Deep Slate Blue */
+    --secondary-color: #7f8c8d;         /* Muted Grey */
+    --heading-color: #2c3e50;
+    --text-color: #2d2d2d;              /* Dark Neutral */
+    --muted-color: #6c757d;             /* Classic Muted */
+    --border-color: #ced4da;
+    --accent-bg: #f8f9fa;
+}
 
+body.theme-ocean {
+    --primary-color: #1a365d;           /* Deep Blue */
+    --secondary-color: #4a90a4;         /* Ocean Blue */
+    --heading-color: #1a365d;
+    --text-color: #123456;              /* Ocean Ink */
+    --muted-color: #5a7d8b;
+    --border-color: #a0c4d0;
+    --accent-bg: #e0f7ff;               /* Light Aqua */
+}
+
+body.theme-forest {
+    --primary-color: #1e4d3e;           /* Deep Forest */
+    --secondary-color: #4a7c59;         /* Forest Green */
+    --heading-color: #1e4d3e;
+    --text-color: #2e3b31;              /* Forest Text */
+    --muted-color: #5f7d6a;
+    --border-color: #a8cbb7;
+    --accent-bg: #e6f4ea;               /* Forest Mist */
+}
+
+body.theme-stone {
+    --primary-color: #2d3748;           /* Charcoal */
+    --secondary-color: #718096;         /* Cool Grey */
+    --heading-color: #2d3748;
+    --text-color: #1a1c1e;              /* Dark Slate */
+    --muted-color: #8a9aa9;
+    --border-color: #cbd5e0;
+    --accent-bg: #f0f2f5;               /* Light Cement */
+}
     @page {
         size: A4;
         margin: 0.8cm 1cm;
