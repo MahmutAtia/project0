@@ -1,6 +1,6 @@
 {% if interests %}
 <section class="resume-section interests-section">
-    <h2><i class="fas fa-heart"></i> Interests</h2>
+    <h2>{% if show_icons %}<i class="fas fa-heart"></i> {% endif %}Interests</h2>
     <p>
         {% for interest in interests %}
         {% if interest.keywords %}

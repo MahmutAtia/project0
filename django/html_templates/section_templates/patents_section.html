@@ -1,6 +1,6 @@
 {% if patents %}
 <section class="resume-section patents-section">
-    <h2><i class="fas fa-lightbulb"></i> Patents</h2>
+    <h2>{% if show_icons %}<i class="fas fa-lightbulb"></i> {% endif %}Patents</h2>
     {% for patent in patents %}
     <article class="item">
         <div class="item-header">

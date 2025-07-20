@@ -1,6 +1,6 @@
 {% if research_experience %}
 <section class="resume-section research-section">
-    <h2><i class="fas fa-microscope"></i> Research Experience</h2>
+    <h2>{% if show_icons %}<i class="fas fa-microscope"></i> {% endif %}Research Experience</h2>
     {% for research in research_experience %}
     <article class="item">
         <div class="item-header">

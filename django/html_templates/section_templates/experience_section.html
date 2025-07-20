@@ -1,6 +1,6 @@
 {% if experience %}
 <section class="resume-section experience-section">
-    <h2><i class="fas fa-briefcase"></i> Work Experience</h2>
+    <h2>{% if show_icons %}<i class="fas fa-briefcase"></i> {% endif %}Work Experience</h2>
     {% for job in experience %}
     <article class="item">
         <div class="item-header">
@@ -18,11 +18,11 @@
         {% if job.description %}
             <div class="description">
                 {% if '\n' in job.description %}
-                    <ul>
-                    {% for point in job.description.split('\n') if point.strip() %}
-                        <li>{{ point.strip() }}</li>
+                    {% for paragraph in job.description.split('\n') %}
+                        {% if paragraph.strip() %}
+                            <p>{{ paragraph.strip() }}</p>
+                        {% endif %}
                     {% endfor %}
-                    </ul>
                 {% else %}
                     <p>{{ job.description }}</p>
                 {% endif %}

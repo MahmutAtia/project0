@@ -1,6 +1,6 @@
 {% if conferences %}
 <section class="resume-section conferences-section">
-    <h2><i class="fas fa-users"></i> Conferences</h2>
+    <h2>{% if show_icons %}<i class="fas fa-users"></i> {% endif %}Conferences</h2>
     {% for conf in conferences %}
     <article class="item">
         <div class="item-header">

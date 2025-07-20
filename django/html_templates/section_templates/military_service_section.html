@@ -1,6 +1,6 @@
 {% if military_service %}
 <section class="resume-section military-section">
-    <h2><i class="fas fa-shield-alt"></i> Military Service</h2>
+    <h2>{% if show_icons %}<i class="fas fa-shield-alt"></i> {% endif %}Military Service</h2>
     {% for service in military_service %}
     <article class="item">
         <div class="item-header">

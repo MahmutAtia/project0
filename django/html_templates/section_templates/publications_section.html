@@ -1,6 +1,6 @@
 {% if publications %}
 <section class="resume-section publications-section">
-    <h2><i class="fas fa-book"></i> Publications</h2>
+    <h2>{% if show_icons %}<i class="fas fa-book"></i> {% endif %}Publications</h2>
     {% for pub in publications %}
     <article class="item">
         <div class="item-header">

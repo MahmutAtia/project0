@@ -345,7 +345,6 @@ def generate_from_job_desc(request):
 
 ################################## genereate_pdf #######s#########################
 
-
 @api_view(["POST"])
 @require_feature("pdf_generation")
 def generate_pdf(request):
@@ -356,12 +355,30 @@ def generate_pdf(request):
     resume_id = request.data.get("resume_id")
     template = request.data.get("templateTheme", "default.html")
     chosen_theme = request.data.get("chosenTheme", "theme-default")
-    print(f"DEBUG: Received resume_id: {resume_id}, template: {template}, chosen_theme: {chosen_theme}")
+    scale = request.data.get("scale", "medium")  # New parameter
+    show_icons = request.data.get("showIcons", False)  # New parameter
+    
+    print(f"DEBUG: Received resume_id: {resume_id}, template: {template}, chosen_theme: {chosen_theme}, scale: {scale}, show_icons: {show_icons}")
+    
     if not resume_id:
         return Response(
             {"error": "resumeId is required"}, status=status.HTTP_400_BAD_REQUEST
         )
 
+    # Validate scale parameter
+    if scale not in ["small", "medium", "large"]:
+        return Response(
+            {"error": "scale must be one of: small, medium, large"}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Validate show_icons parameter
+    if not isinstance(show_icons, bool):
+        return Response(
+            {"error": "showIcons must be a boolean"}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+        
     try:
         # Fetch resume data (keep this part)
         resume = get_object_or_404(Resume, pk=resume_id, user=request.user)
@@ -416,16 +433,16 @@ def generate_pdf(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
-
     # Specify the correct template for documents if different from resumes
     pdf_data = generate_pdf_from_resume_data(
         resume_data=resume_data, 
         template_theme=template, 
         chosen_theme=chosen_theme,
         sections_sort=sections_sort,
-        hidden_sections=hidden_sections
+        hidden_sections=hidden_sections,
+        scale=scale,
+        show_icons=show_icons
     )
-
     # 3. Handle PDF generation result
     if pdf_data:
         # Prepare response

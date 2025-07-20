@@ -68,9 +68,8 @@ def extract_text_from_file(uploaded_file):
         logger.error(f"Error extracting text from file: {e}")
         raise
 
-
 def generate_pdf_from_resume_data(
-    resume_data, template_theme="resume_template_2.html", chosen_theme="theme-default", sections_sort=None, hidden_sections=None
+    resume_data, template_theme="resume_template_2.html", chosen_theme="theme-default", sections_sort=None, hidden_sections=None, scale="medium", show_icons=False
 ):
     """
     Generates a PDF from resume data using a universal Jinja2 template.
@@ -86,6 +85,10 @@ def generate_pdf_from_resume_data(
             If None, uses default order from template.
         hidden_sections (list, optional): List of section keys to hide.
             If None, no sections are hidden.
+        scale (str, optional): Font scale - "small", "medium", or "large".
+            Defaults to "medium".
+        show_icons (bool, optional): Whether to show icons in section headers.
+            Defaults to False.
 
     Returns:
         bytes: The PDF file content as bytes. Returns None on error.
@@ -109,9 +112,19 @@ def generate_pdf_from_resume_data(
         # All our templates now use the universal system
         template = env.get_template('universal_template.html')
         
+        # Map scale to CSS class
+        scale_class_map = {
+            "small": "font-size-small",
+            "medium": "",  # Default, no class needed
+            "large": "font-size-large"
+        }
+        scale_class = scale_class_map.get(scale, "")
+        
         # Prepare template context with optimization flags
         template_context = {
             "theme_class": chosen_theme,
+            "scale_class": scale_class,
+            "show_icons": show_icons,
             "style": template_config.get('template_style', 'default'),
             "layout": template_config.get('layout_type', 'single_column'),
             "optimize_for_print": True,  # Flag for print optimizations
@@ -150,8 +163,7 @@ def generate_pdf_from_resume_data(
         import traceback
         traceback.print_exc()
         return None
-
-
+    
 def generate_html_from_yaml(json_data, template_name="html_bloks_template.html"):
     """
     Generates HTML from YAML data using a Jinja template.

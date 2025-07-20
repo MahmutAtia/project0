@@ -1,6 +1,6 @@
 {% if volunteer_and_social_activities %}
 <section class="resume-section volunteer-section">
-    <h2><i class="fas fa-hands-helping"></i> Volunteer Experience</h2>
+    <h2>{% if show_icons %}<i class="fas fa-hands-helping"></i> {% endif %}Volunteer Experience</h2>
     {% for vol in volunteer_and_social_activities %}
     <article class="item">
         <div class="item-header">

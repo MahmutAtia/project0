@@ -1,6 +1,6 @@
 {% if languages %}
 <section class="resume-section languages-section">
-    <h2><i class="fas fa-language"></i> Languages</h2>
+    <h2>{% if show_icons %}<i class="fas fa-language"></i> {% endif %}Languages</h2>
     <p>
         {% for lang in languages %}
         {{ lang.language }}{% if lang.proficiency %} ({{ lang.proficiency }}){% endif %}{% if not loop.last %}, {% endif %}

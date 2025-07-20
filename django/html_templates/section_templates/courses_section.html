@@ -1,6 +1,6 @@
 {% if courses %}
 <section class="resume-section courses-section">
-    <h2><i class="fas fa-chalkboard-teacher"></i> Relevant Courses</h2>
+    <h2>{% if show_icons %}<i class="fas fa-chalkboard-teacher"></i> {% endif %}Relevant Courses</h2>
     {% for course in courses %}
     <article class="item">
         <div class="item-header">

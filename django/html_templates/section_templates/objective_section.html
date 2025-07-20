@@ -1,6 +1,6 @@
 {% if objective %}
 <section class="resume-section objective-section">
-    <h2><i class="fas fa-target"></i> Objective</h2>
+    <h2>{% if show_icons %}<i class="fas fa-target"></i> {% endif %}Objective</h2>
     <p>{{ objective }}</p>
 </section>
 {% endif %}

@@ -1,6 +1,6 @@
 {% if projects %}
 <section class="resume-section projects-section">
-    <h2><i class="fas fa-project-diagram"></i> Projects</h2>
+    <h2>{% if show_icons %}<i class="fas fa-project-diagram"></i> {% endif %}Projects</h2>
     {% for project in projects %}
     <article class="item">
         <div class="item-header">

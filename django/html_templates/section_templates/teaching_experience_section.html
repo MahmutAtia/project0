@@ -1,6 +1,6 @@
 {% if teaching_experience %}
 <section class="resume-section teaching-section">
-    <h2><i class="fas fa-chalkboard-teacher"></i> Teaching Experience</h2>
+    <h2>{% if show_icons %}<i class="fas fa-chalkboard-teacher"></i> {% endif %}Teaching Experience</h2>
     {% for teaching in teaching_experience %}
     <article class="item">
         <div class="item-header">

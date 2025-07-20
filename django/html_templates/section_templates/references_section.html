@@ -1,6 +1,6 @@
 {% if references %}
 <section class="resume-section references-section">
-    <h2><i class="fas fa-user-friends"></i> References</h2>
+    <h2>{% if show_icons %}<i class="fas fa-user-friends"></i> {% endif %}References</h2>
     {% for ref in references %}
     <article class="item">
         <div class="item-header">

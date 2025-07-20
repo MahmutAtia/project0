@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ personal_information.name|default('Resume') }}</title>
-    <link rel="stylesheet" href="static/css/fontawesome.min.css">
+    {% if show_icons %}<link rel="stylesheet" href="static/css/fontawesome.min.css">{% endif %}
     
     {# Include theme-specific Google Fonts based on template style #}
     {% if style == 'europass' %}
@@ -40,7 +40,7 @@
         {% include 'base/default_styles.html' %}
     {% endif %}
 </head>
-<body class="{{ theme_class|default('theme-default') }}">
+<body class="{{ theme_class|default('theme-default') }}  {{ scale_class }}">
 
 {# Include layout-specific structure #}
 {% if layout == 'europass' %}

@@ -1,6 +1,6 @@
 {% if awards_and_recognition %}
 <section class="resume-section awards-section">
-    <h2><i class="fas fa-trophy"></i> Awards & Recognition</h2>
+    <h2>{% if show_icons %}<i class="fas fa-trophy"></i> {% endif %}Awards & Recognition</h2>
     {% for award in awards_and_recognition %}
     <article class="item">
         <div class="item-header">

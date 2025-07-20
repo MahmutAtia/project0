@@ -1,17 +1,22 @@
 {% if skills %}
 <section class="resume-section skills-section">
-    <h2><i class="fas fa-cogs"></i> Skills</h2>
-    <ul>
-        {% for skill_group in skills %}
+    <h2>{% if show_icons %}<i class="fas fa-cogs"></i> {% endif %}Skills</h2>
+    
+    {% for skill_group in skills %}
+        <div class="skill-group">
             {% if skill_group.category %}
-                <li class="skill-category">{{ skill_group.category }}:</li>
+                <h3 class="skill-category-title">{{ skill_group.category }}</h3>
             {% endif %}
-            {% if skill_group.keywords %}
-                {% for keyword in skill_group.keywords %}<li>{{ keyword }}</li>{% endfor %}
-            {% elif skill_group.name %}
-                <li>{{ skill_group.name }}</li>
-            {% endif %}
-        {% endfor %}
-    </ul>
+            <ul class="skill-keywords">
+                {% if skill_group.keywords %}
+                    {% for keyword in skill_group.keywords %}
+                        <li>{{ keyword }}</li>
+                    {% endfor %}
+                {% elif skill_group.name %}
+                    <li>{{ skill_group.name }}</li>
+                {% endif %}
+            </ul>
+        </div>
+    {% endfor %}
 </section>
 {% endif %}
