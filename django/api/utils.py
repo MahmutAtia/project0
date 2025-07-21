@@ -69,8 +69,16 @@ def extract_text_from_file(uploaded_file):
         raise
 
 def generate_pdf_from_resume_data(
-    resume_data, template_theme="resume_template_2.html", chosen_theme="theme-default", sections_sort=None, hidden_sections=None, scale="medium", show_icons=False
+    resume_data, 
+    template_theme, 
+    chosen_theme,
+    sections_sort=None,
+    hidden_sections=None,
+    scale="medium",
+    show_icons=False,
+    show_avatar=False 
 ):
+   
     """
     Generates a PDF from resume data using a universal Jinja2 template.
     Optimized for fast WeasyPrint rendering with system fonts and efficient CSS.
@@ -125,6 +133,8 @@ def generate_pdf_from_resume_data(
             "theme_class": chosen_theme,
             "scale_class": scale_class,
             "show_icons": show_icons,
+         'show_avatar': show_avatar,  
+
             "style": template_config.get('template_style', 'default'),
             "layout": template_config.get('layout_type', 'single_column'),
             "optimize_for_print": True,  # Flag for print optimizations

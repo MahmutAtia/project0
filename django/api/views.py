@@ -355,39 +355,43 @@ def generate_pdf(request):
     resume_id = request.data.get("resume_id")
     template = request.data.get("templateTheme", "default.html")
     chosen_theme = request.data.get("chosenTheme", "theme-default")
-    scale = request.data.get("scale", "medium")  # New parameter
-    show_icons = request.data.get("showIcons", False)  # New parameter
+    scale = request.data.get("scale", "medium")
+    show_icons = request.data.get("showIcons", False)
+    show_avatar = request.data.get("showAvatar", False)  # Get the frontend choice
     
-    print(f"DEBUG: Received resume_id: {resume_id}, template: {template}, chosen_theme: {chosen_theme}, scale: {scale}, show_icons: {show_icons}")
+    print(f"DEBUG: Received resume_id: {resume_id}, template: {template}, chosen_theme: {chosen_theme}, scale: {scale}, show_icons: {show_icons}, show_avatar: {show_avatar}")
     
     if not resume_id:
         return Response(
             {"error": "resumeId is required"}, status=status.HTTP_400_BAD_REQUEST
         )
 
-    # Validate scale parameter
+    # Validate parameters
     if scale not in ["small", "medium", "large"]:
         return Response(
             {"error": "scale must be one of: small, medium, large"}, 
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    # Validate show_icons parameter
     if not isinstance(show_icons, bool):
         return Response(
             {"error": "showIcons must be a boolean"}, 
             status=status.HTTP_400_BAD_REQUEST
         )
         
-    try:
-        # Fetch resume data (keep this part)
-        resume = get_object_or_404(Resume, pk=resume_id, user=request.user)
-        # Ensure resume_data is serializable (it should be if it's from a JSONField)
-        resume_data = resume.resume
-        sections_sort = resume.sections_sort  # Get the sections sort order from the resume
-        hidden_sections = resume.hidden_sections  # Get the hidden sections from the resume
+    if not isinstance(show_avatar, bool):
+        return Response(
+            {"error": "showAvatar must be a boolean"}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
         
-        if not isinstance(resume_data, (dict, list)):  # Basic check
+    try:
+        resume = get_object_or_404(Resume, pk=resume_id, user=request.user)
+        resume_data = resume.resume
+        sections_sort = resume.sections_sort
+        hidden_sections = resume.hidden_sections
+        
+        if not isinstance(resume_data, (dict, list)):
             logger.error(
                 f"Resume data for ID {resume_id} is not a dict/list: {type(resume_data)}"
             )
@@ -396,14 +400,12 @@ def generate_pdf(request):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-        # Add user avatar to resume data for PDF generation
+        # Handle avatar inclusion based on FRONTEND CHOICE (showAvatar parameter)
         try:
             user_profile = UserProfile.get_or_create_profile(resume.user)
             
-            # Check if user wants to include avatar in PDF using the resume helper method
-            include_avatar = resume.should_include_avatar_in_pdf()
-            
-            if user_profile.avatar and include_avatar:
+            # Use the frontend's showAvatar parameter, not the stored preference
+            if user_profile.avatar and show_avatar:
                 # Ensure resume_data structure exists
                 if not resume_data:
                     resume_data = {}
@@ -412,13 +414,16 @@ def generate_pdf(request):
                 
                 # Add avatar to personal_information section for PDF generation
                 resume_data['personal_information']['avatar'] = user_profile.avatar
-                logger.info(f"Avatar added to resume {resume_id} for PDF generation (size: ~{len(user_profile.avatar)//1024}KB)")
-            elif user_profile.avatar and not include_avatar:
-                logger.info(f"Avatar excluded from resume {resume_id} PDF generation per user preference")
+                logger.info(f"Avatar added to resume {resume_id} for PDF generation per frontend choice (size: ~{len(user_profile.avatar)//1024}KB)")
+            elif user_profile.avatar and not show_avatar:
+                # Remove avatar from resume_data if it exists (user chose to exclude it)
+                if resume_data and 'personal_information' in resume_data and 'avatar' in resume_data['personal_information']:
+                    del resume_data['personal_information']['avatar']
+                logger.info(f"Avatar excluded from resume {resume_id} PDF generation per frontend choice")
             else:
-                logger.debug(f"No avatar found for user {resume.user.username}")
+                logger.debug(f"No avatar found for user {resume.user.username} or avatar disabled")
         except Exception as avatar_error:
-            logger.warning(f"Could not add avatar to PDF for resume {resume_id}: {avatar_error}")
+            logger.warning(f"Could not process avatar for PDF resume {resume_id}: {avatar_error}")
             # Continue without avatar - don't fail the entire PDF generation
 
     except Http404:
@@ -433,7 +438,7 @@ def generate_pdf(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
-    # Specify the correct template for documents if different from resumes
+    # Pass the showAvatar parameter to the PDF generation function
     pdf_data = generate_pdf_from_resume_data(
         resume_data=resume_data, 
         template_theme=template, 
@@ -441,28 +446,26 @@ def generate_pdf(request):
         sections_sort=sections_sort,
         hidden_sections=hidden_sections,
         scale=scale,
-        show_icons=show_icons
+        show_icons=show_icons,
+        show_avatar=show_avatar  # Pass this to the PDF generation function
     )
-    # 3. Handle PDF generation result
+    
+    # Handle PDF generation result
     if pdf_data:
-        # Prepare response
         pdf_buffer = io.BytesIO(pdf_data)
         filename = f"generated_document_{resume_id}"
 
-        # Use StreamingHttpResponse for potentially large files, even if generated sync
         response = StreamingHttpResponse(
-            file_iterator(pdf_buffer),  # Use the helper to stream from BytesIO
+            file_iterator(pdf_buffer),
             content_type="application/pdf",
         )
         response["Content-Disposition"] = (
-            f'inline; filename="{filename}"'  # Use inline or attachment
+            f'inline; filename="{filename}"'
         )
-        response["Content-Length"] = len(pdf_data)  # Set Content-Length
+        response["Content-Length"] = len(pdf_data)
         return response
     else:
         return HttpResponseServerError("Error generating PDF document.")
-
-
 # --- Add this new view to check task status ---
 @api_view(["GET"])
 def get_pdf_generation_status(request, task_id):
