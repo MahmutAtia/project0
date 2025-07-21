@@ -1,5 +1,5 @@
 {# Define sections that should appear in sidebar for this layout #}
-{% set sidebar_sections = ['languages', 'skills'] %}
+{% set sidebar_sections = ['languages', 'skills', 'interests'] %}
 
 {# Render sections based on sort order or default order #}
 {% if sections_sort %}
@@ -10,18 +10,18 @@
         {% elif section_key in sidebar_sections %}
             {% if section_key == 'languages' and languages %}
                 <section class="sidebar-section languages-section">
-                    <h3><i class="fas fa-language icon"></i> Languages</h3>
+                    <h3>{% if show_icons %}<i class="fas fa-language icon"></i> {% endif %}Languages</h3>
                     <ul class="contact-info">
                         {% for lang in languages %}
-                        <li><i class="fas fa-check-circle icon"></i>{{ lang.language }}{% if lang.proficiency %} ({{ lang.proficiency }}){% endif %}</li>
+                        <li>{% if show_icons %}<i class="fas fa-check-circle icon"></i>{% endif %}{{ lang.language }}{% if lang.proficiency %} ({{ lang.proficiency }}){% endif %}</li>
                         {% endfor %}
                     </ul>
                 </section>
             {% elif section_key == 'skills' and skills %}
                 <section class="sidebar-section skills-section">
-                    <h3><i class="fas fa-cogs icon"></i> Skills</h3>
+                    <h3>{% if show_icons %}<i class="fas fa-cogs icon"></i> {% endif %}Skills</h3>
                     <ul class="skills-list">
-                        {% for skill_group in skills[:3] %}
+                        {% for skill_group in skills %}
                             <li>
                                 {% if skill_group.category %}
                                     <strong class="skill-category">{{ skill_group.category }}:</strong>
@@ -35,6 +35,15 @@
                         {% endfor %}
                     </ul>
                 </section>
+            {% elif section_key == 'interests' and interests %}
+                <section class="sidebar-section interests-section">
+                    <h3>{% if show_icons %}<i class="fas fa-heart icon"></i> {% endif %}Interests</h3>
+                    <ul class="skills-list">
+                        {% for interest in interests %}
+                            <li>{{ interest.name }}</li>
+                        {% endfor %}
+                    </ul>
+                </section>
             {% endif %}
         {% endif %}
     {% endfor %}
@@ -42,10 +51,10 @@
     {# Default rendering when no sort order is specified #}
     {% if languages and (not hidden_sections or 'languages' not in hidden_sections) %}
         <section class="sidebar-section languages-section">
-            <h3><i class="fas fa-language icon"></i> Languages</h3>
+            <h3>{% if show_icons %}<i class="fas fa-language icon"></i> {% endif %}Languages</h3>
             <ul class="contact-info">
                 {% for lang in languages %}
-                <li><i class="fas fa-check-circle icon"></i>{{ lang.language }}{% if lang.proficiency %} ({{ lang.proficiency }}){% endif %}</li>
+                <li>{% if show_icons %}<i class="fas fa-check-circle icon"></i>{% endif %}{{ lang.language }}{% if lang.proficiency %} ({{ lang.proficiency }}){% endif %}</li>
                 {% endfor %}
             </ul>
         </section>
@@ -53,9 +62,9 @@
 
     {% if skills and (not hidden_sections or 'skills' not in hidden_sections) %}
         <section class="sidebar-section skills-section">
-            <h3><i class="fas fa-cogs icon"></i> Skills</h3>
+            <h3>{% if show_icons %}<i class="fas fa-cogs icon"></i> {% endif %}Skills</h3>
             <ul class="skills-list">
-                {% for skill_group in skills[:3] %}
+                {% for skill_group in skills %}
                     <li>
                         {% if skill_group.category %}
                             <strong class="skill-category">{{ skill_group.category }}:</strong>
@@ -66,6 +75,17 @@
                             {{ skill_group.name }}
                         {% endif %}
                     </li>
+                {% endfor %}
+            </ul>
+        </section>
+    {% endif %}
+
+    {% if interests and (not hidden_sections or 'interests' not in hidden_sections) %}
+        <section class="sidebar-section interests-section">
+            <h3>{% if show_icons %}<i class="fas fa-heart icon"></i> {% endif %}Interests</h3>
+            <ul class="skills-list">
+                {% for interest in interests %}
+                    <li>{{ interest.name }}</li>
                 {% endfor %}
             </ul>
         </section>

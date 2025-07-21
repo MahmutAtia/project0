@@ -1,4 +1,5 @@
 <style>
+        /* --- Base Variables --- */
         :root {
             --europass-blue: #003399; /* Official Europass blue */
             --europass-light-blue: #e6f2ff; /* Lighter shade for backgrounds */
@@ -7,23 +8,90 @@
             --europass-border-grey: #cccccc;
             --font-family-primary: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
             --font-family-heading: 'Source Serif Pro', 'Georgia', 'Times New Roman', serif;
-            --base-font-size: 10pt;
+            
+            /* --- Font Size Variables --- */
+            --font-size-sm: 9pt;
+            --font-size-md: 10pt;
+            --font-size-lg: 11.5pt;
+
+            /* Default to medium font size */
+            --base-font-size: var(--font-size-md);
+            --h1-font-size: 1.8rem;
+            --h2-font-size: 1.4rem;
+            --h3-font-size: 1.1rem;
+            
+            /* Content font sizes that scale */
+            --headline-font-size: 1.1rem;
+            --contact-font-size: 0.9rem;
+            --item-title-font-size: 1.1rem;
+            --item-subtitle-font-size: 1rem;
+            --item-date-font-size: 0.9rem;
+            --item-description-font-size: 0.95rem;
+            --skill-category-font-size: 0.95rem;
+            --skill-item-font-size: 0.85rem;
+
+            /* Spacing variables that scale with font size */
+            --spacing-xs: 0.15em;
+            --spacing-sm: 0.25em;
+            --spacing-md: 0.4em;
+            --spacing-lg: 0.6em;
+            --spacing-xl: 0.8em;
+
             --line-height: 1.5;
         }
 
+        /* --- Font Size Options with scaled spacing --- */
+        body.font-size-small {
+            --base-font-size: var(--font-size-sm);
+            --h1-font-size: 1.6rem;
+            --h2-font-size: 1.2rem;
+            --h3-font-size: 1rem;
+            
+            /* Scale all content fonts down */
+            --headline-font-size: 1rem;
+            --contact-font-size: 0.8rem;
+            --item-title-font-size: 1rem;
+            --item-subtitle-font-size: 0.9rem;
+            --item-date-font-size: 0.8rem;
+            --item-description-font-size: 0.85rem;
+            --skill-category-font-size: 0.85rem;
+            --skill-item-font-size: 0.75rem;
+            
+            --line-height: 1.4;
+        }
+        body.font-size-large {
+            --base-font-size: var(--font-size-lg);
+            --h1-font-size: 2rem;
+            --h2-font-size: 1.6rem;
+            --h3-font-size: 1.25rem;
+            
+            /* Scale all content fonts up */
+            --headline-font-size: 1.25rem;
+            --contact-font-size: 1rem;
+            --item-title-font-size: 1.25rem;
+            --item-subtitle-font-size: 1.1rem;
+            --item-date-font-size: 1rem;
+            --item-description-font-size: 1.05rem;
+            --skill-category-font-size: 1.05rem;
+            --skill-item-font-size: 0.95rem;
+            
+            --line-height: 1.6;
+        }
+
         /* --- Theme Variations --- */
+        body.theme-default, :root {
+            /* Keep default Europass colors */
+        }
         body.theme-grey {
             --europass-blue: #6c757d; /* Bootstrap secondary grey */
             --europass-light-blue: #f8f9fa; /* Bootstrap light grey */
             --europass-grey: #343a40; /* Bootstrap dark grey */
             --europass-border-grey: #ced4da; /* Bootstrap lighter grey */
         }
-
         body.theme-blue {
             --europass-blue: #0056b3; /* Darker blue */
             --europass-light-blue: #cce5ff; /* Lighter blue */
         }
-
         body.theme-green {
             --europass-blue: #28a745; /* Bootstrap success green */
             --europass-light-blue: #d4edda; /* Light green */
@@ -33,7 +101,7 @@
 
         @page {
             size: A4;
-            margin: 0.8cm 0.4cm 0.4cm 0.4cm;
+            margin: 0.2cm; /* Minimal page margins for maximum space */
             orphans: 2;
             widows: 2;
         }
@@ -55,148 +123,194 @@
             font-family: var(--font-family-heading);
         }
         
-        /* Layout */
+        /* Layout - Optimized for better space usage */
         .resume-container {
             display: flex;
             flex-direction: row;
         }
 
         .sidebar {
-            flex: 0 0 30%;
+            flex: 0 0 32%; /* Increased sidebar width */
             background-color: var(--europass-light-blue);
-            padding: 1cm 1cm;
+            padding: var(--spacing-sm) var(--spacing-md); /* Optimized padding */
             border-right: 1px solid var(--europass-border-grey);
             box-sizing: border-box;
         }
 
         .main-content {
             flex: 1;
-            padding: 1cm 1cm;
+            padding: var(--spacing-md) var(--spacing-lg); /* More generous padding for main content */
             box-sizing: border-box;
         }
 
-        /* Sidebar Styling */
+        /* Sidebar Styling - Better spacing and layout */
         .sidebar h1 {
-            font-size: 1.8rem;
+            font-size: var(--h1-font-size);
             color: var(--europass-blue);
-            margin: 0 0 0.2em 0;
+            margin: 0 0 var(--spacing-xs) 0;
             font-weight: 700;
+            text-align: center;
+            line-height: 1.2;
         }
+        
         .sidebar .headline {
-            font-size: 1.1rem;
+            font-size: var(--headline-font-size);
             color: var(--europass-grey);
-            margin-bottom: 1.5em;
+            margin-bottom: var(--spacing-lg);
             font-weight: 600;
+            text-align: center;
+            line-height: 1.3;
         }
+        
         .sidebar-section {
-            margin-bottom: 1.2em;
+            margin-bottom: var(--spacing-lg);
         }
+        
+        .sidebar-section:last-child {
+            margin-bottom: 0;
+        }
+        
         .sidebar-section h3 {
-            font-size: 1.1rem;
+            font-size: var(--h3-font-size);
             color: var(--europass-blue);
             border-bottom: 1px solid var(--europass-border-grey);
-            padding-bottom: 0.3em;
-            margin-bottom: 0.8em;
+            padding-bottom: var(--spacing-xs);
+            margin-bottom: var(--spacing-sm);
             font-weight: 700;
         }
+        
+        .sidebar-section h3 i.icon {
+            margin-right: var(--spacing-xs);
+            font-size: 0.9em;
+        }
+        
         .contact-info {
             list-style: none;
             padding: 0;
             margin: 0;
-            font-size: 0.9rem;
+            font-size: var(--contact-font-size);
         }
+        
         .contact-info li {
-            margin-bottom: 0.6em;
+            margin-bottom: var(--spacing-sm);
             display: flex;
             align-items: flex-start;
+            line-height: 1.4;
         }
+        
         .contact-info i.icon {
             color: var(--europass-blue);
-            margin-right: 8px;
-            width: 16px;
+            margin-right: var(--spacing-sm);
+            width: 1.2em;
             text-align: center;
-            margin-top: 0.15em;
+            margin-top: 0.1em;
+            flex-shrink: 0;
         }
+        
         .contact-info a {
             color: var(--europass-grey);
             text-decoration: none;
+            word-break: break-word;
         }
+        
         .contact-info a:hover {
             text-decoration: underline;
             color: var(--europass-blue);
         }
+        
         .sidebar-avatar {
-            width: 100px;
-            height: 100px;
+            width: 5.5em; /* Slightly smaller for better proportion */
+            height: 5.5em;
             border-radius: 50%;
             object-fit: cover;
             display: block;
-            margin: 0 auto 1.5em auto;
-            border: 3px solid var(--europass-border-grey);
+            margin: 0 auto var(--spacing-md) auto;
+            border: 2px solid var(--europass-border-grey);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
+        
         .skills-list {
             list-style: none;
             padding: 0;
             margin: 0;
         }
+        
         .skills-list .skill-category {
             font-weight: 700;
             color: var(--europass-blue);
-            margin-top: 0.8em;
-            margin-bottom: 0.3em;
-            font-size: 0.95rem;
+            margin-top: var(--spacing-md);
+            margin-bottom: var(--spacing-xs);
+            font-size: var(--skill-category-font-size);
+            line-height: 1.3;
         }
+        
         .skills-list .skill-category:first-child {
             margin-top: 0;
         }
+        
         .skills-list li:not(.skill-category) {
             background-color: #ffffff;
             border: 1px solid var(--europass-border-grey);
-            padding: 3px 8px;
-            border-radius: 4px;
-            margin-bottom: 6px;
-            margin-right: 6px;
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: 3px;
+            margin-bottom: var(--spacing-xs);
+            margin-right: var(--spacing-xs);
             display: inline-block;
-            font-size: 0.85rem;
+            font-size: var(--skill-item-font-size);
+            line-height: 1.2;
         }
 
         /* Main Content Styling */
         .main-content h2 {
-            font-size: 1.4rem;
+            font-size: var(--h2-font-size);
             color: var(--europass-blue);
-            margin: 0 0 1em 0;
-            padding-bottom: 0.3em;
-            padding-left: 10px;
-            border-left: 3px solid var(--europass-blue);
+            margin: 0 0 var(--spacing-lg) 0;
+            padding-bottom: var(--spacing-xs);
+            padding-left: var(--spacing-md);
+            border-left: 4px solid var(--europass-blue);
             font-weight: 700;
             page-break-after: avoid;
+            line-height: 1.3;
         }
+        
+        .main-content h2 i {
+            margin-right: var(--spacing-sm);
+            font-size: 0.9em;
+        }
+        
         .main-content h2:first-child {
             margin-top: 0;
         }
+        
         .main-content section {
-            margin-bottom: 1.5em;
+            margin-bottom: var(--spacing-xl);
             page-break-inside: auto;
         }
+        
         .main-content section:last-child {
             margin-bottom: 0;
         }
+        
         .main-content p {
-            margin: 0 0 0.8em 0;
+            margin: 0 0 var(--spacing-md) 0;
+            line-height: 1.5;
         }
+        
         .main-content ul {
-            padding-left: 20px;
-            margin-top: 0.5em;
-            margin-bottom: 1em;
+            padding-left: var(--spacing-xl);
+            margin-top: var(--spacing-sm);
+            margin-bottom: var(--spacing-lg);
         }
+        
         .main-content li {
-            margin-bottom: 0.4em;
+            margin-bottom: var(--spacing-xs);
+            line-height: 1.4;
         }
 
         .item {
-            margin-bottom: 1em;
-            padding-left: 15px; 
-            margin-left: 10px;
+            margin-bottom: var(--spacing-lg);
+            padding-left: var(--spacing-md); 
+            margin-left: var(--spacing-sm);
             page-break-inside: auto;
             position: relative;
         }
@@ -206,60 +320,83 @@
         }
 
         .item-header {
-            margin-bottom: 0.3em;
+            margin-bottom: var(--spacing-sm);
             page-break-after: avoid;
         }
 
         .item-title {
-            font-size: 1.1rem;
+            font-size: var(--item-title-font-size);
             font-weight: 700;
             color: var(--europass-grey);
             display: block;
-            margin-bottom: 0.1em;
+            margin-bottom: var(--spacing-xs);
+            line-height: 1.3;
         }
+        
         .item-subtitle {
-            font-size: 1rem;
+            font-size: var(--item-subtitle-font-size);
             font-weight: 600;
             color: var(--europass-grey);
             display: block;
-            margin-bottom: 0.3em;
+            margin-bottom: var(--spacing-xs);
+            line-height: 1.3;
         }
+        
         .item-date-location {
-            font-size: 0.9rem;
+            font-size: var(--item-date-font-size);
             color: var(--europass-blue);
             font-weight: 600;
-            margin-bottom: 0.5em;
+            margin-bottom: var(--spacing-sm);
+            line-height: 1.2;
         }
-        .item-date-location .location { margin-left: 1em; }
+        
+        .item-date-location .location { 
+            margin-left: var(--spacing-lg); 
+        }
 
         .item .description {
-            font-size: 0.95rem;
+            font-size: var(--item-description-font-size);
+            line-height: 1.4;
         }
+        
         .item .description ul {
             list-style: disc;
-            margin-top: 0.3em;
-            margin-bottom: 0.5em;
+            margin-top: var(--spacing-xs);
+            margin-bottom: var(--spacing-sm);
         }
+        
         .item .description ul li {
-            margin-bottom: 0.2em;
+            margin-bottom: var(--spacing-xs);
         }
+        
         .project-link, .project-tech {
-            font-size: 0.9rem;
-            margin-top: 0.5em;
+            font-size: var(--item-date-font-size);
+            margin-top: var(--spacing-sm);
+            line-height: 1.3;
         }
-        .project-link i { color: var(--europass-blue); margin-right: 5px; }
-        .project-tech strong { font-weight: 600; }
+        
+        .project-link i { 
+            color: var(--europass-blue); 
+            margin-right: var(--spacing-xs); 
+        }
+        
+        .project-tech strong { 
+            font-weight: 600; 
+        }
 
         /* RTL Support */
         html[lang="ar"] body { direction: rtl; text-align: right; }
         html[lang="ar"] .resume-container { flex-direction: row-reverse; }
         html[lang="ar"] .sidebar { border-right: none; border-left: 1px solid var(--europass-border-grey); }
-        html[lang="ar"] ul { padding-left: 0; padding-right: 20px; }
+        html[lang="ar"] .sidebar h1, html[lang="ar"] .sidebar .headline { text-align: center; }
+        html[lang="ar"] ul { padding-left: 0; padding-right: var(--spacing-xl); }
         html[lang="ar"] .sidebar ul { padding-right: 0; }
-        html[lang="ar"] .main-content h2 { padding-left: 0; padding-right: 10px; border-left: none; border-right: 3px solid var(--europass-blue); }
-        html[lang="ar"] .main-content .item { padding-left: 0; padding-right: 15px; margin-left: 0; margin-right: 10px; }
-        html[lang="ar"] i.icon { margin-right: 0; margin-left: 8px; }
-        html[lang="ar"] .skills-list li { margin-right: 0; margin-left: 6px; }
-        html[lang="ar"] .item-date-location .location { margin-left: 0; margin-right: 1em; }
-        html[lang="ar"] .project-link i { margin-right: 0; margin-left: 5px; }
-    </style>
+        html[lang="ar"] .main-content h2 { padding-left: 0; padding-right: var(--spacing-md); border-left: none; border-right: 4px solid var(--europass-blue); }
+        html[lang="ar"] .main-content h2 i { margin-right: 0; margin-left: var(--spacing-sm); }
+        html[lang="ar"] .main-content .item { padding-left: 0; padding-right: var(--spacing-md); margin-left: 0; margin-right: var(--spacing-sm); }
+        html[lang="ar"] i.icon { margin-right: 0; margin-left: var(--spacing-sm); }
+        html[lang="ar"] .sidebar-section h3 i.icon { margin-right: 0; margin-left: var(--spacing-xs); }
+        html[lang="ar"] .skills-list li { margin-right: 0; margin-left: var(--spacing-xs); }
+        html[lang="ar"] .item-date-location .location { margin-left: 0; margin-right: var(--spacing-lg); }
+        html[lang="ar"] .project-link i { margin-right: 0; margin-left: var(--spacing-xs); }
+</style>
