@@ -357,9 +357,10 @@ def generate_pdf(request):
     chosen_theme = request.data.get("chosenTheme", "theme-default")
     scale = request.data.get("scale", "medium")
     show_icons = request.data.get("showIcons", False)
-    show_avatar = request.data.get("showAvatar", False)  # Get the frontend choice
+    show_avatar = request.data.get("showAvatar", False)
+    font_family = request.data.get("fontFamily", None)  # Add font family parameter
     
-    print(f"DEBUG: Received resume_id: {resume_id}, template: {template}, chosen_theme: {chosen_theme}, scale: {scale}, show_icons: {show_icons}, show_avatar: {show_avatar}")
+    print(f"DEBUG: Received resume_id: {resume_id}, template: {template}, chosen_theme: {chosen_theme}, scale: {scale}, show_icons: {show_icons}, show_avatar: {show_avatar}, font_family: {font_family}")
     
     if not resume_id:
         return Response(
@@ -438,7 +439,7 @@ def generate_pdf(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
-    # Pass the showAvatar parameter to the PDF generation function
+    # Pass the showAvatar and fontFamily parameters to the PDF generation function
     pdf_data = generate_pdf_from_resume_data(
         resume_data=resume_data, 
         template_theme=template, 
@@ -447,7 +448,8 @@ def generate_pdf(request):
         hidden_sections=hidden_sections,
         scale=scale,
         show_icons=show_icons,
-        show_avatar=show_avatar  # Pass this to the PDF generation function
+        show_avatar=show_avatar,
+        font_family=font_family  # Pass font family to PDF generation
     )
     
     # Handle PDF generation result
@@ -466,7 +468,8 @@ def generate_pdf(request):
         return response
     else:
         return HttpResponseServerError("Error generating PDF document.")
-# --- Add this new view to check task status ---
+
+
 @api_view(["GET"])
 def get_pdf_generation_status(request, task_id):
     """

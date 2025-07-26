@@ -24,110 +24,135 @@ def download_assets():
     else:
         print("⏭️  Font Awesome CSS already exists, skipping...")
 
-    # Google Fonts CSS for default template (Roboto + Open Sans - Professional & Clean)
-    gf_default_path = "static/css/google-fonts-default.css"
-    if not os.path.exists(gf_default_path):
-        print("Downloading Google Fonts CSS for default template...")
-        gf_url = "https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;600;700&display=swap"
-        gf_response = requests.get(gf_url)
-        with open(gf_default_path, "w", encoding="utf-8") as f:
-            f.write(gf_response.text)
+    # Font combinations for each template
+    font_combinations = {
+        'roboto-opensans': {
+            'name': 'Roboto + Open Sans',
+            'url': 'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;600;700&display=swap'
+        },
+        'inter-sourcesans': {
+            'name': 'Inter + Source Sans',
+            'url': 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Source+Sans+Pro:wght@300;400;600;700&display=swap'
+        },
+        'lato-merriweather': {
+            'name': 'Lato + Merriweather',
+            'url': 'https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Merriweather:wght@400;700&display=swap'
+        },
+        'nunito-crimson': {
+            'name': 'Nunito + Crimson Text',
+            'url': 'https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700&family=Crimson+Text:wght@400;600;700&display=swap'
+        },
+        'sourcesans-sourceserif': {
+            'name': 'Source Sans Pro + Source Serif Pro',
+            'url': 'https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&family=Source+Serif+Pro:wght@400;600;700&display=swap'
+        },
+        'calibri-times': {
+            'name': 'Calibri + Times New Roman',
+            'fallback': True,  # System fonts, no download needed
+            'primary': 'Calibri, sans-serif',
+            'secondary': '"Times New Roman", serif'
+        },
+        'arial-georgia': {
+            'name': 'Arial + Georgia',
+            'fallback': True,  # System fonts, no download needed
+            'primary': 'Arial, sans-serif',
+            'secondary': 'Georgia, serif'
+        },
+        'roboto-robotoslab': {
+            'name': 'Roboto + Roboto Slab',
+            'url': 'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Slab:wght@400;500;700&display=swap'
+        },
+        'inter-poppins': {
+            'name': 'Inter + Poppins',
+            'url': 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap'
+        },
+        'montserrat-sourcesans': {
+            'name': 'Montserrat + Source Sans',
+            'url': 'https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Source+Sans+Pro:wght@300;400;600;700&display=swap'
+        },
+        'nunitosans-opensans': {
+            'name': 'Nunito Sans + Open Sans',
+            'url': 'https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700&family=Open+Sans:wght@300;400;600;700&display=swap'
+        },
+        'worksans-lora': {
+            'name': 'Work Sans + Lora',
+            'url': 'https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&family=Lora:wght@400;500;700&display=swap'
+        },
+        'crimson-lato': {
+            'name': 'Crimson Text + Lato',
+            'url': 'https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600;700&family=Lato:wght@300;400;700&display=swap'
+        },
+        'playfair-sourcesans': {
+            'name': 'Playfair Display + Source Sans',
+            'url': 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;700&family=Source+Sans+Pro:wght@300;400;600;700&display=swap'
+        },
+        'cormorant-lato': {
+            'name': 'Cormorant + Lato',
+            'url': 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;700&family=Lato:wght@300;400;700&display=swap'
+        },
+        'librebaskerville-opensans': {
+            'name': 'Libre Baskerville + Open Sans',
+            'url': 'https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Open+Sans:wght@300;400;600;700&display=swap'
+        },
+        'nunitosans-sourceserif': {
+            'name': 'Nunito Sans + Source Serif',
+            'url': 'https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700&family=Source+Serif+Pro:wght@400;600&display=swap'
+        },
+        'system-georgia': {
+            'name': 'System UI + Georgia',
+            'fallback': True,  # System fonts, no download needed
+            'primary': 'system-ui, sans-serif',
+            'secondary': 'Georgia, serif'
+        },
+        'inter-charter': {
+            'name': 'Inter + Charter',
+            'url': 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap',
+            'secondary_fallback': 'Charter, serif'  # Charter is system font on many systems
+        },
+        'karla-spectral': {
+            'name': 'Karla + Spectral',
+            'url': 'https://fonts.googleapis.com/css2?family=Karla:wght@300;400;500;700&family=Spectral:wght@400;500;700&display=swap'
+        },
+        'poppins-merriweather': {
+            'name': 'Poppins + Merriweather',
+            'url': 'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Merriweather:wght@400;700&display=swap'
+        },
+        'comfortaa-opensans': {
+            'name': 'Comfortaa + Open Sans',
+            'url': 'https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;700&family=Open+Sans:wght@300;400;600;700&display=swap'
+        },
+        'raleway-lora': {
+            'name': 'Raleway + Lora',
+            'url': 'https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&family=Lora:wght@400;500;700&display=swap'
+        },
+        'quicksand-crimson': {
+            'name': 'Quicksand + Crimson Text',
+            'url': 'https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;700&family=Crimson+Text:wght@400;600;700&display=swap'
+        },
+        'ibmplexsans-ibmplexserif': {
+            'name': 'IBM Plex Sans + IBM Plex Serif',
+            'url': 'https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;700&family=IBM+Plex+Serif:wght@400;500;700&display=swap'
+        }
+    }
 
-        # Download font files for default template
-        download_font_files_from_css(gf_response.text, "default")
-        print("✅ Google Fonts for default template downloaded")
-    else:
-        print("⏭️  Google Fonts for default template already exists, skipping...")
+    # Download font combinations
+    for font_key, font_config in font_combinations.items():
+        if font_config.get('fallback'):
+            print(f"⏭️  {font_config['name']} uses system fonts, skipping download...")
+            continue
+            
+        css_path = f"static/css/fonts-{font_key}.css"
+        if not os.path.exists(css_path):
+            print(f"Downloading {font_config['name']} fonts...")
+            response = requests.get(font_config['url'])
+            with open(css_path, "w", encoding="utf-8") as f:
+                f.write(response.text)
 
-    # Google Fonts CSS for europass template (Source Sans Pro + Source Serif Pro - Official EU Style)
-    gf_europass_path = "static/css/google-fonts-europass.css"
-    if not os.path.exists(gf_europass_path):
-        print("Downloading Google Fonts CSS for europass template...")
-        gf_url = "https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&family=Source+Serif+Pro:wght@400;600;700&display=swap"
-        gf_response = requests.get(gf_url)
-        with open(gf_europass_path, "w", encoding="utf-8") as f:
-            f.write(gf_response.text)
-
-        # Download font files for europass template
-        download_font_files_from_css(gf_response.text, "europass")
-        print("✅ Google Fonts for europass template downloaded")
-    else:
-        print("⏭️  Google Fonts for europass template already exists, skipping...")
-
-    # Google Fonts CSS for modern theme (Inter + Poppins - Clean & Professional)
-    gf_modern_path = "static/css/google-fonts-modern.css"
-    if not os.path.exists(gf_modern_path):
-        print("Downloading Google Fonts CSS for modern theme...")
-        gf_url = "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap"
-        gf_response = requests.get(gf_url)
-        with open(gf_modern_path, "w", encoding="utf-8") as f:
-            f.write(gf_response.text)
-
-        # Download font files for modern theme
-        download_font_files_from_css(gf_response.text, "modern")
-        print("✅ Google Fonts for modern theme downloaded")
-    else:
-        print("⏭️  Google Fonts for modern theme already exists, skipping...")
-
-    # Google Fonts CSS for classic theme (Crimson Text + Lato - Elegant & Timeless)
-    gf_classic_path = "static/css/google-fonts-classic.css"
-    if not os.path.exists(gf_classic_path):
-        print("Downloading Google Fonts CSS for classic theme...")
-        gf_url = "https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600;700&family=Lato:wght@300;400;700&display=swap"
-        gf_response = requests.get(gf_url)
-        with open(gf_classic_path, "w", encoding="utf-8") as f:
-            f.write(gf_response.text)
-
-        # Download font files for classic theme
-        download_font_files_from_css(gf_response.text, "classic")
-        print("✅ Google Fonts for classic theme downloaded")
-    else:
-        print("⏭️  Google Fonts for classic theme already exists, skipping...")
-
-    # Google Fonts CSS for minimal theme (Nunito Sans + Source Serif Pro - Clean & Minimal)
-    gf_minimal_path = "static/css/google-fonts-minimal.css"
-    if not os.path.exists(gf_minimal_path):
-        print("Downloading Google Fonts CSS for minimal theme...")
-        gf_url = "https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700&family=Source+Serif+Pro:wght@400;600&display=swap"
-        gf_response = requests.get(gf_url)
-        with open(gf_minimal_path, "w", encoding="utf-8") as f:
-            f.write(gf_response.text)
-
-        # Download font files for minimal theme
-        download_font_files_from_css(gf_response.text, "minimal")
-        print("✅ Google Fonts for minimal theme downloaded")
-    else:
-        print("⏭️  Google Fonts for minimal theme already exists, skipping...")
-
-    # Google Fonts CSS for creative theme (Poppins + Merriweather - Creative & Vibrant)
-    gf_creative_path = "static/css/google-fonts-creative.css"
-    if not os.path.exists(gf_creative_path):
-        print("Downloading Google Fonts CSS for creative theme...")
-        gf_url = "https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Merriweather:wght@400;700&display=swap"
-        gf_response = requests.get(gf_url)
-        with open(gf_creative_path, "w", encoding="utf-8") as f:
-            f.write(gf_response.text)
-
-        # Download font files for creative theme
-        download_font_files_from_css(gf_response.text, "creative")
-        print("✅ Google Fonts for creative theme downloaded")
-    else:
-        print("⏭️  Google Fonts for creative theme already exists, skipping...")
-
-    # Google Fonts CSS for professional theme (Inter + Poppins - Modern & Professional)
-    gf_professional_path = "static/css/google-fonts-professional.css"
-    if not os.path.exists(gf_professional_path):
-        print("Downloading Google Fonts CSS for professional theme...")
-        gf_url = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Poppins:wght@600;700&display=swap"
-        gf_response = requests.get(gf_url)
-        with open(gf_professional_path, "w", encoding="utf-8") as f:
-            f.write(gf_response.text)
-
-        # Download font files for professional theme
-        download_font_files_from_css(gf_response.text, "professional")
-        print("✅ Google Fonts for professional theme downloaded")
-    else:
-        print("⏭️  Google Fonts for professional theme already exists, skipping...")
+            # Download font files
+            download_font_files_from_css(response.text, font_key)
+            print(f"✅ {font_config['name']} fonts downloaded")
+        else:
+            print(f"⏭️  {font_config['name']} fonts already exist, skipping...")
 
     # Download Font Awesome font files
     fa_fonts = ["fa-solid-900.woff2", "fa-brands-400.woff2", "fa-regular-400.woff2"]
@@ -144,12 +169,12 @@ def download_assets():
         else:
             print(f"⏭️  {font_file} already exists, skipping...")
 
-    # Update Font Awesome CSS to use local fonts (only if CSS was downloaded)
+    # Update Font Awesome CSS to use local fonts
     if os.path.exists(fa_css_path):
         with open(fa_css_path, "r", encoding="utf-8") as f:
             fa_css = f.read()
 
-        if "../webfonts/" in fa_css:  # Only update if not already updated
+        if "../webfonts/" in fa_css:
             fa_css = fa_css.replace("../webfonts/", "../fonts/")
             with open(fa_css_path, "w", encoding="utf-8") as f:
                 f.write(fa_css)
@@ -158,28 +183,24 @@ def download_assets():
     print("🎉 All assets downloaded successfully!")
 
 
-def download_font_files_from_css(css_content, template_suffix):
+def download_font_files_from_css(css_content, font_key):
     """Download font files referenced in Google Fonts CSS"""
     font_urls = re.findall(r"url\((https://fonts\.gstatic\.com/[^)]+)\)", css_content)
 
     for i, font_url in enumerate(font_urls):
-        font_filename = f"font_{template_suffix}_{i+1}.woff2"
+        font_filename = f"font_{font_key}_{i+1}.woff2"
         font_path = f"static/fonts/{font_filename}"
 
         if not os.path.exists(font_path):
-            print(
-                f"  Downloading font file {i+1}/{len(font_urls)} for {template_suffix}..."
-            )
+            print(f"  Downloading font file {i+1}/{len(font_urls)} for {font_key}...")
             font_response = requests.get(font_url)
             with open(font_path, "wb") as f:
                 f.write(font_response.content)
         else:
-            print(
-                f"  ⏭️  Font file {i+1} for {template_suffix} already exists, skipping..."
-            )
+            print(f"  ⏭️  Font file {i+1} for {font_key} already exists, skipping...")
 
         # Update CSS to use local fonts
-        css_file = f"static/css/google-fonts-{template_suffix}.css"
+        css_file = f"static/css/fonts-{font_key}.css"
         with open(css_file, "r", encoding="utf-8") as f:
             css_content_updated = f.read()
         css_content_updated = css_content_updated.replace(

@@ -99,6 +99,31 @@
             --europass-border-grey: #c3e6cb; /* Lighter green border */
         }
 
+        /* --- Font Family Definitions for Europass --- */
+/* Source Sans Pro + Source Serif Pro (Default) */
+body.sourcesans-sourceserif, :root {
+    --font-family-main: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-family-heading: 'Source Serif Pro', 'Source Sans Pro', Georgia, serif;
+}
+
+/* Calibri + Times New Roman (System fonts) */
+body.calibri-times {
+    --font-family-main: 'Calibri', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-family-heading: 'Times New Roman', 'Calibri', Times, serif;
+}
+
+/* Arial + Georgia (System fonts) */
+body.arial-georgia {
+    --font-family-main: 'Arial', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-family-heading: 'Georgia', 'Arial', serif;
+}
+
+/* Roboto + Roboto Slab */
+body.roboto-robotoslab {
+    --font-family-main: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-family-heading: 'Roboto Slab', 'Roboto', Georgia, serif;
+}
+
         @page {
             size: A4;
             margin: 0.2cm; /* Minimal page margins for maximum space */
@@ -151,7 +176,7 @@
             color: var(--europass-blue);
             margin: 0 0 var(--spacing-xs) 0;
             font-weight: 700;
-            text-align: center;
+            text-align: center; 
             line-height: 1.2;
         }
         

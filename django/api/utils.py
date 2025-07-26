@@ -67,7 +67,6 @@ def extract_text_from_file(uploaded_file):
     except Exception as e:
         logger.error(f"Error extracting text from file: {e}")
         raise
-
 def generate_pdf_from_resume_data(
     resume_data, 
     template_theme, 
@@ -76,7 +75,8 @@ def generate_pdf_from_resume_data(
     hidden_sections=None,
     scale="medium",
     show_icons=False,
-    show_avatar=False 
+    show_avatar=False,
+    font_family=None  # Add new parameter
 ):
    
     """
@@ -97,6 +97,10 @@ def generate_pdf_from_resume_data(
             Defaults to "medium".
         show_icons (bool, optional): Whether to show icons in section headers.
             Defaults to False.
+        show_avatar (bool, optional): Whether to show avatar in the resume.
+            Defaults to False.
+        font_family (str, optional): Font family combination to use.
+            Defaults to template's default font.
 
     Returns:
         bytes: The PDF file content as bytes. Returns None on error.
@@ -128,12 +132,17 @@ def generate_pdf_from_resume_data(
         }
         scale_class = scale_class_map.get(scale, "")
         
+        # Get font configuration
+        font_config = get_font_config(font_family, template_config.get('template_style', 'default'))
+        
         # Prepare template context with optimization flags
         template_context = {
             "theme_class": chosen_theme,
             "scale_class": scale_class,
             "show_icons": show_icons,
-         'show_avatar': show_avatar,  
+            'show_avatar': show_avatar,
+            "font_family": font_config['css_name'],  # Add font family to context
+            "font_css_file": font_config['css_file'],  # Add font CSS file to context
 
             "style": template_config.get('template_style', 'default'),
             "layout": template_config.get('layout_type', 'single_column'),
@@ -173,7 +182,190 @@ def generate_pdf_from_resume_data(
         import traceback
         traceback.print_exc()
         return None
+
+
+def get_font_config(font_family, template_style):
+    """
+    Returns font configuration based on font family selection.
     
+    Args:
+        font_family (str): The font family key (e.g., 'roboto-opensans')
+        template_style (str): The template style to get default font if none specified
+        
+    Returns:
+        dict: Font configuration with CSS class name and file path
+    """
+    
+    # Font family configurations
+    font_configs = {
+        'roboto-opensans': {
+            'css_name': 'roboto-opensans',
+            'css_file': 'fonts-roboto-opensans.css',
+            'primary': 'Roboto',
+            'secondary': 'Open Sans'
+        },
+        'inter-sourcesans': {
+            'css_name': 'inter-sourcesans',
+            'css_file': 'fonts-inter-sourcesans.css',
+            'primary': 'Inter',
+            'secondary': 'Source Sans Pro'
+        },
+        'lato-merriweather': {
+            'css_name': 'lato-merriweather',
+            'css_file': 'fonts-lato-merriweather.css',
+            'primary': 'Lato',
+            'secondary': 'Merriweather'
+        },
+        'nunito-crimson': {
+            'css_name': 'nunito-crimson',
+            'css_file': 'fonts-nunito-crimson.css',
+            'primary': 'Nunito',
+            'secondary': 'Crimson Text'
+        },
+        'sourcesans-sourceserif': {
+            'css_name': 'sourcesans-sourceserif',
+            'css_file': 'fonts-sourcesans-sourceserif.css',
+            'primary': 'Source Sans Pro',
+            'secondary': 'Source Serif Pro'
+        },
+        'calibri-times': {
+            'css_name': 'calibri-times',
+            'css_file': None,  # System fonts
+            'primary': 'Calibri',
+            'secondary': 'Times New Roman'
+        },
+        'arial-georgia': {
+            'css_name': 'arial-georgia',
+            'css_file': None,  # System fonts
+            'primary': 'Arial',
+            'secondary': 'Georgia'
+        },
+        'roboto-robotoslab': {
+            'css_name': 'roboto-robotoslab',
+            'css_file': 'fonts-roboto-robotoslab.css',
+            'primary': 'Roboto',
+            'secondary': 'Roboto Slab'
+        },
+        'inter-poppins': {
+            'css_name': 'inter-poppins',
+            'css_file': 'fonts-inter-poppins.css',
+            'primary': 'Inter',
+            'secondary': 'Poppins'
+        },
+        'montserrat-sourcesans': {
+            'css_name': 'montserrat-sourcesans',
+            'css_file': 'fonts-montserrat-sourcesans.css',
+            'primary': 'Montserrat',
+            'secondary': 'Source Sans Pro'
+        },
+        'nunitosans-opensans': {
+            'css_name': 'nunitosans-opensans',
+            'css_file': 'fonts-nunitosans-opensans.css',
+            'primary': 'Nunito Sans',
+            'secondary': 'Open Sans'
+        },
+        'worksans-lora': {
+            'css_name': 'worksans-lora',
+            'css_file': 'fonts-worksans-lora.css',
+            'primary': 'Work Sans',
+            'secondary': 'Lora'
+        },
+        'crimson-lato': {
+            'css_name': 'crimson-lato',
+            'css_file': 'fonts-crimson-lato.css',
+            'primary': 'Crimson Text',
+            'secondary': 'Lato'
+        },
+        'playfair-sourcesans': {
+            'css_name': 'playfair-sourcesans',
+            'css_file': 'fonts-playfair-sourcesans.css',
+            'primary': 'Playfair Display',
+            'secondary': 'Source Sans Pro'
+        },
+        'cormorant-lato': {
+            'css_name': 'cormorant-lato',
+            'css_file': 'fonts-cormorant-lato.css',
+            'primary': 'Cormorant Garamond',
+            'secondary': 'Lato'
+        },
+        'librebaskerville-opensans': {
+            'css_name': 'librebaskerville-opensans',
+            'css_file': 'fonts-librebaskerville-opensans.css',
+            'primary': 'Libre Baskerville',
+            'secondary': 'Open Sans'
+        },
+        'nunitosans-sourceserif': {
+            'css_name': 'nunitosans-sourceserif',
+            'css_file': 'fonts-nunitosans-sourceserif.css',
+            'primary': 'Nunito Sans',
+            'secondary': 'Source Serif Pro'
+        },
+        'system-georgia': {
+            'css_name': 'system-georgia',
+            'css_file': None,  # System fonts
+            'primary': 'system-ui',
+            'secondary': 'Georgia'
+        },
+        'inter-charter': {
+            'css_name': 'inter-charter',
+            'css_file': 'fonts-inter-charter.css',
+            'primary': 'Inter',
+            'secondary': 'Charter'
+        },
+        'karla-spectral': {
+            'css_name': 'karla-spectral',
+            'css_file': 'fonts-karla-spectral.css',
+            'primary': 'Karla',
+            'secondary': 'Spectral'
+        },
+        'poppins-merriweather': {
+            'css_name': 'poppins-merriweather',
+            'css_file': 'fonts-poppins-merriweather.css',
+            'primary': 'Poppins',
+            'secondary': 'Merriweather'
+        },
+        'comfortaa-opensans': {
+            'css_name': 'comfortaa-opensans',
+            'css_file': 'fonts-comfortaa-opensans.css',
+            'primary': 'Comfortaa',
+            'secondary': 'Open Sans'
+        },
+        'raleway-lora': {
+            'css_name': 'raleway-lora',
+            'css_file': 'fonts-raleway-lora.css',
+            'primary': 'Raleway',
+            'secondary': 'Lora'
+        },
+        'quicksand-crimson': {
+            'css_name': 'quicksand-crimson',
+            'css_file': 'fonts-quicksand-crimson.css',
+            'primary': 'Quicksand',
+            'secondary': 'Crimson Text'
+        },
+        'ibmplexsans-ibmplexserif': {
+            'css_name': 'ibmplexsans-ibmplexserif',
+            'css_file': 'fonts-ibmplexsans-ibmplexserif.css',
+            'primary': 'IBM Plex Sans',
+            'secondary': 'IBM Plex Serif'
+        }
+    }
+    
+    # Default fonts for each template style
+    template_defaults = {
+        'default': 'roboto-opensans',
+        'europass': 'sourcesans-sourceserif',
+        'modern': 'inter-poppins',
+        'classic': 'crimson-lato',
+        'minimal': 'nunitosans-sourceserif',
+        'creative': 'poppins-merriweather',
+        'professional': 'inter-poppins'
+    }
+    
+    # Use provided font_family or fall back to template default
+    if not font_family:
+        font_family = template_defaults.get(template_style, 'roboto-opensans')
+    
+    return font_configs.get(font_family, font_configs['roboto-opensans'])
 def generate_html_from_yaml(json_data, template_name="html_bloks_template.html"):
     """
     Generates HTML from YAML data using a Jinja template.
@@ -535,12 +727,12 @@ def get_template_config(template_name):
             'layout_type': 'two_column',
             'use_universal': True
         },
-        'template6':
-{
+    
+        'professional': {
             'template_style': 'professional',
             'layout_type': 'single_column',
             'use_universal': True
-}
+        }
         
 
     }
@@ -550,3 +742,8 @@ def get_template_config(template_name):
         'layout_type': 'single_column',
         'use_universal': False
     })
+
+
+
+
+

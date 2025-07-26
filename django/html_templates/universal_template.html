@@ -4,23 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ personal_information.name|default('Resume') }}</title>
+    
+    {# Include Font Awesome if icons are enabled #}
     {% if show_icons %}<link rel="stylesheet" href="static/css/fontawesome.min.css">{% endif %}
     
-    {# Include theme-specific Google Fonts based on template style #}
-    {% if style == 'europass' %}
-        <link rel="stylesheet" href="static/css/google-fonts-europass.css">
-    {% elif style == 'modern' %}
-        <link rel="stylesheet" href="static/css/google-fonts-modern.css">
-    {% elif style == 'classic' %}
-        <link rel="stylesheet" href="static/css/google-fonts-classic.css">
-    {% elif style == 'minimal' %}
-        <link rel="stylesheet" href="static/css/google-fonts-minimal.css">
-    {% elif style == 'creative' %}
-        <link rel="stylesheet" href="static/css/google-fonts-creative.css">
-    {% elif style == 'professional' %}
-        <link rel="stylesheet" href="static/css/google-fonts-professional.css">
-    {% else %}
-        <link rel="stylesheet" href="static/css/google-fonts-default.css">
+    {# Include font-specific CSS based on font_family selection #}
+    {% if font_css_file %}
+        <link rel="stylesheet" href="static/css/{{ font_css_file }}">
     {% endif %}
     
     {# Include theme-specific styles based on template #}
@@ -40,7 +30,7 @@
         {% include 'base/default_styles.html' %}
     {% endif %}
 </head>
-<body class="{{ theme_class|default('theme-default') }}  {{ scale_class }}">
+<body class="{{ theme_class|default('theme-default') }} {{ scale_class }} {{ font_family|default('') }}">
 
 {# Include layout-specific structure #}
 {% if layout == 'europass' %}
