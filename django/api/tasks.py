@@ -103,6 +103,7 @@ def generate_and_save_resume_task(
         icon = generated_resume_data_serializable.get("primeicon")
         resume_data = generated_resume_data_serializable.get("resume")
         about = generated_resume_data_serializable.get("about_candidate")
+        job_search_keywords = generated_resume_data_serializable.get("job_search_keywords")
 
         # Find the user
         try:
@@ -122,6 +123,7 @@ def generate_and_save_resume_task(
             about=about,
             icon=icon,
             description=description,
+            job_search_keywords=job_search_keywords,
         )
         logger.info(
             f"Task {task_id}: Successfully saved resume with id {new_resume.id} for user_id: {user_id}"
