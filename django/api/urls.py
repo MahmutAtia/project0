@@ -10,7 +10,6 @@ urlpatterns = [
     
     # 1. Exact matches first
     path("resumes/", views.ResumeListCreateView.as_view(), name="resume-list-create"),
-    path("resumes/generate/", views.generate_resume, name="generate-resume"),
     path("resumes/generate-pdf/", views.generate_pdf, name="generate-pdf"),
 
     path(
@@ -65,9 +64,7 @@ urlpatterns = [
         views.update_website_yaml,
         name="save-updates-to-personal-website",
     ),
-    path(
-        "website-yaml/edit-block/", views.edit_website_block, name="edit_website_block"
-    ),  # With trailing slash
+  
     # 2. Other prefixes with
     path(
         "<uuid:unique_id>/",
@@ -75,18 +72,12 @@ urlpatterns = [
         name="view-personal-website-yaml",
     ),
     # ats checker
-    path("resumes/ats-checker/", views.ats_checker, name="ats-checker"),
     path(
         "resumes/save_generated_resume/",
         views.save_generated_resume,
         name="save-generated-resume",
     ),
-    # 3. Specific parameterized paths under 'resumes/'
-    path(
-        "resumes/<str:pk>/generate/",
-        views.generate_resume,
-        name="generate-resume-with-pk",
-    ),
+
     # 4. General parameterized paths under 'resumes/'
     path(
         "resumes/<str:pk>/",
