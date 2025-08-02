@@ -1,5 +1,5 @@
 from rest_framework import generics, permissions, status
-from .models import Resume, GeneratedWebsite, GeneratedDocument
+from .models import Resume, GeneratedWebsite, GeneratedDocument,BackgroundTask
 from .serializers import ResumeSerializer, UserProfileSerializer
 from django.http import Http404
 from .utils import (
@@ -36,12 +36,8 @@ import time
 import uuid
 import io
 
-from .tasks import generate_resume_data_task  # Import the Celery task
-from asgiref.sync import async_to_sync
 
-# clerey
-from celery import states  # Import states
-from celery.result import AsyncResult
+
 
 import httpx  # Add httpx for async requests
 from asgiref.sync import sync_to_async  # For wrapping sync code if needed
@@ -468,61 +464,6 @@ def generate_pdf(request):
         return response
     else:
         return HttpResponseServerError("Error generating PDF document.")
-
-
-@api_view(["GET"])
-def get_pdf_generation_status(request, task_id):
-    """
-    Checks the status of a PDF generation Celery task.
-    If successful, returns base64 encoded PDF data.
-    """
-    logger.debug(f"Checking status for PDF task_id: {task_id}")
-    result = AsyncResult(task_id)
-
-    response_data = {"task_id": task_id, "status": result.status, "result": None}
-
-    if result.successful():
-        task_result = result.get()
-        response_data["result"] = task_result  # Store the result (which might be None)
-
-        # Check if task_result is not None before trying to access it
-        if task_result is not None and isinstance(task_result, dict):
-            # Task completed successfully and returned a dictionary as expected
-            response_data["status"] = task_result.get(
-                "status", "SUCCESS"
-            )  # Update status from task result if available
-            logger.info(f"PDF Task {task_id} completed successfully with result.")
-        elif task_result is None:
-            # Task completed successfully but returned None
-            logger.warning(
-                f"PDF Task {task_id} completed successfully but returned None."
-            )
-            # Keep status as SUCCESS, but result is None
-            response_data["status"] = "SUCCESS"  # Explicitly set status
-        else:
-            # Task completed successfully but returned an unexpected type
-            logger.warning(
-                f"PDF Task {task_id} completed successfully but returned unexpected type: {type(task_result)}"
-            )
-            response_data["status"] = "SUCCESS"  # Explicitly set status
-
-        # Return 200 OK with the result (which might be None or the expected dict)
-        return Response(response_data, status=status.HTTP_200_OK)
-
-    elif result.status in [states.PENDING, states.STARTED, states.RETRY]:
-        # Task is still processing or waiting
-        logger.debug(f"PDF Task {task_id} status: {result.status}")
-        response_data["result"] = {"message": f"Task is currently {result.status}"}
-        # Return 200 OK, status indicates it's not ready yet
-        return Response(response_data, status=status.HTTP_200_OK)
-    else:
-        # Unknown state
-        logger.warning(f"PDF Task {task_id} has unknown status: {result.status}")
-        response_data["result"] = {
-            "message": f"Task has an unknown status: {result.status}"
-        }
-        return Response(response_data, status=status.HTTP_200_OK)
-
 
 ############################# generate website resume #############################
 
@@ -1184,11 +1125,12 @@ def ats_checker(request):
 
 
 @api_view(["POST"])
-@permission_classes([permissions.IsAuthenticated])  # Ensure user is logged in
+@permission_classes([permissions.IsAuthenticated])
 def save_generated_resume(request):
     """
-    Retrieves generated resume data from cache using a task_id
-    and saves it as a Resume object for the authenticated user.
+    Finds a background task, claims it for the now-authenticated user,
+    and creates a Resume instance from the task's result.
+    This replaces the old cache-based retrieval.
     """
     task_id = request.data.get("generation_task_id")
     if not task_id:
@@ -1198,105 +1140,91 @@ def save_generated_resume(request):
         )
 
     user = request.user
-    cache_key = f"generated_resume_data_{task_id}"
 
     try:
-        # 1. Retrieve data from cache
-        generated_data = cache.get(cache_key)
+        # 1. Retrieve the task from the database
+        task = BackgroundTask.objects.get(id=task_id)
 
-        if generated_data is None:
-            logger.warning(
-                f"No cached data found for key {cache_key} for user {user.id}. Task might have expired, failed, or ID is wrong."
+        # 2. Security and State Check
+        if task.user and task.user != user:
+            logger.warning(f"User {user.id} attempted to claim task {task_id} belonging to user {task.user.id}.")
+            return Response({"error": "This task does not belong to you."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Prevent re-processing a task that already created a resume
+        if Resume.objects.filter(generation_task_id=task_id).exists():
+            existing_resume = Resume.objects.get(generation_task_id=task_id)
+            logger.warning(f"Resume {existing_resume.id} already created from task {task_id}.")
+            serializer = ResumeSerializer(existing_resume)
+            return Response({
+                "resume_id": existing_resume.id,
+                "resume_data": serializer.data,
+                "message": "Resume already created from this task."
+            }, status=status.HTTP_200_OK)
+
+        # 3. Handle task based on its status
+        if task.status == 'SUCCESS':
+            generated_data = task.result
+            if not generated_data or "resume" not in generated_data:
+                logger.error(f"Task {task_id} succeeded but has invalid result data.")
+                task.status = 'FAILURE'
+                task.error_message = "Task completed with invalid or missing result data."
+                task.save()
+                return Response({"error": "Task completed with invalid data."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            # Extract data and create the Resume
+            title = generated_data.get("title", "Generated Resume")
+            description = generated_data.get("description", "")
+            icon = generated_data.get("fontawesome_icon", "")
+            resume_data = generated_data.get("resume")
+            about = generated_data.get("about_candidate", "")
+            job_search_keywords = generated_data.get("job_search_keywords", "")
+
+            is_default = not Resume.objects.filter(user=user).exists()
+
+            new_resume = Resume.objects.create(
+                user=user,
+                resume=resume_data,
+                job_search_keywords=job_search_keywords,
+                is_default=is_default,
+                title=title,
+                about=about,
+                icon=icon,
+                description=description,
+                generation_task_id=task_id  # Link the resume to the task
             )
-            # Optionally check AsyncResult status here for more context
-            task_status_result = AsyncResult(task_id)
-            status_info = task_status_result.status
-            if status_info == states.FAILURE:
-                return Response(
-                    {"error": "Resume generation task failed previously. Cannot save."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            return Response(
-                {
-                    "error": "Generated resume data not found or expired. Please generate again."
-                },
-                status=status.HTTP_404_NOT_FOUND,
-            )
+            
+            # Claim the task by assigning the user
+            if not task.user:
+                task.user = user
+                task.save()
 
-        # 2. Check if resume already created from this task (optional but recommended)
-        # Add a field to Resume model, e.g., `generation_task_id = models.CharField(max_length=50, null=True, blank=True, unique=True)`
-        # if Resume.objects.filter(generation_task_id=task_id).exists():
-        #     logger.warning(f"Resume already created from task {task_id} for user {user.id}.")
-        #     existing_resume = Resume.objects.get(generation_task_id=task_id)
-        #     return Response({"resume_id": existing_resume.id, "message": "Resume already exists."}, status=status.HTTP_200_OK)
-
-        # 3. Extract data (ensure keys match what's stored in cache)
-        title = generated_data.get("title", "Generated Resume")
-        description = generated_data.get("description", "")
-        icon = generated_data.get("fontawesome_icon", "")
-        resume_data = generated_data.get("resume")  # Main resume content
-        about = generated_data.get(
-            "about_candidate", ""
-        )  # Or "about" depending on task output
-        job_search_keywords = generated_data.get("job_search_keywords", "")
-        if not resume_data:
-            logger.error(
-                f"Cached data for task {task_id} is missing 'resume' content for user {user.id}."
-            )
-            return Response(
-                {"error": "Invalid cached resume data."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-
-        # 4. Save the Resume object
-        is_default = not Resume.objects.filter(user=user).exists()
-
-        # resume obj
-        resume_obj = {
-            "user": user,
-            "resume": resume_data,
-            "job_search_keywords": job_search_keywords,
-            "is_default": is_default,
-            "title": title,
-            "about": about,
-            "icon": icon,
-            "description": description,
-        }
-
-        new_resume = Resume.objects.create(**resume_obj)
-        logger.info(
-            f"Successfully saved resume with ID {new_resume.id} for user {user.id} from task {task_id}."
-        )
-
-        # 5. Optionally delete the cache entry now that it's saved
-        cache.delete(cache_key)
-        logger.info(f"Deleted cache entry {cache_key}.")
-
-        # 6. Return the new resume ID
-        return Response(
-            {
+            logger.info(f"Successfully saved resume {new_resume.id} for user {user.id} from task {task_id}.")
+            
+            serializer = ResumeSerializer(new_resume)
+            return Response({
                 "resume_id": new_resume.id,
-                "resume_data": resume_obj,
-                "message": "Resume saved successfully.",
-            },
-            status=status.HTTP_201_CREATED,
-        )
+                "resume_data": serializer.data,
+                "message": "Resume saved successfully."
+            }, status=status.HTTP_201_CREATED)
 
+        elif task.status == 'PENDING':
+            return Response({"error": "Resume generation is still in progress. Please wait."}, status=status.HTTP_202_ACCEPTED)
+        
+        elif task.status == 'FAILURE':
+            return Response({"error": f"Resume generation failed: {task.error_message}"}, status=status.HTTP_400_BAD_REQUEST)
+
+        else:
+            return Response({"error": f"Unknown task status: {task.status}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    except BackgroundTask.DoesNotExist:
+        logger.warning(f"User {user.id} requested non-existent task ID {task_id}.")
+        return Response({"error": "Generated resume data not found. The task may have expired or the ID is incorrect."}, status=status.HTTP_404_NOT_FOUND)
+    
     except Exception as e:
-        logger.exception(
-            f"Error saving generated resume for user {user.id} from task {task_id}: {e}"
-        )
-        return Response(
-            {"error": "An unexpected error occurred while saving the resume."},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
+        logger.exception(f"Error saving generated resume for user {user.id} from task {task_id}: {e}")
+        return Response({"error": "An unexpected error occurred while saving the resume."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-from .serializers import ResumeSerializer, UserProfileSerializer
-from .models import UserProfile
-from django.contrib.auth.models import User
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework import permissions
 
 
 @api_view(['GET', 'PUT', 'PATCH'])
@@ -1395,3 +1323,72 @@ def get_avatar(request):
         'avatar': profile.avatar,
         'hasAvatar': bool(profile.avatar)
     })
+
+
+
+
+######################### Task Management API Endpoints #########################
+
+
+# --- PUBLIC ENDPOINT FOR FRONTEND ---
+@api_view(["GET"])
+@permission_classes([permissions.IsAuthenticated])
+def get_task_status(request, task_id):
+    """Lets the frontend check the status of a task."""
+    try:
+        task = BackgroundTask.objects.get(id=task_id)
+        return Response({
+            "task_id": task.id,
+            "status": task.status,
+            "result": task.result,
+            "error": task.error_message
+        })
+    except BackgroundTask.DoesNotExist:
+        return Response({"error": "Task not found"}, status=status.HTTP_404_NOT_FOUND)
+
+# --- INTERNAL ENDPOINTS FOR FASTAPI ---
+# You should secure these with an API key or internal network restrictions in production
+
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny]) # Internal access only
+def internal_create_task(request):
+    """Creates a task record and returns its ID."""
+    user_id = request.data.get("user_id")
+    user = None
+    
+    if user_id:
+        try:
+            # Find the user if an ID is provided
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            # Log this, but don't fail the request. The task will be anonymous.
+            logger.warning(f"internal_create_task called with non-existent user_id: {user_id}")
+    
+    try:
+        # Create the task with the user object (which can be None)
+        task = BackgroundTask.objects.create(user=user, status='PENDING')
+        logger.info(f"Internal task {task.id} created for user: {user_id if user_id else 'Anonymous'}")
+        return Response({"task_id": str(task.id)}, status=status.HTTP_201_CREATED)
+    except Exception as e:
+        logger.exception(f"Failed to create internal task: {e}")
+        return Response({"error": "Failed to create task record."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny]) # Internal access only
+def internal_update_task(request):
+    """Updates a task with a result or an error."""
+    task_id = request.data.get("task_id")
+    status = request.data.get("status")
+    result = request.data.get("result")
+    error = request.data.get("error")
+    
+    try:
+        task = BackgroundTask.objects.get(id=task_id)
+        task.status = status
+        task.result = result
+        task.error_message = error
+        task.save()
+        return Response({"message": "Task updated"})
+    except BackgroundTask.DoesNotExist:
+        return Response({"error": "Task not found"}, status=status.HTTP_404_NOT_FOUND)

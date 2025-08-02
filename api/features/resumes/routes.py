@@ -1,16 +1,22 @@
-from fastapi import APIRouter, HTTPException, Depends, Header
+from fastapi import APIRouter, HTTPException, Depends, Header ,BackgroundTasks, File, Form, UploadFile
 from pydantic import BaseModel
 from .utils import (
     save_resume_to_django,
     verify_resume_generation,
-    verify_resume_section_edit
+    verify_resume_section_edit,
+    extract_text_from_file,
+    generate_resume_and_update_django
 )
-from .chains import chain_instance
+from .chains import chain_instance, ats_create_resume_chain, ats_job_desc_resume_chain,ats_checker_chain, ats_checker_no_job_desc_chain
 from .prompts import (
     create_resume_prompt,
     edit_resume_section_prompt
 )
+import httpx
 import yaml
+import json
+import os
+
 
 
 class ResumeRequest(BaseModel):
@@ -125,4 +131,70 @@ async def create_resume(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
 
+
+
+
+
+@router.post("/ats_checker_and_generate")
+async def ats_checker_and_generate(
+    background_tasks: BackgroundTasks,
+    resume: UploadFile = File(...),
+    formData: str = Form(...),
+):
+    """
+    New primary endpoint for the ATS checker.
+    1. Receives file and form data directly from the frontend.
+    2. Performs synchronous ATS check.
+    3. Triggers asynchronous full resume generation.
+    """
+    # --- 1. Process Inputs ---
+    # Pass the UploadFile object directly to the utility and await it
+    text = await extract_text_from_file(resume) 
+    
+    # The rest of your logic remains the same
+    form_data = json.loads(formData)
+    
+    job_description = form_data.get("description", "")
+    language = form_data.get("targetLanguage", "en")
+    target_role = form_data.get("targetRole", "")
+    generate_new_resume_flag = form_data.get("generate_new_resume", True)
+
+    # --- 2. Synchronous ATS Check ---
+    ats_chain = ats_checker_chain if job_description else ats_checker_no_job_desc_chain
+    ats_result = await ats_chain.ainvoke({
+        "input_text": text,
+        "job_description": job_description,
+        "target_role": target_role,
+        "language": language,
+        "user_input_role": target_role,
+    })
+
+
+    generation_task_id = None
+    if generate_new_resume_flag:
+        # --- 3. Create Task Record in Django ---
+        create_task_url = f"{os.environ.get('DJANGO_API_URL', 'http://django:8000')}/api/create-task/"
+        async with httpx.AsyncClient() as client:
+            response = await client.post(create_task_url)
+            response.raise_for_status()
+            generation_task_id = response.json()["task_id"]
+        
+        print(f"Created task {generation_task_id} in Django.")
+
+        # --- 4. Add Background Task ---
+        background_tasks.add_task(
+            generate_resume_and_update_django,
+            generation_task_id,
+            text,
+            job_description,
+            language,
+            ats_result
+        )
+        print(f"Enqueued background generation for task {generation_task_id}.")
+
+    # --- 5. Return Immediate Response ---
+    return {
+        "ats_result": ats_result,
+        "generation_task_id": generation_task_id
+    }
 

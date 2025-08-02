@@ -81,6 +81,10 @@ class Resume(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    # ... other fields ...
+    generation_task_id = models.CharField(max_length=255, null=True, blank=True, unique=True)
+
 
     def __str__(self):
         return f"{self.user.username}'s Resume: {self.title or 'Unnamed'}"
@@ -236,3 +240,22 @@ class UserProfile(models.Model):
         if self.avatar:
             return len(self.avatar) // 1024
         return 0
+
+
+class BackgroundTask(models.Model):
+    class Status(models.TextChoices):
+        PENDING = 'PENDING', 'Pending'
+        SUCCESS = 'SUCCESS', 'Success'
+        FAILURE = 'FAILURE', 'Failure'
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE,null=True, blank=True, related_name='background_tasks')
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
+    result = models.JSONField(null=True, blank=True) # Stores the final generated resume
+    error_message = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        user_identifier = self.user.username if self.user else "Anonymous"
+        return f"Task {self.id} for {user_identifier}"

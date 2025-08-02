@@ -1,5 +1,13 @@
 from modules.base_chains import BaseChain
 from modules.utils import clean_yaml_parser
-
+from .prompts import ats_create_resume_prompt, ats_job_desc_resume_prompt, edit_resume_section_prompt, ats_checker_prompt, ats_checker_no_job_desc_prompt
 
 chain_instance = BaseChain(output_parser=clean_yaml_parser)
+
+
+# chains
+ats_create_resume_chain = chain_instance.build_chain(ats_create_resume_prompt)
+ats_job_desc_resume_chain = chain_instance.build_chain(ats_job_desc_resume_prompt)
+edit_resume_section_chain = chain_instance.build_chain(edit_resume_section_prompt)
+ats_checker_chain = chain_instance.build_chain(ats_checker_prompt)
+ats_checker_no_job_desc_chain = chain_instance.build_chain(ats_checker_no_job_desc_prompt)

@@ -12,11 +12,7 @@ urlpatterns = [
     path("resumes/", views.ResumeListCreateView.as_view(), name="resume-list-create"),
     path("resumes/generate/", views.generate_resume, name="generate-resume"),
     path("resumes/generate-pdf/", views.generate_pdf, name="generate-pdf"),
-    path(
-        "resumes/pdf-generation-status/<str:task_id>/",
-        views.get_pdf_generation_status,
-        name="get_pdf_generation_status",
-    ),
+
     path(
         "resumes/generate_website/",
         views.generate_personal_website,
@@ -26,11 +22,6 @@ urlpatterns = [
         "resumes/generate_website_yaml/",
         views.generate_personal_website_bloks,
         name="generate-resume-website-bloks",
-    ),
-    path(
-        "resumes/generate_from_job_desc/",
-        views.generate_from_job_desc,
-        name="generate-resume-from-job-desc",
     ),
 
 
@@ -102,7 +93,12 @@ urlpatterns = [
         views.ResumeRetrieveUpdateDestroyView.as_view(),
         name="resume-retrieve-update-destroy",
     ),
-    # 5. Generate document
-    # path('resumes/generate_document/', views.generate_document_bloks, name='generate-document'),
-    # # path('resumes/<str:pk>/document/<uuid:unique_id>/update/', views.update_document, name='update-document'),
+   #5. Task management
+    path("task-status/<str:task_id>/",
+        views.get_task_status,
+        name="get_task_status",
+    ),
+   path("create-task/", views.internal_create_task, name="create-task"),
+    path("update-task/", views.internal_update_task, name="update-task"),
+
 ]
