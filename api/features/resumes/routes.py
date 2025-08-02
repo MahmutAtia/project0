@@ -100,8 +100,8 @@ async def create_resume(
             {
                 "input_text": request.input_text,
                 "language": request.language,
-                "job_description": request.job_description,
-                "instructions": request.instructions,
+                "job_description": request.job_description or "the user did not provide a job description",
+                "instructions": request.instructions or "the user did not provide any extra instructions",
             }
         )
 
