@@ -21,6 +21,7 @@ from collections import OrderedDict
 
 # from weasyprint.fonts import FontConfiguration # Optional - Not used, so removed
 
+logger = logging.getLogger(__name__)
 
 def cleanup_old_sessions(request):
     """Remove session data older than 1 hour"""
@@ -37,7 +38,6 @@ def cleanup_old_sessions(request):
         del request.session[key]
 
 
-logger = logging.getLogger(__name__)
 
 
 def extract_text_from_file(uploaded_file):

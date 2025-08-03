@@ -1,5 +1,5 @@
 from rest_framework import generics, permissions, status
-from .models import Resume, GeneratedWebsite, GeneratedDocument,BackgroundTask
+from .models import Resume, GeneratedWebsite, GeneratedDocument,BackgroundTask,UserProfile
 from .serializers import ResumeSerializer, UserProfileSerializer
 from django.http import Http404
 from .utils import (
@@ -46,6 +46,10 @@ from rest_framework import permissions
 from django.core.cache import cache
 
 from plans.decorators import require_feature
+
+import logging  # For logging errors and info
+logger = logging.getLogger(__name__)
+
 
 ORDER_MAP = {
     "resume": [
