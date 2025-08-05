@@ -13,14 +13,9 @@ urlpatterns = [
     path("resumes/generate-pdf/", views.generate_pdf, name="generate-pdf"),
 
     path(
-        "resumes/generate_website/",
-        views.generate_personal_website,
-        name="generate-resume-website",
-    ),
-    path(
-        "resumes/generate_website_yaml/",
-        views.generate_personal_website_bloks,
-        name="generate-resume-website-bloks",
+        "resumes/save_generated_website/",
+        views.save_generated_website,
+        name="save-generated-website",
     ),
 
 

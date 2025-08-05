@@ -287,198 +287,41 @@ def generate_pdf(request):
 
 ############################# generate website resume #############################
 
-
 @api_view(["POST"])
-@require_feature("website_generation")
-def generate_personal_website(request):
+def save_generated_website(request):
     """
-    API endpoint to generate and save a personal website.
+    Finds a background task and creates a GeneratedWebsite instance from the task's result.
     """
-    resume_id = request.data.get("resumeId")
-    preferences = request.data.get("preferences", {})
-
-    if not resume_id:
-        return Response(
-            {"error": "resumeId is required"}, status=status.HTTP_400_BAD_REQUEST
-        )
+    task_id = request.data.get("generation_task_id")
+    if not task_id:
+        return Response({"error": "Missing generation_task_id."}, status=status.HTTP_400_BAD_REQUEST)
+    user = request.user
     try:
-        resume = get_object_or_404(Resume, pk=resume_id)
-        resume_data = resume.resume
+        # 1. Retrieve the task from the database
+        task = BackgroundTask.objects.get(id=task_id)
+        # 2. Security and State Check
+        if task.user and task.user != user:
+            return Response({"error": "You do not have permission to access this task."}, status=status.HTTP_403_FORBIDDEN)
+        # Prevent re-processing a task that already created a website
+        if GeneratedWebsite.objects.filter(unique_id=task_id).exists():
+            return Response({"error": "Website already generated for this task."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Note: We don't add base64 avatar to website generation as it would make HTML too large
-        # Website generation uses a different approach for images
-        try:
-            user_profile = UserProfile.get_or_create_profile(resume.user)
-            
-            # Check if user wants to include avatar (for future website avatar feature)
-            include_avatar = resume.should_include_avatar_in_pdf()
-            
-            if user_profile.avatar and include_avatar:
-                logger.info(f"User has avatar and wants it included - website avatar feature could be implemented later")
-            elif user_profile.avatar and not include_avatar:
-                logger.info(f"Avatar excluded from resume {resume_id} website generation per user preference")
-            else:
-                logger.debug(f"No avatar found for user {resume.user.username}")
-        except Exception as avatar_error:
-            logger.warning(f"Could not process avatar preference for website {resume_id}: {avatar_error}")
-            # Continue without avatar - don't fail the entire website generation
+        # 3. Create the GeneratedWebsite instance
+        resume = get_object_or_404(Resume, pk=task.result.get("resume_id"), user=user)
 
-        # Check if a website has already been generated for this resume
-        generated_website = GeneratedWebsite.objects.filter(resume=resume).first()
-        if generated_website:
-            # Website already exists, return the unique link
-
-            return Response(
-                {"website_uuid": generated_website.unique_id}, status=status.HTTP_200_OK
-            )
-
-    except Exception as e:
-        return Response(
-            {"error": f"Error fetching resume data: {e}"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
-
-    # Generate the personal website
-    resume_yaml = yaml.dump(resume_data)
-    preferences = yaml.dump(preferences)  # Convert preferences to YAML
-    ai_service_url = os.environ.get("AI_SERVICE_URL") + "create_resume_website/invoke"
-    body = {"input": {"resume_yaml": resume_yaml, "preferences": preferences}}
-
-    try:
-        ai_response = requests.post(ai_service_url, json=body)
-        ai_response.raise_for_status()
-        generated_website_yaml = ai_response.json().get("output")
-        generated_website_data = yaml.safe_load(generated_website_yaml)
-        html_code = generated_website_data.get("html")
-        css_code = generated_website_data.get("css")
-        js_code = generated_website_data.get("js")
-
-        full_html = f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Personal Website</title>
-    <style>
-        {css_code}
-    </style>
-</head>
-<body>
-    {html_code}
-    <script>
-        {js_code}
-    </script>
-</body>
-</html>"""
-
-        # Save the generated website
-        unique_id = str(uuid.uuid4())
-        GeneratedWebsite.objects.create(
-            resume=resume, unique_id=unique_id, html_content=full_html
-        )
-
-        # Return the unique link
-        website_url = f"{FRONTEND_BASE_URL}/api/website/{unique_id}/"
-        return Response({"website_url": website_url}, status=status.HTTP_201_CREATED)
-
-    except requests.exceptions.RequestException as e:
-        return Response(
-            {"error": f"Error communicating with AI service: {e}"},
-            status=status.HTTP_503_SERVICE_UNAVAILABLE,
-        )
-    except (yaml.YAMLError, AttributeError) as e:
-        return Response(
-            {"error": f"Error processing AI service response: {e}"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
-
-
-@api_view(["POST"])
-@require_feature("website_generation")  # Add this decorator
-def generate_personal_website_bloks(request):
-    """
-    API endpoint to generate and save a personal website using Bloks.
-    """
-    resume_id = request.data.get("resumeId")
-    preferences = request.data.get("preferences", {})
-
-    if not resume_id:
-        return Response(
-            {"error": "resumeId is required"}, status=status.HTTP_400_BAD_REQUEST
-        )
-
-    try:
-        resume = get_object_or_404(Resume, pk=resume_id)
-        resume_data = resume.resume
-
-        # Note: We don't add base64 avatar to website generation as it would make HTML too large
-        # Website generation uses a different approach for images
-        try:
-            user_profile = UserProfile.get_or_create_profile(resume.user)
-            
-            # Check if user wants to include avatar (for future website avatar feature)
-            include_avatar = resume.should_include_avatar_in_pdf()
-            
-            if user_profile.avatar and include_avatar:
-                logger.info(f"User has avatar and wants it included - website avatar feature could be implemented later")
-            elif user_profile.avatar and not include_avatar:
-                logger.info(f"Avatar excluded from resume {resume_id} website regeneration per user preference")
-            else:
-                logger.debug(f"No avatar found for user {resume.user.username}")
-        except Exception as avatar_error:
-            logger.warning(f"Could not process avatar preference for website {resume_id}: {avatar_error}")
-            # Continue without avatar - don't fail the entire website generation
-
-        # Check if a website has already been generated for this resume
-        generated_website = GeneratedWebsite.objects.filter(resume=resume).first()
-        if generated_website:
-            # Website already exists, return the unique link
-            return Response(
-                {"website_uuid": generated_website.unique_id}, status=status.HTTP_200_OK
-            )
-
-    except Exception as e:
-        return Response(
-            {"error": f"Error fetching resume data: {e}"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
-
-    # Generate the personal website using Bloks
-    resume_yaml = "\n".join(
-        format_data_to_ordered_text(resume_data, "resume", ORDER_MAP)
-    )
-    ai_service_url = (
-        os.environ.get("AI_SERVICE_URL") + "create_resume_website_bloks/invoke"
-    )
-    body = {"input": {"resume_yaml": resume_yaml, "preferences": preferences}}
-
-    try:
-        ai_response = requests.post(ai_service_url, json=body)
-        ai_response.raise_for_status()
-        generated_website_bloks = ai_response.json().get("output")
-        generated_website_bloks_json = parse_custom_format(generated_website_bloks)
-
-        # Save the generated website YAML
-        unique_id = str(uuid.uuid4())
-        GeneratedWebsite.objects.create(
+        unique_id = str(uuid.uuid4())  # Generate a new unique ID for the website
+        generated_website = GeneratedWebsite.objects.create(
             resume=resume,
             unique_id=unique_id,
-            json_content=generated_website_bloks_json,
+            json_content=task.result.get("website", {}),
         )
+        return Response({"message": "Website generated successfully.", "website_uuid": generated_website.unique_id}, status=status.HTTP_201_CREATED)
 
-        # Return the unique id
-        return Response({"website_uuid": unique_id}, status=status.HTTP_201_CREATED)
+    except BackgroundTask.DoesNotExist:
+        return Response({"error": "Background task not found."}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({"error": f"Error saving generated website: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    except requests.exceptions.RequestException as e:
-        return Response(
-            {"error": f"Error communicating with AI service: {e}"},
-            status=status.HTTP_503_SERVICE_UNAVAILABLE,
-        )
-    except (yaml.YAMLError, AttributeError) as e:
-        return Response(
-            {"error": f"Error processing AI service response: {e}"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
 
 
 @api_view(["GET"])
