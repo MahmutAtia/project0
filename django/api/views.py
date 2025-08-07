@@ -303,16 +303,21 @@ def save_generated_website(request):
         if task.user and task.user != user:
             return Response({"error": "You do not have permission to access this task."}, status=status.HTTP_403_FORBIDDEN)
         # Prevent re-processing a task that already created a website
-        if GeneratedWebsite.objects.filter(unique_id=task_id).exists():
-            return Response({"error": "Website already generated for this task."}, status=status.HTTP_400_BAD_REQUEST)
+        if GeneratedWebsite.objects.filter(unique_id=task_id).exists():  # using task_id as unique_id to avoid conflicts
+            # If a website already generated for this task, return early
+            logger.info(f"Website already generated for task {task_id}.")
+            return Response({"message": "Website already generated for this task.", "website_uuid": task_id}, status=status.HTTP_200_OK)
 
         # 3. Create the GeneratedWebsite instance
         resume = get_object_or_404(Resume, pk=task.result.get("resume_id"), user=user)
 
-        unique_id = str(uuid.uuid4())  # Generate a new unique ID for the website
+        # check if there is a resume with that id has already a website
+        if GeneratedWebsite.objects.filter(resume=resume).exists():
+            return Response({"message": "Website already exists for this resume.", "website_uuid": resume.personal_website.unique_id}, status=status.HTTP_200_OK)
+
         generated_website = GeneratedWebsite.objects.create(
             resume=resume,
-            unique_id=unique_id,
+            unique_id= task_id,
             json_content=task.result.get("website", {}),
         )
         return Response({"message": "Website generated successfully.", "website_uuid": generated_website.unique_id}, status=status.HTTP_201_CREATED)
