@@ -20,6 +20,7 @@ from django.urls import path, include
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+from api import views as api_views 
 
 
 schema_view = get_schema_view(
@@ -55,4 +56,13 @@ urlpatterns = [
     path("dj-rest-auth/registration/", include("dj_rest_auth.registration.urls")),
     path("accounts/", include("accounts.urls")),
     path("api/", include("plans.urls")),  # Add this if not present
+
+    # Serve the personal website URL at the root.
+    # This should be last as it's a broad catch-all.
+    path(
+        "<str:unique_id>/",
+        api_views.serve_personal_website_yaml,
+        name="view-personal-website-yaml",
+    ),
+
 ]

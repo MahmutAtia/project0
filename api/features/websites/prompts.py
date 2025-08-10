@@ -21,8 +21,13 @@ the client preferences are provided below:
 
 <body>
 <!-- BEGIN global -->
-<!-- DESCRIPTION: This handles global settings, dark mode, light mode, interactive background, overlay, etc. -->
-<!-- here in global JUST GLOBAL HTML CODE -->
+<!-- DESCRIPTION: This handles global settings, theme toggle, custom cursor, interactive background, overlay, etc. -->
+<!-- The theme toggle button and custom cursor elements MUST be placed here to be available in all editor iframes. -->
+<div id="custom-cursor"></div>
+<button id="theme-toggle" aria-label="Toggle Theme">
+  <!-- SVG icons for sun/moon or equivalent -->
+</button>
+<!-- Other global elements like loading overlay -->
 <!-- END global -->
 
 <!-- BEGIN SECTION: header_and_navigation -->
@@ -48,10 +53,9 @@ the client preferences are provided below:
 
 ===CSS===
 /* BEGIN global */
-/* Here global styles (variables, base styles, themes custom cursor, interactive background,styles uesd in multiple sections, etc.) like global styles, themes, colors, fonts, etc. */
-/* DO NOT ADD ANY SECTION SPECIFIC STYLES HERE. EVERY SECTION MUST HAVE ITS OWN STYLES ISOLATED FROM OTHER SECTIONS. BUT YOU CAN ADD GLOBAL STYLES HERE  WHICH WILL BE USED ACROSS ALL SECTIONS */
-/* Add the styles which are used in multiple sections here */
+/* Here global styles (variables, base styles, themes, custom cursor, etc.) */
 /* CRITICAL: For theme switching, apply styles based on an attribute on the <html> tag, like this: html[data-theme='dark'] .some-element {{ ... }} */
+/* CRITICAL: The theme toggle button MUST be styled with 'position: fixed' (e.g., bottom-right corner) to be visible in all editor iframes. */
 /* END global */
 
 /* BEGIN SECTION: header_and_navigation */
@@ -82,6 +86,7 @@ the client preferences are provided below:
 
 STRICT OUTPUT INSTRUCTIONS
 **CREATIVE MANDATE**: You must generate a unique, modern, and visually memorable website suitable for a creative professional like a designer or developer. Avoid generic, boring, or repetitive layouts. Prioritize creative interactions, bold typography, and a strong visual identity. The client's preferences are key to unlocking more advanced and creative features.
+**IMPORTANT**: To ensure high quality and prevent incomplete output, generate a concise website with a maximum of 8 sections (e.g., Hero, About, Experience, Skills, Contact) plus a header and footer. Focus on quality over quantity.
 
 Generate code for a complete single-page website that functions correctly when all sections are combined with global, and also ensures global code plus any single section's code functions correctly when loaded in isolation (for iframe code editor preview).
 
@@ -91,6 +96,7 @@ No explanations, apologies, or extra text before or after the output.
 Do not include any code examples, extra comments, or verbose explanations.
 All code must be complete and functional—no placeholders, unfinished, or empty sections.
 Use emoji favicons.
+**SVG USAGE**: Keep all inline SVGs as simple and non-verbose as possible. For icons, prefer single-path SVGs or CSS-only solutions over complex, multi-element SVGs.
 Enhance the design with icons, 3D visuals, graphics, and illustrations using only HTML, CSS, and JS.
 Create original visuals; do not reference external files.
 Do not include contact forms or any feature requiring backend integration implement "get in touch" section in
@@ -103,7 +109,10 @@ All content must be visible and the layout must not be broken.
 Add a loading overlay. Include a fixed, full-viewport HTML/CSS overlay with a loading indicator, styled to match the site's design. It should be visible on load and fade out via JS.
 All JavaScript must work and all sections must function correctly.
 Scripts in one section must not depend on or try to directly manipulate elements in another section, unless it's a global system designed to do so (like a navigation menu or scroll animation observer).
-
+**EDITOR COMPATIBILITY**: The editor renders each section in an isolated iframe.
+*   **You MUST disable animations that rely on page-level scroll events** (e.g., `window.scrollY`) in the editor, as they will not work correctly. Wrap this logic in a condition like `if (document.body.dataset.renderContext === 'live')`.
+*   **You MUST ensure all other self-contained animations** (like typing effects, hover effects, or interactive elements within a single section) **remain active in the editor** to provide an accurate preview.
+*   Features that depend on elements from *other* sections (like a navigation link scrolling to an ID) will not work and should be handled gracefully.
 
 **CRITICAL JAVASCRIPT LOGIC**: You must implement logic based on the `data-render-context` attribute on the `<body>` tag. The global script is responsible for handling the loading overlay and all scroll-triggered animations.
 
@@ -133,6 +142,36 @@ Scripts in one section must not depend on or try to directly manipulate elements
                     setTimeout(() => {{ loadingOverlay.style.display = 'none'; }}, 500);
                 }});
             }}
+        }}
+
+        // --- Theme Toggle (safe check) ---
+        // Ensure the theme toggle button exists before adding the event listener
+        const themeToggle = document.getElementById('theme-toggle');
+        if (themeToggle) {{
+            themeToggle.addEventListener('click', () => {{
+                // This is just an example, the AI will implement the actual logic
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', newTheme);
+            }});
+        }}
+
+        // --- Custom Cursor (safe check) ---
+        // This feature is self-contained and should work in the editor.
+        const customCursor = document.getElementById('custom-cursor');
+        if (customCursor) {{
+             window.addEventListener('mousemove', e => {{
+                customCursor.style.left = e.clientX + 'px';
+                customCursor.style.top = e.clientY + 'px';
+            }});
+        }}
+
+        // --- Interactive Background (safe check) ---
+        // This feature is self-contained and should work in the editor.
+        const interactiveBg = document.getElementById('interactive-background');
+        if (interactiveBg) {{
+            // AI will implement the canvas animation logic here.
+            // It should NOT be disabled in the editor.
         }}
 
         // --- Global Scroll Animation Handler ---
