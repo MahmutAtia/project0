@@ -50,22 +50,22 @@ urlpatterns = [
     ),
     # editor views here
     path(
-        "website-yaml/<uuid:resume_id>/",
+        "website-yaml/<str:resume_id>/",
         views.get_website_yaml_json,
         name="serve_website_yaml_json",
     ),
     path(
-        "website-yaml/update/<uuid:unique_id>/",
+        "website-yaml/update/<str:unique_id>/",
         views.update_website_yaml,
         name="save-updates-to-personal-website",
     ),
   
-    # 2. Other prefixes with
-    path(
-        "<uuid:unique_id>/",
-        views.serve_personal_website_yaml,
-        name="view-personal-website-yaml",
-    ),
+    # # 2. Other prefixes with
+    # path(
+    #     "<str:unique_id>/",
+    #     views.serve_personal_website_yaml,
+    #     name="view-personal-website-yaml",
+    # ),
     # ats checker
     path(
         "resumes/save_generated_resume/",

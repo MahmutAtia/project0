@@ -10,6 +10,7 @@ from .utils import (
     parse_custom_format,
     format_data_to_ordered_text,
     generate_docx_from_template,
+    generate_website_slug
 )
 from rest_framework.response import Response
 from django.contrib.auth.models import User
@@ -302,11 +303,13 @@ def save_generated_website(request):
         # 2. Security and State Check
         if task.user and task.user != user:
             return Response({"error": "You do not have permission to access this task."}, status=status.HTTP_403_FORBIDDEN)
+
+        # TODO: Check if the task has already been processed
         # Prevent re-processing a task that already created a website
-        if GeneratedWebsite.objects.filter(unique_id=task_id).exists():  # using task_id as unique_id to avoid conflicts
-            # If a website already generated for this task, return early
-            logger.info(f"Website already generated for task {task_id}.")
-            return Response({"message": "Website already generated for this task.", "website_uuid": task_id}, status=status.HTTP_200_OK)
+        # if GeneratedWebsite.objects.filter(unique_id=task_id).exists():  # using task_id as unique_id to avoid conflicts
+        #     # If a website already generated for this task, return early
+        #     logger.info(f"Website already generated for task {task_id}.")
+        #     return Response({"message": "Website already generated for this task.", "website_uuid": task_id}, status=status.HTTP_200_OK)
 
         # 3. Create the GeneratedWebsite instance
         resume = get_object_or_404(Resume, pk=task.result.get("resume_id"), user=user)
@@ -317,7 +320,7 @@ def save_generated_website(request):
 
         generated_website = GeneratedWebsite.objects.create(
             resume=resume,
-            unique_id= task_id,
+            unique_id= generate_website_slug(resume.user, resume.id),
             json_content=task.result.get("website", {}),
         )
         return Response({"message": "Website generated successfully.", "website_uuid": generated_website.unique_id}, status=status.HTTP_201_CREATED)

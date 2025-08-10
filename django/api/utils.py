@@ -19,6 +19,11 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from weasyprint import HTML, CSS
 from collections import OrderedDict
 
+import random
+import string
+from django.utils.text import slugify
+from .models import GeneratedWebsite
+
 # from weasyprint.fonts import FontConfiguration # Optional - Not used, so removed
 
 logger = logging.getLogger(__name__)
@@ -36,6 +41,46 @@ def cleanup_old_sessions(request):
 
     for key in keys_to_delete:
         del request.session[key]
+
+
+
+
+
+def generate_website_slug(user, resume_id):
+    """
+    Generate a unique website slug based on user's name and resume ID.
+    Format: firstname-lastname-resume-{resume_id}[-{random}]
+    """
+    # Get user's first and last name
+    first_name = user.first_name.strip() if user.first_name else ""
+    last_name = user.last_name.strip() if user.last_name else ""
+    
+    # Fallback to username if no first/last name
+    if not first_name and not last_name:
+        base_name = user.username
+    else:
+        base_name = f"{first_name} {last_name}".strip()
+    
+    # Create base slug
+    base_slug = slugify(base_name)
+
+
+    
+    # Check if this slug already exists
+    original_slug = base_slug
+
+    if not GeneratedWebsite.objects.filter(unique_id=base_slug).exists():
+        return base_slug
+
+    # If it exists, append resume ID
+    base_slug = f"{base_slug}-{resume_id}"
+    if not GeneratedWebsite.objects.filter(unique_id=base_slug).exists():
+        return base_slug
+    # If it still exists, append a random suffix
+    random_suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=4))
+    base_slug = f"{base_slug}-{random_suffix}"
+
+    return base_slug
 
 
 
