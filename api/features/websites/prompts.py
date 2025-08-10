@@ -137,22 +137,21 @@ Scripts in one section must not depend on or try to directly manipulate elements
 
         // --- Global Scroll Animation Handler ---
         const animatedElements = document.querySelectorAll('.animate-on-scroll');
-        if (isEditor) {
+        if (isEditor) {{
             // In editor mode, all animated elements in the current iframe should be visible.
             animatedElements.forEach(el => el.classList.add('is-visible'));
-        } else {
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
+        }} else {{
+            const observer = new IntersectionObserver((entries) => {{
+                entries.forEach(entry => {{
+                    if (entry.isIntersecting) {{
                         entry.target.classList.add('is-visible');
                         observer.unobserve(entry.target);
-                    }
-                });
-            }, { threshold: 0.1 });
+                    }}
+                }});
+            }}, {{ threshold: 0.1 }});
             animatedElements.forEach(el => observer.observe(el));
-        }
+        }}
         ```
-
 2.  **Section JS (e.g., `BEGIN SECTION: about`)**:
     *   Section-specific JavaScript should ONLY contain logic for features unique to that section (e.g., an accordion, a carousel, a specific button interaction).
     *   **DO NOT** include any scroll animation or IntersectionObserver logic here. This is now handled globally.
