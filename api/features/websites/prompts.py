@@ -87,6 +87,14 @@ the client preferences are provided below:
 STRICT OUTPUT INSTRUCTIONS
 **CREATIVE MANDATE**: You must generate a unique, modern, and visually memorable website suitable for a creative professional like a designer or developer. Avoid generic, boring, or repetitive layouts. Prioritize creative interactions, bold typography, and a strong visual identity. The client's preferences are key to unlocking more advanced and creative features.
 **IMPORTANT**: To ensure high quality and prevent incomplete output, generate a concise website with a maximum of 8 sections (e.g., Hero, About, Experience, Skills, Contact) plus a header and footer. Focus on quality over quantity.
+Use also the following features to make the website more visually appealing and creative based on the design concepts and preferences:
+*   **Custom Cursor**: A unique cursor that matches the theme. must be visible in both light and dark modes. Use `mix-blend-mode: difference;` to ensure visibility.
+*   **Typing Animation**: Animate the name/title in the hero section with a typing/deleting effect.
+*   **Interactive Background**: A background that subtly reacts to mouse movement.it might be subtly reacting to the user's mouse movement or scroll position (e.g., subtle parallax, shifting gradients, particle effects that follow the cursor).
+*   **Subtle 3D Elements**: Use perspective, transforms, or shadows to add depth.
+*   **Generative Art**: Include algorithmically generated visuals or patterns that match the site's aesthetic.
+*   **Unique Footer**: A visually distinct footer that is more than just a list of links.
+*   **Variable Fonts**: Use variable fonts for dynamic and interactive typography.
 
 Generate code for a complete single-page website that functions correctly when all sections are combined with global, and also ensures global code plus any single section's code functions correctly when loaded in isolation (for iframe code editor preview).
 
