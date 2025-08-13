@@ -5,6 +5,11 @@ from typing import Optional
 import httpx
 import os
 import re
+import logging
+
+# Configure logging to see output in production environments
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 # Django service URL
 DJANGO_API_URL = os.getenv("DJANGO_API_URL", "http://django:8000")
@@ -17,9 +22,16 @@ def parse_custom_format(site_text):
     css_match = re.search(r"===CSS===\s*(.*?)\s*===JS===", site_text, re.DOTALL)
     js_match = re.search(r"===JS===\s*(.*)", site_text, re.DOTALL)
 
-    html = html_match.group(1) if html_match else ""
-    css = css_match.group(1) if css_match else ""
-    js = js_match.group(1) if js_match else ""
+    if not html_match or not css_match or not js_match:
+        missing = []
+        if not html_match: missing.append("HTML")
+        if not css_match: missing.append("CSS")
+        if not js_match: missing.append("JS")
+        raise ValueError(f"Parsing failed: Missing required sections: {', '.join(missing)}")
+
+    html = html_match.group(1)
+    css = css_match.group(1)
+    js = js_match.group(1)
 
     # Extract <head> content
     head_match = re.search(r"<head>(.*?)</head>", html, re.DOTALL)
@@ -98,32 +110,53 @@ def parse_custom_format(site_text):
 async def generate_website_and_update_django(task_id: str, resume_yaml: str, preferences: dict,
  resume_id:int, user_id:int):
     update_url = f"{DJANGO_API_URL}/api/update-task/"
-    generated_website = None
+    generated_website_json = None
+    max_retries = 3
+    last_error = None
 
-    try:
-        # 1. Run the slow AI generation chain
-        generated_website = await create_resume_website_bloks_chain.ainvoke({
-            "resume_yaml": resume_yaml,
-            "preferences": preferences,
-        })
-        
-        # Add a check to ensure the AI returned a valid string
-        if not generated_website or not isinstance(generated_website, str):
-            raise ValueError("AI chain failed to return a valid website string.")
+    for attempt in range(max_retries):
+        try:
+            logger.info(f"Task {task_id}: Website generation attempt {attempt + 1}/{max_retries}")
+            # 1. Run the slow AI generation chain
+            generated_website = await create_resume_website_bloks_chain.ainvoke({
+                "resume_yaml": resume_yaml,
+                "preferences": preferences,
+            })
+            
+            # Add a check to ensure the AI returned a valid string
+            if not generated_website or not isinstance(generated_website, str):
+                raise ValueError("AI chain failed to return a valid website string.")
 
-        generated_website_json = parse_custom_format(generated_website)
+            generated_website_json = parse_custom_format(generated_website)
+            
+            logger.info(f"Task {task_id}: Successfully generated and parsed website on attempt {attempt + 1}.")
+            break # Success, exit the retry loop
 
+        except Exception as e:
+            last_error = e
+            logger.warning(f"Task {task_id}: Attempt {attempt + 1} failed. Error: {e}")
+            if attempt < max_retries - 1:
+                logger.info(f"Task {task_id}: Retrying in 5 seconds...")
+                await asyncio.sleep(5)  # Wait for 5 seconds before the next attempt
+            else:
+                logger.error(f"Task {task_id}: All {max_retries} generation attempts failed.")
+                error_payload = {"task_id": task_id, "status": "FAILURE", "error": str(last_error)}
+                async with httpx.AsyncClient() as client:
+                    await client.post(update_url, json=error_payload)
+                return
+
+    if generated_website_json:
         # 2. Update the task in Django with the result
-        payload = {"task_id": task_id, "status": "SUCCESS", "result": {"website": generated_website_json, "resume_id": resume_id}, "user_id": user_id}
-        async with httpx.AsyncClient() as client:
-            await client.post(update_url, json=payload)
-
-    except Exception as e:
-        # 3. If anything fails, update the task with an error
-        print(f"Error occurred while generating website: {e}")
-        error_payload = {"task_id": task_id, "status": "FAILURE", "error": str(e)}
-        async with httpx.AsyncClient() as client:
-            await client.post(update_url, json=error_payload)
+        try:
+            payload = {"task_id": task_id, "status": "SUCCESS", "result": {"website": generated_website_json, "resume_id": resume_id}, "user_id": user_id}
+            async with httpx.AsyncClient() as client:
+                await client.post(update_url, json=payload)
+        except Exception as e:
+            # 3. If the final update fails, update the task with an error
+            logger.error(f"Task {task_id}: Succeeded but failed to update Django. Error: {e}")
+            error_payload = {"task_id": task_id, "status": "FAILURE", "error": f"Failed to save result: {e}"}
+            async with httpx.AsyncClient() as client:
+                await client.post(update_url, json=error_payload)
         
 
 # Create specific dependencies for different features

@@ -3,18 +3,13 @@ from .models import Resume, GeneratedWebsite, GeneratedDocument,BackgroundTask,U
 from .serializers import ResumeSerializer, UserProfileSerializer
 from django.http import Http404
 from .utils import (
-    cleanup_old_sessions,
-    extract_text_from_file,
     generate_pdf_from_resume_data,
     generate_html_from_yaml,
-    parse_custom_format,
-    format_data_to_ordered_text,
     generate_docx_from_template,
     generate_website_slug
 )
 from rest_framework.response import Response
 from django.contrib.auth.models import User
-import requests  # For calling the AI service
 from rest_framework.decorators import (
     api_view,
     permission_classes,
@@ -25,15 +20,8 @@ from django.http import (
     StreamingHttpResponse,
     FileResponse,
     HttpResponse,
-    JsonResponse,
     HttpResponseServerError,
 )
-from datetime import datetime  # Import datetime class directly
-import textwrap
-import json
-import yaml
-import os
-import time
 import uuid
 import io
 
