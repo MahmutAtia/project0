@@ -95,6 +95,7 @@ Output must match the provided format and comments exactly.
 No explanations, apologies, or extra text before or after the output.
 Do not include any code examples, extra comments, or verbose explanations.
 All code must be complete and functional—no placeholders, unfinished, or empty sections.
+**CRITICAL CODE QUALITY**: Your generated code, especially within SVG paths or CSS properties, must NOT contain repetitive, nonsensical, or looping patterns. Any such repetition will result in a failed output.
 Use emoji favicons.
 **SVG USAGE**: Keep all inline SVGs as simple and non-verbose as possible. For icons, prefer single-path SVGs or CSS-only solutions over complex, multi-element SVGs.
 Enhance the design with icons, 3D visuals, graphics, and illustrations using only HTML, CSS, and JS.
