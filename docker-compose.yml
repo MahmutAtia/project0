@@ -56,7 +56,6 @@ services:
       - "8000:8000"
     depends_on:
       - db
-      - redis
     environment:
       # Django Core Settings
       - DEBUG=${DEBUG:-0}
@@ -117,48 +116,6 @@ services:
       timeout: 5s
       retries: 5
 
-  redis:
-    image: redis:6.2-alpine
-    volumes:
-      - redis_data:/data
-    command: redis-server --appendonly yes
-    restart: always
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-
-  celery:
-    build: ./django
-    image: proj0_django_image
-    command: celery -A proj0 worker -l info
-    volumes:
-      - ./django:/app
-    depends_on:
-      - db
-      - redis
-    environment:
-      # Mirror Django's environment but with Celery-specific settings
-      - DEBUG=${DEBUG:-0}
-      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
-      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
-      - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-proj0.settings}
-      - PYTHONUNBUFFERED=${PYTHONUNBUFFERED:-1}
-      
-      # Database Settings
-      - DJANGO_DB_NAME=${DJANGO_DB_NAME}
-      - DJANGO_DB_USER=${DJANGO_DB_USER}
-      - DJANGO_DB_PASSWORD=${DJANGO_DB_PASSWORD}
-      - DJANGO_DB_HOST=${DJANGO_DB_HOST:-db}
-      - DJANGO_DB_PORT=${DJANGO_DB_PORT:-5432}
-      
-      # Service URLs
-      - AI_SERVICE_URL=${AI_SERVICE_URL:-http://api:80/resumes/}
-      
-      # Celery-specific
-      - C_FORCE_ROOT=1
-    restart: always
 
   careerflow:
     build:
@@ -202,7 +159,6 @@ services:
 
 volumes:
   postgres_data:
-  redis_data:
   certbot-etc:
   certbot-var:
   web-root:

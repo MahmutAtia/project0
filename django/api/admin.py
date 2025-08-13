@@ -1,9 +1,10 @@
 from django.contrib import admin
-from .models import Resume, GeneratedWebsite, GeneratedDocument, UserProfile
+from .models import Resume, GeneratedWebsite, GeneratedDocument, UserProfile,BackgroundTask
 
 admin.site.register(Resume)
 admin.site.register(GeneratedWebsite)
 admin.site.register(GeneratedDocument)
+admin.site.register(BackgroundTask)
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):

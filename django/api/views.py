@@ -1,19 +1,15 @@
 from rest_framework import generics, permissions, status
-from .models import Resume, GeneratedWebsite, GeneratedDocument
+from .models import Resume, GeneratedWebsite, GeneratedDocument,BackgroundTask,UserProfile
 from .serializers import ResumeSerializer, UserProfileSerializer
 from django.http import Http404
 from .utils import (
-    cleanup_old_sessions,
-    extract_text_from_file,
     generate_pdf_from_resume_data,
     generate_html_from_yaml,
-    parse_custom_format,
-    format_data_to_ordered_text,
     generate_docx_from_template,
+    generate_website_slug
 )
 from rest_framework.response import Response
 from django.contrib.auth.models import User
-import requests  # For calling the AI service
 from rest_framework.decorators import (
     api_view,
     permission_classes,
@@ -24,24 +20,13 @@ from django.http import (
     StreamingHttpResponse,
     FileResponse,
     HttpResponse,
-    JsonResponse,
     HttpResponseServerError,
 )
-from datetime import datetime  # Import datetime class directly
-import textwrap
-import json
-import yaml
-import os
-import time
 import uuid
 import io
 
-from .tasks import generate_resume_data_task  # Import the Celery task
-from asgiref.sync import async_to_sync
 
-# clerey
-from celery import states  # Import states
-from celery.result import AsyncResult
+
 
 import httpx  # Add httpx for async requests
 from asgiref.sync import sync_to_async  # For wrapping sync code if needed
@@ -50,6 +35,10 @@ from rest_framework import permissions
 from django.core.cache import cache
 
 from plans.decorators import require_feature
+
+import logging  # For logging errors and info
+logger = logging.getLogger(__name__)
+
 
 ORDER_MAP = {
     "resume": [
@@ -157,190 +146,6 @@ class ResumeRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-
-@api_view(["POST"])
-@require_feature("resume_generation")
-def generate_resume(request):
-    # Test Redis connection
-    try:
-        cache.set("test_key", "test_value")
-        test_value = cache.get("test_key")
-    except Exception as e:
-        return Response({"error": "Redis connection failed"}, status=500)
-
-    input_data = request.data
-    ai_service_url = os.environ.get("AI_SERVICE_URL") + "genereate_from_input/invoke"
-    response = requests.post(ai_service_url, json=input_data)
-
-    if response.status_code == 200:
-        try:
-            generated_resume_yaml = response.json().get("output")
-            generated_resume_data = yaml.safe_load(generated_resume_yaml)
-
-            # Extract the data
-            title = generated_resume_data.get("title")  # the title of the resume
-            description = generated_resume_data.get(
-                "description"
-            )  # the description of the resume
-            icon = generated_resume_data.get(
-                "fontawesome_icon"
-            )  # the icon of the resume
-            job_search_keywords = generated_resume_data.get(
-                "job_search_keywords"
-            )  # the job search keywords of the resume
-
-            resume_data = generated_resume_data.get("resume")  # the resume data
-            about = generated_resume_data.get("about_candidate")  # the about of the resume
-
-            if not request.user.is_authenticated:
-                timestamp = int(time.time())
-                session_key = f"temp_resume_{timestamp}"
-
-                # Store directly in Redis cache
-                cache_data = {
-                    "data": resume_data,
-                    "created_at": timestamp,
-                }
-
-                cache.set(session_key, json.dumps(cache_data), timeout=3600)
-
-                # Verify storage
-                stored_data = cache.get(session_key)
-                # print(f"DEBUG: Stored in Redis - {stored_data}")
-
-                response = Response(
-                    {
-                        "id": session_key,
-                        "message": "Resume stored in Redis",
-                    },
-                    status=status.HTTP_201_CREATED,
-                )
-
-                return response
-
-            else:  # the user is authenticated it will save the resume in the database
-
-                # if this the first resume of the user it will set it as the default resume
-                if not Resume.objects.filter(user=request.user).exists():
-                    is_default = True
-                else:
-                    is_default = False
-
-                resume = Resume.objects.create(
-                    user=request.user,
-                    resume=resume_data,
-                    job_search_keywords=job_search_keywords,
-                    is_default=is_default,
-                    title=title,
-                    about=about,
-                    icon=icon,
-                    description=description,
-                )
-                print(f"DEBUG: Resume saved - {resume}")
-                return Response(
-                    {
-                        "id": resume.id,
-                        "message": "Resume saved successfully",
-                    },
-                    status=status.HTTP_201_CREATED,
-                )
-
-        except (json.JSONDecodeError, yaml.YAMLError) as e:
-            return Response(
-                {"error": f"Invalid data received from AI service: {e}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-    else:
-        return Response(response.json(), status=response.status_code)
-
-
-@api_view(["POST"])
-@require_feature("resume_generation")  # Add this decorator
-def generate_from_job_desc(request):
-    try:
-
-        uploaded_file = request.FILES.get("resume")
-        if not uploaded_file:
-            return Response({"error": "No file uploaded"}, status=400)
-
-        text = extract_text_from_file(uploaded_file)
-
-        form_data = json.loads(request.POST.get("formData", "{}"))
-
-        input_data = {
-            "input": {
-                "input_text": text,
-                "job_description": form_data.get("description") or "",
-                "language": form_data.get("targetLanguage") or "en",
-                "docs_instructions": "\n".join(
-                    f"Write a {key} tailored to the job description"
-                    for key, value in form_data.get("documentPreferences", {}).items()
-                    if value
-                ),
-            }
-        }
-
-        ai_service_url = (
-            os.environ.get("AI_SERVICE_URL") + "genereate_from_job_desc/invoke"
-        )
-
-        response = requests.post(ai_service_url, json=input_data)
-
-        if response.status_code == 200:
-            try:
-                generated_resume_yaml = response.json().get("output")
-                generated_resume_data = yaml.safe_load(generated_resume_yaml)
-
-                title = generated_resume_data.get("title")
-                description = generated_resume_data.get("description")
-                icon = generated_resume_data.get("fontawesome_icon")
-                job_search_keywords = generated_resume_data.get("job_search_keywords")
-                resume_data = generated_resume_data.get("resume")
-                about = generated_resume_data.get("about")
-
-                if not request.user.is_authenticated:
-                    timestamp = int(time.time())
-                    session_key = f"temp_resume_{timestamp}"
-                    cache_data = {
-                        "data": resume_data,
-                        "created_at": timestamp,
-                    }
-                    cache.set(session_key, json.dumps(cache_data), timeout=3600)
-                    return Response(
-                        {
-                            "id": session_key,
-                            "message": "Resume stored in Redis",
-                        },
-                        status=status.HTTP_201_CREATED,
-                    )
-                else:
-                    is_default = not Resume.objects.filter(user=request.user).exists()
-                    resume = Resume.objects.create(
-                        user=request.user,
-                        resume=resume_data,
-                        job_search_keywords=job_search_keywords,
-                        is_default=is_default,
-                        title=title,
-                        about=about,
-                        icon=icon,
-                        description=description,
-                    )
-                    return Response(
-                        {
-                            "id": resume.id,
-                            "message": "Resume saved successfully",
-                        },
-                        status=status.HTTP_201_CREATED,
-                    )
-            except (json.JSONDecodeError, yaml.YAMLError) as e:
-                return Response(
-                    {"error": f"Invalid data received from AI service: {e}"},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                )
-        else:
-            return Response(response.json(), status=response.status_code)
-    except Exception as e:
-        return Response({"error": str(e)}, status=500)
 
 
 ################################## genereate_pdf #######s#########################
@@ -469,255 +274,50 @@ def generate_pdf(request):
     else:
         return HttpResponseServerError("Error generating PDF document.")
 
-
-@api_view(["GET"])
-def get_pdf_generation_status(request, task_id):
-    """
-    Checks the status of a PDF generation Celery task.
-    If successful, returns base64 encoded PDF data.
-    """
-    logger.debug(f"Checking status for PDF task_id: {task_id}")
-    result = AsyncResult(task_id)
-
-    response_data = {"task_id": task_id, "status": result.status, "result": None}
-
-    if result.successful():
-        task_result = result.get()
-        response_data["result"] = task_result  # Store the result (which might be None)
-
-        # Check if task_result is not None before trying to access it
-        if task_result is not None and isinstance(task_result, dict):
-            # Task completed successfully and returned a dictionary as expected
-            response_data["status"] = task_result.get(
-                "status", "SUCCESS"
-            )  # Update status from task result if available
-            logger.info(f"PDF Task {task_id} completed successfully with result.")
-        elif task_result is None:
-            # Task completed successfully but returned None
-            logger.warning(
-                f"PDF Task {task_id} completed successfully but returned None."
-            )
-            # Keep status as SUCCESS, but result is None
-            response_data["status"] = "SUCCESS"  # Explicitly set status
-        else:
-            # Task completed successfully but returned an unexpected type
-            logger.warning(
-                f"PDF Task {task_id} completed successfully but returned unexpected type: {type(task_result)}"
-            )
-            response_data["status"] = "SUCCESS"  # Explicitly set status
-
-        # Return 200 OK with the result (which might be None or the expected dict)
-        return Response(response_data, status=status.HTTP_200_OK)
-
-    elif result.status in [states.PENDING, states.STARTED, states.RETRY]:
-        # Task is still processing or waiting
-        logger.debug(f"PDF Task {task_id} status: {result.status}")
-        response_data["result"] = {"message": f"Task is currently {result.status}"}
-        # Return 200 OK, status indicates it's not ready yet
-        return Response(response_data, status=status.HTTP_200_OK)
-    else:
-        # Unknown state
-        logger.warning(f"PDF Task {task_id} has unknown status: {result.status}")
-        response_data["result"] = {
-            "message": f"Task has an unknown status: {result.status}"
-        }
-        return Response(response_data, status=status.HTTP_200_OK)
-
-
 ############################# generate website resume #############################
 
-
 @api_view(["POST"])
-@require_feature("website_generation")
-def generate_personal_website(request):
+def save_generated_website(request):
     """
-    API endpoint to generate and save a personal website.
+    Finds a background task and creates a GeneratedWebsite instance from the task's result.
     """
-    resume_id = request.data.get("resumeId")
-    preferences = request.data.get("preferences", {})
-
-    if not resume_id:
-        return Response(
-            {"error": "resumeId is required"}, status=status.HTTP_400_BAD_REQUEST
-        )
+    task_id = request.data.get("generation_task_id")
+    if not task_id:
+        return Response({"error": "Missing generation_task_id."}, status=status.HTTP_400_BAD_REQUEST)
+    user = request.user
     try:
-        resume = get_object_or_404(Resume, pk=resume_id)
-        resume_data = resume.resume
+        # 1. Retrieve the task from the database
+        task = BackgroundTask.objects.get(id=task_id)
+        # 2. Security and State Check
+        if task.user and task.user != user:
+            return Response({"error": "You do not have permission to access this task."}, status=status.HTTP_403_FORBIDDEN)
 
-        # Note: We don't add base64 avatar to website generation as it would make HTML too large
-        # Website generation uses a different approach for images
-        try:
-            user_profile = UserProfile.get_or_create_profile(resume.user)
-            
-            # Check if user wants to include avatar (for future website avatar feature)
-            include_avatar = resume.should_include_avatar_in_pdf()
-            
-            if user_profile.avatar and include_avatar:
-                logger.info(f"User has avatar and wants it included - website avatar feature could be implemented later")
-            elif user_profile.avatar and not include_avatar:
-                logger.info(f"Avatar excluded from resume {resume_id} website generation per user preference")
-            else:
-                logger.debug(f"No avatar found for user {resume.user.username}")
-        except Exception as avatar_error:
-            logger.warning(f"Could not process avatar preference for website {resume_id}: {avatar_error}")
-            # Continue without avatar - don't fail the entire website generation
+        # TODO: Check if the task has already been processed
+        # Prevent re-processing a task that already created a website
+        # if GeneratedWebsite.objects.filter(unique_id=task_id).exists():  # using task_id as unique_id to avoid conflicts
+        #     # If a website already generated for this task, return early
+        #     logger.info(f"Website already generated for task {task_id}.")
+        #     return Response({"message": "Website already generated for this task.", "website_uuid": task_id}, status=status.HTTP_200_OK)
 
-        # Check if a website has already been generated for this resume
-        generated_website = GeneratedWebsite.objects.filter(resume=resume).first()
-        if generated_website:
-            # Website already exists, return the unique link
+        # 3. Create the GeneratedWebsite instance
+        resume = get_object_or_404(Resume, pk=task.result.get("resume_id"), user=user)
 
-            return Response(
-                {"website_uuid": generated_website.unique_id}, status=status.HTTP_200_OK
-            )
+        # check if there is a resume with that id has already a website
+        if GeneratedWebsite.objects.filter(resume=resume).exists():
+            return Response({"message": "Website already exists for this resume.", "website_uuid": resume.personal_website.unique_id}, status=status.HTTP_200_OK)
 
-    except Exception as e:
-        return Response(
-            {"error": f"Error fetching resume data: {e}"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
-
-    # Generate the personal website
-    resume_yaml = yaml.dump(resume_data)
-    preferences = yaml.dump(preferences)  # Convert preferences to YAML
-    ai_service_url = os.environ.get("AI_SERVICE_URL") + "create_resume_website/invoke"
-    body = {"input": {"resume_yaml": resume_yaml, "preferences": preferences}}
-
-    try:
-        ai_response = requests.post(ai_service_url, json=body)
-        ai_response.raise_for_status()
-        generated_website_yaml = ai_response.json().get("output")
-        generated_website_data = yaml.safe_load(generated_website_yaml)
-        html_code = generated_website_data.get("html")
-        css_code = generated_website_data.get("css")
-        js_code = generated_website_data.get("js")
-
-        full_html = f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Personal Website</title>
-    <style>
-        {css_code}
-    </style>
-</head>
-<body>
-    {html_code}
-    <script>
-        {js_code}
-    </script>
-</body>
-</html>"""
-
-        # Save the generated website
-        unique_id = str(uuid.uuid4())
-        GeneratedWebsite.objects.create(
-            resume=resume, unique_id=unique_id, html_content=full_html
-        )
-
-        # Return the unique link
-        website_url = f"{FRONTEND_BASE_URL}/api/website/{unique_id}/"
-        return Response({"website_url": website_url}, status=status.HTTP_201_CREATED)
-
-    except requests.exceptions.RequestException as e:
-        return Response(
-            {"error": f"Error communicating with AI service: {e}"},
-            status=status.HTTP_503_SERVICE_UNAVAILABLE,
-        )
-    except (yaml.YAMLError, AttributeError) as e:
-        return Response(
-            {"error": f"Error processing AI service response: {e}"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
-
-
-@api_view(["POST"])
-@require_feature("website_generation")  # Add this decorator
-def generate_personal_website_bloks(request):
-    """
-    API endpoint to generate and save a personal website using Bloks.
-    """
-    resume_id = request.data.get("resumeId")
-    preferences = request.data.get("preferences", {})
-
-    if not resume_id:
-        return Response(
-            {"error": "resumeId is required"}, status=status.HTTP_400_BAD_REQUEST
-        )
-
-    try:
-        resume = get_object_or_404(Resume, pk=resume_id)
-        resume_data = resume.resume
-
-        # Note: We don't add base64 avatar to website generation as it would make HTML too large
-        # Website generation uses a different approach for images
-        try:
-            user_profile = UserProfile.get_or_create_profile(resume.user)
-            
-            # Check if user wants to include avatar (for future website avatar feature)
-            include_avatar = resume.should_include_avatar_in_pdf()
-            
-            if user_profile.avatar and include_avatar:
-                logger.info(f"User has avatar and wants it included - website avatar feature could be implemented later")
-            elif user_profile.avatar and not include_avatar:
-                logger.info(f"Avatar excluded from resume {resume_id} website regeneration per user preference")
-            else:
-                logger.debug(f"No avatar found for user {resume.user.username}")
-        except Exception as avatar_error:
-            logger.warning(f"Could not process avatar preference for website {resume_id}: {avatar_error}")
-            # Continue without avatar - don't fail the entire website generation
-
-        # Check if a website has already been generated for this resume
-        generated_website = GeneratedWebsite.objects.filter(resume=resume).first()
-        if generated_website:
-            # Website already exists, return the unique link
-            return Response(
-                {"website_uuid": generated_website.unique_id}, status=status.HTTP_200_OK
-            )
-
-    except Exception as e:
-        return Response(
-            {"error": f"Error fetching resume data: {e}"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
-
-    # Generate the personal website using Bloks
-    resume_yaml = "\n".join(
-        format_data_to_ordered_text(resume_data, "resume", ORDER_MAP)
-    )
-    ai_service_url = (
-        os.environ.get("AI_SERVICE_URL") + "create_resume_website_bloks/invoke"
-    )
-    body = {"input": {"resume_yaml": resume_yaml, "preferences": preferences}}
-
-    try:
-        ai_response = requests.post(ai_service_url, json=body)
-        ai_response.raise_for_status()
-        generated_website_bloks = ai_response.json().get("output")
-        generated_website_bloks_json = parse_custom_format(generated_website_bloks)
-
-        # Save the generated website YAML
-        unique_id = str(uuid.uuid4())
-        GeneratedWebsite.objects.create(
+        generated_website = GeneratedWebsite.objects.create(
             resume=resume,
-            unique_id=unique_id,
-            json_content=generated_website_bloks_json,
+            unique_id= generate_website_slug(resume.user, resume.id),
+            json_content=task.result.get("website", {}),
         )
+        return Response({"message": "Website generated successfully.", "website_uuid": generated_website.unique_id}, status=status.HTTP_201_CREATED)
 
-        # Return the unique id
-        return Response({"website_uuid": unique_id}, status=status.HTTP_201_CREATED)
+    except BackgroundTask.DoesNotExist:
+        return Response({"error": "Background task not found."}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({"error": f"Error saving generated website: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    except requests.exceptions.RequestException as e:
-        return Response(
-            {"error": f"Error communicating with AI service: {e}"},
-            status=status.HTTP_503_SERVICE_UNAVAILABLE,
-        )
-    except (yaml.YAMLError, AttributeError) as e:
-        return Response(
-            {"error": f"Error processing AI service response: {e}"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
 
 
 @api_view(["GET"])
@@ -790,71 +390,6 @@ def update_website_yaml(request, unique_id):
         )
 
 
-############################### edit website block ###############################
-
-
-@api_view(["POST"])
-@require_feature("website_generation")  # Add this decorator
-def edit_website_block(request):
-    data = json.loads(request.body)
-    resume_id = data.get("resumeId")
-    current_name = data.get("blockName")
-    current_html = data.get("currentHtml")
-    current_css = data.get("currentCss")
-    current_js = data.get("currentJs")
-    prompt = data.get("prompt")
-    artifacts = data.get("artifacts", [])
-
-    if not all([resume_id, current_name, prompt]):
-        print("Missing required parameters:", resume_id, current_name, prompt)
-        return JsonResponse({"error": "Missing required parameters."}, status=400)
-
-    # Call the AI service
-    ai_service_url = os.environ.get("AI_SERVICE_URL") + "edit_block/invoke"
-    body = {
-        "input": {
-            "current_name": current_name,
-            "current_html": textwrap.indent(
-                current_html, "  "
-            ),  # used to indent the html code
-            "current_css": textwrap.indent(
-                current_css, "  "
-            ),  # used to indent the css code
-            "current_js": textwrap.indent(
-                current_js, "  "
-            ),  # used to indent the js code
-            "prompt": prompt,
-            "artifacts": artifacts,
-        }
-    }
-
-    response = requests.post(ai_service_url, json=body)
-    if response.status_code == 200:
-        try:
-            generated_block_yaml = response.json().get("output")
-            generated_block_data = yaml.safe_load(generated_block_yaml)
-            html_code = generated_block_data.get("html")
-            css_code = generated_block_data.get("css")
-            js_code = generated_block_data.get("js")
-            feedback_message = generated_block_data.get("feedback_message")
-
-            return JsonResponse(
-                {
-                    "html": html_code,
-                    "css": css_code,
-                    "js": js_code,
-                    "feedback_message": feedback_message,
-                },
-                status=200,
-            )
-        except (json.JSONDecodeError, yaml.YAMLError) as e:
-            return JsonResponse(
-                {"error": f"Invalid data received from AI service: {e}"}, status=500
-            )
-    else:
-        return JsonResponse(
-            {"error": "Error from AI service"}, status=response.status_code
-        )
 
 
 ############################# Documents ##############################
@@ -1032,163 +567,17 @@ def update_document(request, document_id):
 
 ##################################### ATS Checker #####################################
 
-from .tasks import generate_and_save_resume_task  # Import the Celery task
-import logging  # Import logging
-
-logger = logging.getLogger(__name__)  # Setup logger for the view
-
-
-@api_view(["POST"])
-@require_feature("ats_checker")  # Add this decorator
-def ats_checker(request):
-    """
-    Checks resume against a job description using an ATS service.
-    Conditionally triggers background generation of resume data (cache)
-    or a full resume save (DB) based on authentication and user preference.
-    Returns the ATS checker result and the task ID (if generation was triggered).
-    """
-    generation_task_id = None  # Initialize task ID as None
-
-    try:
-        uploaded_file = request.FILES.get("resume")
-        if not uploaded_file:
-            return Response(
-                {"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # Extract text and form data
-        text = extract_text_from_file(uploaded_file)
-        form_data = json.loads(request.POST.get("formData", "{}"))
-        logger.debug(f"DEBUG: form_data: {form_data}", flush=True)
-        job_description = form_data.get("description") or ""
-        language = form_data.get("targetLanguage") or "en"
-        target_role = form_data.get("targetRole") or ""
-        # Get the new flag, default to True if not provided
-        generate_new_resume_flag = form_data.get("generate_new_resume", True)
-
-        # --- 1. Call ATS Checker Service (Synchronous) ---
-        # ... (Keep existing ATS call logic - ensure ats_result is populated) ...
-        input_data_ats = {
-            "input": {
-                "input_text": text,
-                "job_description": job_description,
-                "language": language,
-                "user_input_role": target_role,
-            }
-        }
-        if job_description:
-            ai_service_url_ats = os.environ.get("AI_SERVICE_URL") + "ats_checker/invoke"
-        else:
-            ai_service_url_ats = (
-                os.environ.get("AI_SERVICE_URL") + "ats_checker_no_job_desc/invoke"
-            )
-
-        ats_result = None
-        try:
-            logger.info("Calling ATS checker service...")
-            response_ats = requests.post(
-                ai_service_url_ats, json=input_data_ats, timeout=60
-            )
-            response_ats.raise_for_status()
-            ats_result = response_ats.json().get("output")
-            logger.info("ATS checker service call successful.")
-        except requests.exceptions.Timeout:
-            logger.error("Error calling ATS checker service: Request timed out")
-            return Response(
-                {"error": "ATS checker service timed out."},
-                status=status.HTTP_504_GATEWAY_TIMEOUT,
-            )
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Error calling ATS checker service: {e}")
-            error_detail = f"Failed to get ATS score: {e}"
-            if e.response is not None:
-                error_detail += f" - Status: {e.response.status_code}, Response: {e.response.text[:500]}"
-            return Response(
-                {"error": error_detail}, status=status.HTTP_503_SERVICE_UNAVAILABLE
-            )
-        except json.JSONDecodeError:
-            logger.error(f"Error decoding ATS checker response: {response_ats.text}")
-            return Response(
-                {"error": "Invalid response from ATS checker service"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-
-        if ats_result is None:
-            logger.error("ATS result is None after supposed successful call.")
-            return Response(
-                {"error": "Failed to retrieve ATS score, cannot proceed."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-
-        # --- 2. Conditionally Trigger Resume Generation Task ---
-        if request.user.is_authenticated:
-            logger.info(f"User {request.user.id} is authenticated.")
-            if generate_new_resume_flag:
-                logger.info(
-                    "generate_new_resume flag is True. Triggering 'generate_and_save_resume_task'."
-                )
-                user_id = request.user.id
-                task_result_object = generate_and_save_resume_task.delay(
-                    user_id=user_id,
-                    input_text=text,
-                    job_description=job_description,
-                    language=language,
-                    ats_result=ats_result,
-                )
-                generation_task_id = task_result_object.id
-                logger.info(
-                    f"DB Save Task triggered with ID: {generation_task_id} for user {user_id}"
-                )
-            else:
-                logger.info(
-                    "generate_new_resume flag is False. Skipping resume generation task."
-                )
-                # generation_task_id remains None
-        else:
-            logger.info(
-                "User is not authenticated. Triggering 'generate_resume_data_task' (cache)."
-            )
-            task_result_object = generate_resume_data_task.delay(
-                input_text=text,
-                job_description=job_description,
-                language=language,
-                ats_result=ats_result,
-            )
-            generation_task_id = task_result_object.id
-            logger.info(f"Cache Task triggered with ID: {generation_task_id}")
-
-        # --- 3. Return ATS Checker Response AND Task ID (if any) ---
-        logger.info(
-            "Returning ATS result and generation task ID (if applicable) to client."
-        )
-        response_payload = {
-            "ats_result": ats_result,
-            "generation_task_id": generation_task_id,  # Will be None if generation was skipped
-        }
-        return Response(response_payload, status=status.HTTP_200_OK)
-
-    except json.JSONDecodeError:
-        logger.warning("Invalid formData provided in request.")
-        return Response(
-            {"error": "Invalid formData provided"}, status=status.HTTP_400_BAD_REQUEST
-        )
-    except Exception as e:
-        logger.exception(f"Unexpected error in ats_checker view: {e}")
-        return Response(
-            {"error": "An unexpected server error occurred."},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
-
 
 ###### Saving Resume After AUTH ########
 
 
 @api_view(["POST"])
-@permission_classes([permissions.IsAuthenticated])  # Ensure user is logged in
+@permission_classes([permissions.IsAuthenticated])
 def save_generated_resume(request):
     """
-    Retrieves generated resume data from cache using a task_id
-    and saves it as a Resume object for the authenticated user.
+    Finds a background task, claims it for the now-authenticated user,
+    and creates a Resume instance from the task's result.
+    This replaces the old cache-based retrieval.
     """
     task_id = request.data.get("generation_task_id")
     if not task_id:
@@ -1198,105 +587,91 @@ def save_generated_resume(request):
         )
 
     user = request.user
-    cache_key = f"generated_resume_data_{task_id}"
 
     try:
-        # 1. Retrieve data from cache
-        generated_data = cache.get(cache_key)
+        # 1. Retrieve the task from the database
+        task = BackgroundTask.objects.get(id=task_id)
 
-        if generated_data is None:
-            logger.warning(
-                f"No cached data found for key {cache_key} for user {user.id}. Task might have expired, failed, or ID is wrong."
+        # 2. Security and State Check
+        if task.user and task.user != user:
+            logger.warning(f"User {user.id} attempted to claim task {task_id} belonging to user {task.user.id}.")
+            return Response({"error": "This task does not belong to you."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Prevent re-processing a task that already created a resume
+        if Resume.objects.filter(generation_task_id=task_id).exists():
+            existing_resume = Resume.objects.get(generation_task_id=task_id)
+            logger.warning(f"Resume {existing_resume.id} already created from task {task_id}.")
+            serializer = ResumeSerializer(existing_resume)
+            return Response({
+                "resume_id": existing_resume.id,
+                "resume_data": serializer.data,
+                "message": "Resume already created from this task."
+            }, status=status.HTTP_200_OK)
+
+        # 3. Handle task based on its status
+        if task.status == 'SUCCESS':
+            generated_data = task.result
+            if not generated_data or "resume" not in generated_data:
+                logger.error(f"Task {task_id} succeeded but has invalid result data.")
+                task.status = 'FAILURE'
+                task.error_message = "Task completed with invalid or missing result data."
+                task.save()
+                return Response({"error": "Task completed with invalid data."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            # Extract data and create the Resume
+            title = generated_data.get("title", "Generated Resume")
+            description = generated_data.get("description", "")
+            icon = generated_data.get("fontawesome_icon", "")
+            resume_data = generated_data.get("resume")
+            about = generated_data.get("about_candidate", "")
+            job_search_keywords = generated_data.get("job_search_keywords", "")
+
+            is_default = not Resume.objects.filter(user=user).exists()
+
+            new_resume = Resume.objects.create(
+                user=user,
+                resume=resume_data,
+                job_search_keywords=job_search_keywords,
+                is_default=is_default,
+                title=title,
+                about=about,
+                icon=icon,
+                description=description,
+                generation_task_id=task_id  # Link the resume to the task
             )
-            # Optionally check AsyncResult status here for more context
-            task_status_result = AsyncResult(task_id)
-            status_info = task_status_result.status
-            if status_info == states.FAILURE:
-                return Response(
-                    {"error": "Resume generation task failed previously. Cannot save."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            return Response(
-                {
-                    "error": "Generated resume data not found or expired. Please generate again."
-                },
-                status=status.HTTP_404_NOT_FOUND,
-            )
+            
+            # Claim the task by assigning the user
+            if not task.user:
+                task.user = user
+                task.save()
 
-        # 2. Check if resume already created from this task (optional but recommended)
-        # Add a field to Resume model, e.g., `generation_task_id = models.CharField(max_length=50, null=True, blank=True, unique=True)`
-        # if Resume.objects.filter(generation_task_id=task_id).exists():
-        #     logger.warning(f"Resume already created from task {task_id} for user {user.id}.")
-        #     existing_resume = Resume.objects.get(generation_task_id=task_id)
-        #     return Response({"resume_id": existing_resume.id, "message": "Resume already exists."}, status=status.HTTP_200_OK)
-
-        # 3. Extract data (ensure keys match what's stored in cache)
-        title = generated_data.get("title", "Generated Resume")
-        description = generated_data.get("description", "")
-        icon = generated_data.get("fontawesome_icon", "")
-        resume_data = generated_data.get("resume")  # Main resume content
-        about = generated_data.get(
-            "about_candidate", ""
-        )  # Or "about" depending on task output
-        job_search_keywords = generated_data.get("job_search_keywords", "")
-        if not resume_data:
-            logger.error(
-                f"Cached data for task {task_id} is missing 'resume' content for user {user.id}."
-            )
-            return Response(
-                {"error": "Invalid cached resume data."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-
-        # 4. Save the Resume object
-        is_default = not Resume.objects.filter(user=user).exists()
-
-        # resume obj
-        resume_obj = {
-            "user": user,
-            "resume": resume_data,
-            "job_search_keywords": job_search_keywords,
-            "is_default": is_default,
-            "title": title,
-            "about": about,
-            "icon": icon,
-            "description": description,
-        }
-
-        new_resume = Resume.objects.create(**resume_obj)
-        logger.info(
-            f"Successfully saved resume with ID {new_resume.id} for user {user.id} from task {task_id}."
-        )
-
-        # 5. Optionally delete the cache entry now that it's saved
-        cache.delete(cache_key)
-        logger.info(f"Deleted cache entry {cache_key}.")
-
-        # 6. Return the new resume ID
-        return Response(
-            {
+            logger.info(f"Successfully saved resume {new_resume.id} for user {user.id} from task {task_id}.")
+            
+            serializer = ResumeSerializer(new_resume)
+            return Response({
                 "resume_id": new_resume.id,
-                "resume_data": resume_obj,
-                "message": "Resume saved successfully.",
-            },
-            status=status.HTTP_201_CREATED,
-        )
+                "resume_data": serializer.data,
+                "message": "Resume saved successfully."
+            }, status=status.HTTP_201_CREATED)
 
+        elif task.status == 'PENDING':
+            return Response({"error": "Resume generation is still in progress. Please wait."}, status=status.HTTP_202_ACCEPTED)
+        
+        elif task.status == 'FAILURE':
+            return Response({"error": f"Resume generation failed: {task.error_message}"}, status=status.HTTP_400_BAD_REQUEST)
+
+        else:
+            return Response({"error": f"Unknown task status: {task.status}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    except BackgroundTask.DoesNotExist:
+        logger.warning(f"User {user.id} requested non-existent task ID {task_id}.")
+        return Response({"error": "Generated resume data not found. The task may have expired or the ID is incorrect."}, status=status.HTTP_404_NOT_FOUND)
+    
     except Exception as e:
-        logger.exception(
-            f"Error saving generated resume for user {user.id} from task {task_id}: {e}"
-        )
-        return Response(
-            {"error": "An unexpected error occurred while saving the resume."},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
+        logger.exception(f"Error saving generated resume for user {user.id} from task {task_id}: {e}")
+        return Response({"error": "An unexpected error occurred while saving the resume."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-from .serializers import ResumeSerializer, UserProfileSerializer
-from .models import UserProfile
-from django.contrib.auth.models import User
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework import permissions
 
 
 @api_view(['GET', 'PUT', 'PATCH'])
@@ -1395,3 +770,72 @@ def get_avatar(request):
         'avatar': profile.avatar,
         'hasAvatar': bool(profile.avatar)
     })
+
+
+
+
+######################### Task Management API Endpoints #########################
+
+
+# --- PUBLIC ENDPOINT FOR FRONTEND ---
+@api_view(["GET"])
+@permission_classes([permissions.IsAuthenticated])
+def get_task_status(request, task_id):
+    """Lets the frontend check the status of a task."""
+    try:
+        task = BackgroundTask.objects.get(id=task_id)
+        return Response({
+            "task_id": task.id,
+            "status": task.status,
+            "result": task.result,
+            "error": task.error_message
+        })
+    except BackgroundTask.DoesNotExist:
+        return Response({"error": "Task not found"}, status=status.HTTP_404_NOT_FOUND)
+
+# --- INTERNAL ENDPOINTS FOR FASTAPI ---
+# You should secure these with an API key or internal network restrictions in production
+
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny]) # Internal access only
+def internal_create_task(request):
+    """Creates a task record and returns its ID."""
+    user_id = request.data.get("user_id")
+    user = None
+    
+    if user_id:
+        try:
+            # Find the user if an ID is provided
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            # Log this, but don't fail the request. The task will be anonymous.
+            logger.warning(f"internal_create_task called with non-existent user_id: {user_id}")
+    
+    try:
+        # Create the task with the user object (which can be None)
+        task = BackgroundTask.objects.create(user=user, status='PENDING')
+        logger.info(f"Internal task {task.id} created for user: {user_id if user_id else 'Anonymous'}")
+        return Response({"task_id": str(task.id)}, status=status.HTTP_201_CREATED)
+    except Exception as e:
+        logger.exception(f"Failed to create internal task: {e}")
+        return Response({"error": "Failed to create task record."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny]) # Internal access only
+def internal_update_task(request):
+    """Updates a task with a result or an error."""
+    task_id = request.data.get("task_id")
+    status = request.data.get("status")
+    result = request.data.get("result")
+    error = request.data.get("error")
+    
+    try:
+        task = BackgroundTask.objects.get(id=task_id)
+        task.status = status
+        task.result = result
+        task.error_message = error
+        task.save()
+        return Response({"message": "Task updated"})
+    except BackgroundTask.DoesNotExist:
+        return Response({"error": "Task not found"}, status=status.HTTP_404_NOT_FOUND)

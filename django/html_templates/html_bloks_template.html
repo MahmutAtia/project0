@@ -11,7 +11,7 @@
         {% endfor %}
     </style>
 </head>
-<body>
+<body data-render-context="live">
     {{ data.global.html | safe }}
     {% for block in data.code_bloks %}
         {{ block.html | safe }}

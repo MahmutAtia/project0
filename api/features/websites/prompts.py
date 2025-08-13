@@ -21,21 +21,30 @@ the client preferences are provided below:
 
 <body>
 <!-- BEGIN global -->
-<!-- DESCRIPTION: This handles global settings, dark mode, light mode, interactive background, overlay, etc. -->
-<!-- here in global JUST GLOBAL HTML CODE -->
+<!-- DESCRIPTION: This handles global settings, theme toggle, custom cursor, interactive background, overlay, etc. -->
+<!-- The theme toggle button and custom cursor elements MUST be placed here to be available in all editor iframes. -->
+<div id="custom-cursor"></div>
+<button id="theme-toggle" aria-label="Toggle Theme">
+  <!-- SVG icons for sun/moon or equivalent -->
+</button>
+<!-- Other global elements like loading overlay -->
 <!-- END global -->
 
 <!-- BEGIN SECTION: header_and_navigation -->
 <!-- DESCRIPTION: This handles the main header with logo and navigation -->
-<section id="header_and_navigation">
-  <!-- here header content -->
-</section>
+<header id="header_and_navigation">
+  <nav class="container">
+    <!-- here header content -->
+  </nav>
+</header>
 <!-- END SECTION: header_and_navigation -->
 
 <!-- BEGIN SECTION: hero -->
 <!-- DESCRIPTION: ... -->
 <section id="hero">
+  <div class="container">
   <!-- here hero content -->
+  </div>
 </section>
 <!-- END SECTION: hero -->
 
@@ -44,9 +53,9 @@ the client preferences are provided below:
 
 ===CSS===
 /* BEGIN global */
-/* Here global styles (variables, base styles, themes custom cursor, interactive background,styles uesd in multiple sections, etc.) like global styles, themes, colors, fonts, etc. */
-/* DO NOT ADD ANY SECTION SPECIFIC STYLES HERE. EVERY SECTION MUST HAVE ITS OWN STYLES ISOLATED FROM OTHER SECTIONS. BUT YOU CAN ADD GLOBAL STYLES HERE  WHICH WILL BE USED ACROSS ALL SECTIONS */
-/* Add the styles which are used in multiple sections here */
+/* Here global styles (variables, base styles, themes, custom cursor, etc.) */
+/* CRITICAL: For theme switching, apply styles based on an attribute on the <html> tag, like this: html[data-theme='dark'] .some-element {{ ... }} */
+/* CRITICAL: The theme toggle button MUST be styled with 'position: fixed' (e.g., bottom-right corner) to be visible in all editor iframes. */
 /* END global */
 
 /* BEGIN SECTION: header_and_navigation */
@@ -76,6 +85,17 @@ the client preferences are provided below:
 ```
 
 STRICT OUTPUT INSTRUCTIONS
+**CREATIVE MANDATE**: You must generate a unique, modern, and visually memorable website suitable for a creative professional like a designer or developer. Avoid generic, boring, or repetitive layouts. Prioritize creative interactions, bold typography, and a strong visual identity. The client's preferences are key to unlocking more advanced and creative features.
+**IMPORTANT**: To ensure high quality and prevent incomplete output, generate a concise website with a maximum of 8 sections (e.g., Hero, About, Experience, Skills, Contact) plus a header and footer. Focus on quality over quantity.
+Use also the following features to make the website more visually appealing and creative based on the design concepts and preferences:
+*   **Custom Cursor**: A unique cursor that matches the theme. must be visible in both light and dark modes. Use `mix-blend-mode: difference;` to ensure visibility.
+*   **Typing Animation**: Animate the name/title in the hero section with a typing/deleting effect.
+*   **Interactive Background**: A background that subtly reacts to mouse movement.it might be subtly reacting to the user's mouse movement or scroll position (e.g., subtle parallax, shifting gradients, particle effects that follow the cursor).
+*   **Subtle 3D Elements**: Use perspective, transforms, or shadows to add depth.
+*   **Generative Art**: Include algorithmically generated visuals or patterns that match the site's aesthetic.
+*   **Unique Footer**: A visually distinct footer that is more than just a list of links.
+*   **Variable Fonts**: Use variable fonts for dynamic and interactive typography.
+
 Generate code for a complete single-page website that functions correctly when all sections are combined with global, and also ensures global code plus any single section's code functions correctly when loaded in isolation (for iframe code editor preview).
 
 Output must match the provided format and comments exactly.
@@ -83,20 +103,107 @@ Output must match the provided format and comments exactly.
 No explanations, apologies, or extra text before or after the output.
 Do not include any code examples, extra comments, or verbose explanations.
 All code must be complete and functional—no placeholders, unfinished, or empty sections.
+**CRITICAL CODE QUALITY**: Your generated code, especially within SVG paths or CSS properties, must NOT contain repetitive, nonsensical, or looping patterns. Any such repetition will result in a failed output.
 Use emoji favicons.
+**SVG USAGE**: Keep all inline SVGs as simple and non-verbose as possible. For icons, prefer single-path SVGs or CSS-only solutions over complex, multi-element SVGs.
 Enhance the design with icons, 3D visuals, graphics, and illustrations using only HTML, CSS, and JS.
 Create original visuals; do not reference external files.
-Do not include contact forms or any feature requiring backend integration implement "get in touch" section in creative way.
+Do not include contact forms or any feature requiring backend integration implement "get in touch" section in
 You may use localStorage or sessionStorage for user preferences, but no backend calls.
-The mouse cursor must always be visible, ensure it is visible in dark mode and light mode.
+The mouse cursor must always be visible, ensure it is visible in dark mode and light mode. **For custom cursors, use `mix-blend-mode: difference;` and a solid color like `white` to ensure visibility on all backgrounds. Do NOT set the cursor's color to be the same as the page's background color.**
 The website must be fully responsive and display correctly on all devices, including mobile-optimized UI patterns like hamburger menus, accordions, tabs, navigation drawers, etc.
 All text must be clearly visible and readable in both light and dark modes.
 The layout must be clean, consistent, and visually appealing—never cluttered, overlapping, messy, unreadable, or confusing.
 All content must be visible and the layout must not be broken.
-Add a loading overlay. Include a fixed, full-viewport HTML/CSS overlay with a loading indicator, styled to match the site's design. It should be visible on load and fade out via JS on `window.onload`. 
+Add a loading overlay. Include a fixed, full-viewport HTML/CSS overlay with a loading indicator, styled to match the site's design. It should be visible on load and fade out via JS.
 All JavaScript must work and all sections must function correctly.
-Do not initialize section-specific scripts in global JS.
-Avoid global event listeners or variables for section scripts. Each section’s JS, CSS, and HTML must be fully self-contained and work independently if loaded in isolation (e.g., in an iframe). Each section must not depend on external scripts or styles.
+Scripts in one section must not depend on or try to directly manipulate elements in another section, unless it's a global system designed to do so (like a navigation menu or scroll animation observer).
+**EDITOR COMPATIBILITY**: The editor renders each section in an isolated iframe.
+*   **You MUST disable animations that rely on page-level scroll events** (e.g., `window.scrollY`) in the editor, as they will not work correctly. Wrap this logic in a condition like `if (document.body.dataset.renderContext === 'live')`.
+*   **You MUST ensure all other self-contained animations** (like typing effects, hover effects, or interactive elements within a single section) **remain active in the editor** to provide an accurate preview.
+*   Features that depend on elements from *other* sections (like a navigation link scrolling to an ID) will not work and should be handled gracefully.
+
+**CRITICAL JAVASCRIPT LOGIC**: You must implement logic based on the `data-render-context` attribute on the `<body>` tag. The global script is responsible for handling the loading overlay and all scroll-triggered animations.
+
+1.  **Global JS (`BEGIN global`)**:
+    *   Your global script **MUST** check the `data-render-context` to correctly handle the loading overlay and animations.
+    *   **Loading Overlay**:
+        *   If `document.body.dataset.renderContext === 'editor'`, remove the overlay immediately.
+        *   If `document.body.dataset.renderContext === 'live'`, the overlay must be visible for a minimum of 1.5 seconds and wait for the page to fully load before fading out.
+    *   **Scroll Animations**:
+        *   Create a single, global `IntersectionObserver` that targets all elements with a common class (e.g., `.animate-on-scroll`).
+        *   If in the `'editor'`, immediately add the `.is-visible` class to all animated elements so they appear in the preview without needing to scroll.
+        *   If in `'live'`, use the observer to add the `.is-visible` class as elements scroll into view.
+    *   **Example Logic**:
+        ```javascript
+        const isEditor = document.body.dataset.renderContext === 'editor';
+
+        // --- Loading Overlay ---
+        const loadingOverlay = document.getElementById('loading-overlay');
+        if (loadingOverlay) {{
+            if (isEditor) {{
+                loadingOverlay.style.display = 'none';
+            }} else {{
+                const minDisplayTime = new Promise(resolve => setTimeout(resolve, 1500));
+                const pageLoad = new Promise(resolve => window.addEventListener('load', resolve));
+                Promise.all([minDisplayTime, pageLoad]).then(() => {{
+                    loadingOverlay.style.opacity = '0';
+                    setTimeout(() => {{ loadingOverlay.style.display = 'none'; }}, 500);
+                }});
+            }}
+        }}
+
+        // --- Theme Toggle (safe check) ---
+        // Ensure the theme toggle button exists before adding the event listener
+        const themeToggle = document.getElementById('theme-toggle');
+        if (themeToggle) {{
+            themeToggle.addEventListener('click', () => {{
+                // This is just an example, the AI will implement the actual logic
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', newTheme);
+            }});
+        }}
+
+        // --- Custom Cursor (safe check) ---
+        // This feature is self-contained and should work in the editor.
+        const customCursor = document.getElementById('custom-cursor');
+        if (customCursor) {{
+             window.addEventListener('mousemove', e => {{
+                customCursor.style.left = e.clientX + 'px';
+                customCursor.style.top = e.clientY + 'px';
+            }});
+        }}
+
+        // --- Interactive Background (safe check) ---
+        // This feature is self-contained and should work in the editor.
+        const interactiveBg = document.getElementById('interactive-background');
+        if (interactiveBg) {{
+            // AI will implement the canvas animation logic here.
+            // It should NOT be disabled in the editor.
+        }}
+
+        // --- Global Scroll Animation Handler ---
+        const animatedElements = document.querySelectorAll('.animate-on-scroll');
+        if (isEditor) {{
+            // In editor mode, all animated elements in the current iframe should be visible.
+            animatedElements.forEach(el => el.classList.add('is-visible'));
+        }} else {{
+            const observer = new IntersectionObserver((entries) => {{
+                entries.forEach(entry => {{
+                    if (entry.isIntersecting) {{
+                        entry.target.classList.add('is-visible');
+                        observer.unobserve(entry.target);
+                    }}
+                }});
+            }}, {{ threshold: 0.1 }});
+            animatedElements.forEach(el => observer.observe(el));
+        }}
+        ```
+2.  **Section JS (e.g., `BEGIN SECTION: about`)**:
+    *   Section-specific JavaScript should ONLY contain logic for features unique to that section (e.g., an accordion, a carousel, a specific button interaction).
+    *   **DO NOT** include any scroll animation or IntersectionObserver logic here. This is now handled globally.
+
 Do not output anything except the required format.
 Do not use file or image paths; all visuals must be created with HTML, CSS, and JS only.
 Do not use or create base64 images. Also do not create verbose SVG strings.
@@ -114,7 +221,8 @@ ENSURE animations are lightweight and finite
 ENSURE scripts complete execution quickly (under 2 seconds)
 IF using event listeners, provide cleanup methods
 IF using animations, use CSS instead of JavaScript when possible
-
+**CRITICAL**: Do NOT wrap your JavaScript code in `DOMContentLoaded` or `window.onload` event listeners. The scripts are already placed at the end of the body, so the DOM is ready.
+**CRITICAL**: All scroll-triggered animations must be handled by a single, global IntersectionObserver that targets a common class like `.animate-on-scroll`. Do NOT create separate observers in each section.
 personal portfolio website output"""
 
 create_resume_website_bloks_prompt = PromptTemplate.from_template(
@@ -212,3 +320,13 @@ This array contains multiple objects, where each object represents a distinct se
 # - somethings like cheklist adding then will add instructions like the cursor animation trick think of other tricks and things which are widly uesed in pesonal websites
 # - think of other themes and colors and fonts that are widely used in personal websites
 # - i waht ther preferences that will make perfect personal websites and the most visually appealing and creative and unique authentic fot this specific user
+
+
+
+# **CREATIVE FEATURES & ADVANCED INTERACTIONS**:
+# If the client's preferences mention specific keywords, implement the corresponding advanced features:
+# - **"Magnetic buttons" or "magnetic elements"**: Make specified elements (like buttons or links) attract the custom cursor when it's nearby.
+# - **"Text reveal animation"**: Animate headlines or key text to appear letter by letter or word by word on scroll.
+# - **"Scroll-based rotation/scaling"**: Animate images or decorative elements to rotate or scale as the user scrolls through a section.
+# - **"Unconventional grid" or "asymmetrical layout"**: Use overlapping elements and a non-standard grid to create a more dynamic and less rigid design.
+# - **"Advanced hover effects"**: Implement unique hover effects on portfolio items or cards, like image distortions, color shifts, or content reveals.

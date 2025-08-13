@@ -10,27 +10,12 @@ urlpatterns = [
     
     # 1. Exact matches first
     path("resumes/", views.ResumeListCreateView.as_view(), name="resume-list-create"),
-    path("resumes/generate/", views.generate_resume, name="generate-resume"),
     path("resumes/generate-pdf/", views.generate_pdf, name="generate-pdf"),
+
     path(
-        "resumes/pdf-generation-status/<str:task_id>/",
-        views.get_pdf_generation_status,
-        name="get_pdf_generation_status",
-    ),
-    path(
-        "resumes/generate_website/",
-        views.generate_personal_website,
-        name="generate-resume-website",
-    ),
-    path(
-        "resumes/generate_website_yaml/",
-        views.generate_personal_website_bloks,
-        name="generate-resume-website-bloks",
-    ),
-    path(
-        "resumes/generate_from_job_desc/",
-        views.generate_from_job_desc,
-        name="generate-resume-from-job-desc",
+        "resumes/save_generated_website/",
+        views.save_generated_website,
+        name="save-generated-website",
     ),
 
 
@@ -65,44 +50,41 @@ urlpatterns = [
     ),
     # editor views here
     path(
-        "website-yaml/<uuid:resume_id>/",
+        "website-yaml/<str:resume_id>/",
         views.get_website_yaml_json,
         name="serve_website_yaml_json",
     ),
     path(
-        "website-yaml/update/<uuid:unique_id>/",
+        "website-yaml/update/<str:unique_id>/",
         views.update_website_yaml,
         name="save-updates-to-personal-website",
     ),
-    path(
-        "website-yaml/edit-block/", views.edit_website_block, name="edit_website_block"
-    ),  # With trailing slash
-    # 2. Other prefixes with
-    path(
-        "<uuid:unique_id>/",
-        views.serve_personal_website_yaml,
-        name="view-personal-website-yaml",
-    ),
+  
+    # # 2. Other prefixes with
+    # path(
+    #     "<str:unique_id>/",
+    #     views.serve_personal_website_yaml,
+    #     name="view-personal-website-yaml",
+    # ),
     # ats checker
-    path("resumes/ats-checker/", views.ats_checker, name="ats-checker"),
     path(
         "resumes/save_generated_resume/",
         views.save_generated_resume,
         name="save-generated-resume",
     ),
-    # 3. Specific parameterized paths under 'resumes/'
-    path(
-        "resumes/<str:pk>/generate/",
-        views.generate_resume,
-        name="generate-resume-with-pk",
-    ),
+
     # 4. General parameterized paths under 'resumes/'
     path(
         "resumes/<str:pk>/",
         views.ResumeRetrieveUpdateDestroyView.as_view(),
         name="resume-retrieve-update-destroy",
     ),
-    # 5. Generate document
-    # path('resumes/generate_document/', views.generate_document_bloks, name='generate-document'),
-    # # path('resumes/<str:pk>/document/<uuid:unique_id>/update/', views.update_document, name='update-document'),
+   #5. Task management
+    path("task-status/<str:task_id>/",
+        views.get_task_status,
+        name="get_task_status",
+    ),
+   path("create-task/", views.internal_create_task, name="create-task"),
+    path("update-task/", views.internal_update_task, name="update-task"),
+
 ]
