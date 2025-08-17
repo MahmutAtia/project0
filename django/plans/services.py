@@ -18,6 +18,9 @@ from .models import (
 
 logger = logging.getLogger(__name__)
 
+# Define a constant for the reactivation grace period
+REACTIVATION_GRACE_PERIOD_DAYS = 7
+
 
 class PlanService:
     """Service for plan-related operations"""
@@ -305,8 +308,56 @@ class SubscriptionService:
         return subscription
 
     @staticmethod
-    def cancel_subscription(user: User, immediate: bool = False) -> dict:
-        """Cancel user's subscription with proper handling"""
+    def reactivate_subscription(user, plan_to_activate):
+        """
+        Finds and reactivates a recently canceled subscription for the user
+        if it's for the same plan and within a grace period.
+        """
+        try:
+            # Find the most recently canceled subscription for the target plan
+            last_canceled_sub = (
+                UserSubscription.objects.filter(user=user, plan=plan_to_activate)
+                .exclude(status="active")
+                .order_by("-end_date")
+                .first()
+            )
+
+            if not last_canceled_sub:
+                return {"success": False, "message": "No previous subscription found."}
+
+            # --- FIX: Ensure end_date is not None before comparison ---
+            if last_canceled_sub.end_date is None:
+                return {"success": False, "message": "Subscription has no end date."}
+
+            # Check if the subscription ended within the grace period
+            grace_period_end = last_canceled_sub.end_date + timedelta(
+                days=REACTIVATION_GRACE_PERIOD_DAYS
+            )
+
+            if timezone.now() <= grace_period_end:
+                # Reactivate the subscription
+                last_canceled_sub.status = "active"
+                last_canceled_sub.auto_renew = True
+                last_canceled_sub.canceled_at = None
+                # Optionally extend the end_date if needed, or reset it based on plan
+                # For simplicity, we'll just reactivate it here.
+                last_canceled_sub.save()
+                return {"success": True, "subscription": last_canceled_sub}
+            else:
+                return {
+                    "success": False,
+                    "message": "Reactivation period has expired.",
+                }
+
+        except UserSubscription.DoesNotExist:
+            return {"success": False, "message": "No subscription history found."}
+        except Exception as e:
+            # Log the exception e
+            return {"success": False, "message": str(e)}
+
+    @staticmethod
+    def cancel_subscription(user, immediate=False):
+        """Cancels the user's active subscription."""
         from django.utils import timezone
 
         subscription = SubscriptionService.get_active_subscription(user)
@@ -342,60 +393,6 @@ class SubscriptionService:
             "ends_at": subscription.end_date,
             "grace_period": not immediate,
         }
-
-    @staticmethod
-    def reactivate_subscription(user: User, plan: Plan = None) -> dict:
-        """Reactivate a canceled subscription"""
-        from django.utils import timezone
-
-        # Look for recently canceled subscription OR active subscription that was set to not renew
-        recent_subscription = UserSubscription.objects.filter(user=user)
-
-        if plan:
-            recent_subscription = recent_subscription.filter(plan=plan)
-
-        # Filter for canceled within 30 days OR active but marked as non-renewing
-        recent_subscription = recent_subscription.filter(
-            models.Q(status="canceled") | models.Q(status="active", auto_renew=False)
-            if hasattr(UserSubscription, "auto_renew")
-            else models.Q(status="canceled")
-        ).first()
-
-        if recent_subscription:
-            # Check if it's within reactivation period (30 days)
-            if (
-                hasattr(recent_subscription, "canceled_at")
-                and recent_subscription.canceled_at
-            ):
-                if recent_subscription.canceled_at < timezone.now() - timedelta(
-                    days=30
-                ):
-                    return {"success": False, "reactivated": False}
-
-            # Reactivate existing subscription
-            recent_subscription.status = "active"
-            if hasattr(recent_subscription, "canceled_at"):
-                recent_subscription.canceled_at = None
-            if hasattr(recent_subscription, "auto_renew"):
-                recent_subscription.auto_renew = True
-
-            # Extend end date if expired or about to expire
-            if recent_subscription.end_date <= timezone.now() + timedelta(hours=1):
-                if recent_subscription.plan.billing_period == "monthly":
-                    recent_subscription.end_date = timezone.now() + timedelta(days=30)
-                elif recent_subscription.plan.billing_period == "yearly":
-                    recent_subscription.end_date = timezone.now() + timedelta(days=365)
-
-            recent_subscription.save()
-
-            return {
-                "success": True,
-                "message": "Subscription reactivated",
-                "subscription": recent_subscription,
-                "reactivated": True,
-            }
-
-        return {"success": False, "reactivated": False}
 
     @staticmethod
     def handle_payment_and_subscription(
