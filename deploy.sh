@@ -10,9 +10,9 @@ set -e
 # --- Configuration ---
 BACKEND_REPO="https://github.com/MahmutAtia/project0.git"
 FRONTEND_REPO="https://github.com/MahmutAtia/proj0_front.git"
-PROJECT_DIR="prod"
+PROJECT_DIR="prod2"
 FRONTEND_DIR="careerflow"
-BRANCH="prod"
+BRANCH="prod2"
 DOMAIN="vbs.attiais.me"
 
 # Colors for output
@@ -575,7 +575,7 @@ main() {
     # Step 8: Start core services
     log_info "Step 8: Starting core services..."
     cd "$PROJECT_DIR"
-    docker compose up -d db redis
+    docker compose up -d db
     sleep 15
     log_success "Core services started"
     echo
