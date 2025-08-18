@@ -10,7 +10,7 @@ set -e
 # --- Configuration ---
 BACKEND_REPO="https://github.com/MahmutAtia/project0.git"
 FRONTEND_REPO="https://github.com/MahmutAtia/proj0_front.git"
-PROJECT_DIR="prod2"
+PROJECT_DIR="prod"
 FRONTEND_DIR="careerflow"
 BRANCH="prod2"
 DOMAIN="vbs.attiais.me"
