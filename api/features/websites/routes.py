@@ -36,7 +36,7 @@ class EditWebsiteSectionRequest(BaseModel):
     artifacts: list = []
 
 
-@router.post("/edit_section")
+@router.post("/edit_section/")
 async def edit_website_section(
     request: EditWebsiteSectionRequest,
     auth_data: dict = Depends(verify_website_edit),
@@ -78,7 +78,7 @@ async def edit_website_section(
 
 
 
-@router.post("/create_resume_website")
+@router.post("/create_resume_website/")
 async def create_resume_website(
     request: CreateResumeWebsiteRequest,
         background_tasks: BackgroundTasks,
