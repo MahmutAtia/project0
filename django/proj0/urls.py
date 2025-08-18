@@ -60,7 +60,7 @@ urlpatterns = [
     # Serve the personal website URL at the root.
     # This should be last as it's a broad catch-all.
     path(
-        "<str:unique_id>/",
+        "site/<str:unique_id>/",
         api_views.serve_personal_website_yaml,
         name="view-personal-website-yaml",
     ),
