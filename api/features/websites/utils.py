@@ -6,6 +6,7 @@ import httpx
 import os
 import re
 import logging
+import asyncio
 
 # Configure logging to see output in production environments
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
