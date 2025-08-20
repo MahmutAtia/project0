@@ -32,17 +32,6 @@ class ResumeSectionRequest(BaseModel):
     prompt: str
 
 
-class GenerateFromInputRequest(BaseModel):
-    input_text: str
-    language: str = "en"
-    job_description: str = ""
-    instructions: str = ""
-
-
-class GenerateFromJobDescRequest(BaseModel):
-    job_description: str
-    target_language: str = "en"
-    document_preferences: dict = {}
 
 
 router = APIRouter()
@@ -56,7 +45,7 @@ async def edit_section(
     """
     Edits a specific section of a resume.
     """
-    try:
+    try:                                                                                                                                                                                                                                                        
         # Create prompt and call chain
         chain = chain_instance.build_chain(edit_resume_section_prompt)
         result = await chain.ainvoke(
@@ -138,7 +127,9 @@ async def create_resume(
 @router.post("/ats_checker_and_generate")
 async def ats_checker_and_generate(
     background_tasks: BackgroundTasks,
-    resume: UploadFile = File(...),
+    # make resume optional, if not provided, use form data
+    resume: UploadFile = File(None),
+    resume_text: str = Form(None),
     formData: str = Form(...),
 ):
     """
@@ -149,8 +140,10 @@ async def ats_checker_and_generate(
     """
     # --- 1. Process Inputs ---
     # Pass the UploadFile object directly to the utility and await it
-    text = await extract_text_from_file(resume) 
-    
+    if resume:
+        text = await extract_text_from_file(resume)
+    else:
+        text = resume_text
     # The rest of your logic remains the same
     form_data = json.loads(formData)
     
