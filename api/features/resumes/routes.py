@@ -5,9 +5,9 @@ from .utils import (
     verify_resume_generation,
     verify_resume_section_edit,
     extract_text_from_file,
-    generate_resume_and_update_django
+    generate_resume_and_update_django,
 )
-from .chains import chain_instance, ats_create_resume_chain, ats_job_desc_resume_chain,ats_checker_chain, ats_checker_no_job_desc_chain
+from .chains import chain_instance,ats_checker_chain, ats_checker_no_job_desc_chain
 from .prompts import (
     create_resume_prompt,
     edit_resume_section_prompt
@@ -16,7 +16,6 @@ import httpx
 import yaml
 import json
 import os
-
 
 
 class ResumeRequest(BaseModel):
