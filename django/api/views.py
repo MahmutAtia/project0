@@ -24,6 +24,7 @@ from django.http import (
 )
 import uuid
 import io
+import yaml
 
 
 
@@ -193,7 +194,14 @@ def generate_pdf(request):
         
     try:
         resume = get_object_or_404(Resume, pk=resume_id, user=request.user)
-        resume_data = resume.resume
+        resume_data = {}
+        if resume.resume:
+            try:
+                resume_data = yaml.safe_load(resume.resume)
+            except yaml.YAMLError as e:
+                logger.error(f"Error parsing YAML for resume {resume_id}: {e}")
+                return Response({"error": "Could not parse resume data."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
         sections_sort = resume.sections_sort
         hidden_sections = resume.hidden_sections
         
