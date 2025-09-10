@@ -12,10 +12,13 @@ from .prompts import (
     create_resume_prompt,
     edit_resume_section_prompt
 )
+from modules.utils import safe_load_yaml_with_logging
 import httpx
 import yaml
+from io import StringIO
 import json
 import os
+
 
 
 class ResumeRequest(BaseModel):
@@ -93,19 +96,37 @@ async def create_resume(
             }
         )
 
-        # Step 2: Parse result
-        resume_data = yaml.safe_load(result)
+        # Step 2: Parse the full result to extract metadata and the resume object
+        parsed_data = safe_load_yaml_with_logging(result) 
 
+        # The 'resume' part from the YAML
+        resume_content_obj = parsed_data.get("resume", {})
+
+        # Convert the ordered resume object back to a YAML string for storage, preserving key order
+        string_stream = StringIO()
+        yaml.dump(resume_content_obj, string_stream, sort_keys=False, default_flow_style=False)
+        resume_yaml_string = string_stream.getvalue()
+
+        # Prepare the payload for the Django API call
+        django_payload = {
+            "title": parsed_data.get("title", "Generated Resume"),
+            "description": parsed_data.get("description", ""),
+            "about_candidate": parsed_data.get("about_candidate", ""),
+            "job_search_keywords": parsed_data.get("job_search_keywords", ""),
+            "fontawesome_icon": parsed_data.get("fontawesome_icon", ""),
+            "resume": resume_yaml_string # Send the raw, order-preserved YAML string
+        }
+        print(f"Prepared Django payload: {django_payload['resume'][:100]}...")  # Log first 100 chars of resume for debugging
         # Step 3: Save to Django via API call
         saved_resume = await save_resume_to_django(
-            auth_data["user_id"], resume_data, auth_data["authorization"]
+            auth_data["user_id"], django_payload, auth_data["authorization"]
         )
 
         if not saved_resume:
-            # If saving fails, still return the generated content
+            # If saving fails, still return the generated content (as a parsed object)
             return {
                 "success": True,
-                "content": resume_data,
+                "content": parsed_data,
                 "warning": "Resume generated but not saved to database",
             }
 

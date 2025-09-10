@@ -7,8 +7,9 @@ import httpx
 from .chains import ats_create_resume_chain, ats_job_desc_resume_chain
 import os
 import io
+from modules.utils import safe_load_yaml_with_logging
+from io import StringIO
 import yaml
-
 
 
 
@@ -22,11 +23,12 @@ async def save_resume_to_django(user_id: int, data: dict, authorization: str):
             response = await client.post(
                 f"{DJANGO_API_URL}/api/resumes/",
                 headers={"Authorization": authorization},
+                
                 json={
-                    "resume": data.get("resume", {}),  # The main resume JSON data
+                    "resume": data.get("resume", ""),  # The main resume YAML string
                     "title": data.get("title", "Generated Resume"),
                     "description": data.get("description", ""),
-                    "about": data.get("about_candidate", ""),
+                    "about": data.get("about_candidate", ""), # Correctly get from 'about_candidate' key
                     "job_search_keywords": data.get("job_search_keywords", ""),
                     "icon": data.get("fontawesome_icon", ""),
                     # Django will automatically set: user, is_default, created_at, updated_at
@@ -65,12 +67,29 @@ async def generate_resume_and_update_django(task_id: str, resume_text: str, job_
         if not generated_resume or not isinstance(generated_resume, str):
             raise ValueError("AI chain failed to return a valid resume string.")
 
-        generated_resume_json = yaml.safe_load(generated_resume.replace("```yaml", "").replace("```", ""))
+        # Parse the YAML to extract metadata
+        parsed_data = safe_load_yaml_with_logging(generated_resume)
+        
+        # The 'resume' part from the YAML
+        resume_content_obj = parsed_data.get("resume", {})
 
+        # Convert the ordered resume object back to a string for storage
+        string_stream = StringIO()
+        yaml.dump(resume_content_obj, string_stream, sort_keys=False, default_flow_style=False)
+        resume_yaml_string = string_stream.getvalue()
 
+        # Prepare the result payload
+        result_payload = {
+            "title": parsed_data.get("title", "Generated Resume"),
+            "description": parsed_data.get("description", ""),
+            "about_candidate": parsed_data.get("about_candidate", ""),
+            "job_search_keywords": parsed_data.get("job_search_keywords", ""),
+            "fontawesome_icon": parsed_data.get("fontawesome_icon", ""),
+            "resume_yaml_string": resume_yaml_string # The raw, order-preserved YAML string
+        }
 
         # 2. Update the task in Django with the result
-        payload = {"task_id": task_id, "status": "SUCCESS", "result": generated_resume_json}
+        payload = {"task_id": task_id, "status": "SUCCESS", "result": result_payload}
         async with httpx.AsyncClient() as client:
             await client.post(update_url, json=payload)
 

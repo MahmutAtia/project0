@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import Resume, GeneratedDocument, GeneratedWebsite, UserProfile
+import io
+import yaml
 
 User = get_user_model()
 
@@ -74,6 +76,7 @@ class ResumeSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(
         read_only=True
     )  # Option 2: Display user ID (default for FK)
+    resume = serializers.CharField(required=False, allow_blank=True) # Make it a writable field
     generated_documents_data = serializers.SerializerMethodField(
         read_only=True
     )  # New field
@@ -101,6 +104,31 @@ class ResumeSerializer(serializers.ModelSerializer):
             "personal_website_uuid",  # New field
         ]
         # 'user' is read-only as it's set by the view during creation.
+
+    def to_representation(self, instance):
+        """
+        Convert the `resume` YAML string from the model into a Python object for the JSON response.
+        """
+        ret = super().to_representation(instance)
+        resume_yaml_string = instance.resume
+        if resume_yaml_string:
+            try:
+                ret['resume'] = yaml.safe_load(resume_yaml_string)
+            except yaml.YAMLError:
+                ret['resume'] = None # Or some error indicator
+        else:
+            ret['resume'] = None
+        return ret
+
+    def to_internal_value(self, data):
+        """
+        Convert the incoming `resume` object/string into a YAML string to be saved in the database.
+        """
+        # The incoming request from FastAPI sends the resume as a string already.
+        # If it were an object, we would dump it to YAML here.
+        # This method ensures the field is correctly processed.
+        return super().to_internal_value(data)
+
 
     def get_generated_documents_data(self, obj: Resume):  # Renamed method
         """

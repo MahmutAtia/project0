@@ -611,7 +611,7 @@ def save_generated_resume(request):
         # 3. Handle task based on its status
         if task.status == 'SUCCESS':
             generated_data = task.result
-            if not generated_data or "resume" not in generated_data:
+            if not generated_data or "resume_yaml_string" not in generated_data:
                 logger.error(f"Task {task_id} succeeded but has invalid result data.")
                 task.status = 'FAILURE'
                 task.error_message = "Task completed with invalid or missing result data."
@@ -622,7 +622,7 @@ def save_generated_resume(request):
             title = generated_data.get("title", "Generated Resume")
             description = generated_data.get("description", "")
             icon = generated_data.get("fontawesome_icon", "")
-            resume_data = generated_data.get("resume")
+            resume_yaml_string = generated_data.get("resume_yaml_string") # Get the YAML string
             about = generated_data.get("about_candidate", "")
             job_search_keywords = generated_data.get("job_search_keywords", "")
 
@@ -630,7 +630,7 @@ def save_generated_resume(request):
 
             new_resume = Resume.objects.create(
                 user=user,
-                resume=resume_data,
+                resume=resume_yaml_string, # Save the string directly
                 job_search_keywords=job_search_keywords,
                 is_default=is_default,
                 title=title,

@@ -1,8 +1,9 @@
 from django.db import models
 from django.db.models import JSONField
 from django.contrib.auth.models import User
+from io import StringIO
 import uuid
-
+import yaml
 
 DEFAULT_RESUME_SECTION_KEYS = [
     "personal_information",
@@ -51,7 +52,7 @@ class Resume(models.Model):
         null=True,
         help_text="A name for this resume (e.g., 'Software Engineer Resume')",
     )
-    resume = JSONField(blank=True, null=True)  # Stores the entire resume data as JSON
+    resume = models.TextField(blank=True, null=True)  # Stores the entire resume as a YAML string
     about = models.TextField(
         blank=True, null=True, help_text="A brief description about the resume"
     )
@@ -82,12 +83,21 @@ class Resume(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
-    # ... other fields ...
     generation_task_id = models.CharField(max_length=255, null=True, blank=True, unique=True)
 
+    @property
+    def resume_data(self):
+        """Parses the stored YAML string and returns it as ordered data."""
+        if not self.resume:
+            return None
+        try:
+            return yaml.safe_load(self.resume)
+        except:
+            # Fallback for malformed YAML, though this should be rare
+            return {}
 
     def __str__(self):
-        return f"{self.user.username}'s Resume: {self.title or 'Unnamed'}"
+        return f"{self.title} for {self.user.username}"
 
     def save(self, *args, **kwargs):
         is_new = not self.pk  # Check if the instance is being created
@@ -104,21 +114,24 @@ class Resume(models.Model):
             self.is_default = True
 
         if is_new:
+            # Parse the resume string into an object to work with it
+            resume_data = self.resume_data
+
             # 1. Initialize sections_sort if it's empty or not provided
             if not self.sections_sort:  # Handles None or empty list from default=list
                 self.sections_sort = list(
                     DEFAULT_RESUME_SECTION_KEYS
                 )  # Ensure it's a new list instance
 
-            # 2. Initialize hidden_sections by checking empty sections in resume JSON
+            # 2. Initialize hidden_sections by checking empty sections in the parsed data
             if not self.hidden_sections:
                 self.hidden_sections = []
 
             # Check for empty sections in resume JSON and add to hidden_sections
-            if self.resume:
+            if resume_data:
                 for section_key in DEFAULT_RESUME_SECTION_KEYS:
                     # Check if section exists and is empty/None
-                    section_data = self.resume.get(section_key)
+                    section_data = resume_data.get(section_key)
 
                     # empty list or emtpty dict or None
                     if section_data is None or (
@@ -133,13 +146,7 @@ class Resume(models.Model):
                         if section_key in self.hidden_sections:
                             self.hidden_sections.remove(section_key)
                 
-                # Set default avatar inclusion preference for new resumes
-                if 'personal_information' in self.resume:
-                    if 'includeAvatarInPDF' not in self.resume['personal_information']:
-                        self.resume['personal_information']['includeAvatarInPDF'] = False
-                elif self.resume:
-                    # Create personal_information section if it doesn't exist
-                    self.resume['personal_information'] = {'includeAvatarInPDF': False}
+
         super().save(*args, **kwargs)
 
     def should_include_avatar_in_pdf(self):
