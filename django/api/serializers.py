@@ -124,6 +124,16 @@ class ResumeSerializer(serializers.ModelSerializer):
         """
         Convert the incoming `resume` object/string into a YAML string to be saved in the database.
         """
+        resume_data = data.get('resume')
+        if resume_data and isinstance(resume_data, dict):
+            # If 'resume' is an object, convert it to a YAML string
+            try:
+                string_stream = io.StringIO()
+                yaml.dump(resume_data, string_stream, sort_keys=False, default_flow_style=False)
+                data['resume'] = string_stream.getvalue()
+            except Exception as e:
+                raise serializers.ValidationError({"resume": f"Could not serialize resume object to YAML: {e}"})
+
         # The incoming request from FastAPI sends the resume as a string already.
         # If it were an object, we would dump it to YAML here.
         # This method ensures the field is correctly processed.
