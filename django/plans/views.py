@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -7,10 +7,11 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from payments import get_payment_model, RedirectNeeded
-from payments.core import provider_factory
 import json
 from decimal import Decimal
+from polar_sdk import Polar
+from django.conf import settings
+from django.urls import reverse
 
 from .models import Plan, UserSubscription, PlanPayment, Feature, UsageRecord
 from .serializers import (
@@ -19,8 +20,6 @@ from .serializers import (
     PlanPaymentSerializer,
 )
 from .services import PlanService, PaymentService, UsageService, SubscriptionService
-
-Payment = get_payment_model()
 
 
 class PlanListView(ListView):
@@ -42,104 +41,6 @@ def get_plans(request):
     )
     serializer = PlanSerializer(plans, many=True)
     return Response(serializer.data)
-
-
-@api_view(["POST"])
-@permission_classes([IsAuthenticated])
-def subscribe_to_plan(request):
-    """Subscribe user to a plan with proper handling"""
-    plan_id = request.data.get("plan_id")
-    variant = request.data.get("variant", "dummy")
-
-    if not plan_id:
-        return Response(
-            {"error": "Plan ID is required"}, status=status.HTTP_400_BAD_REQUEST
-        )
-
-    try:
-        plan = Plan.objects.get(id=plan_id, is_active=True)
-    except Plan.DoesNotExist:
-        return Response({"error": "Plan not found"}, status=status.HTTP_404_NOT_FOUND)
-
-    # Check for existing active subscription to same plan
-    existing_subscription = SubscriptionService.get_active_subscription(request.user)
-    if existing_subscription and existing_subscription.plan.id == plan_id:
-        return Response(
-            {
-                "success": True,
-                "message": "You are already subscribed to this plan",
-                "subscription_id": existing_subscription.id,
-                "already_subscribed": True,
-            }
-        )
-
-    # For ANY plan (free or paid), first try to reactivate recent subscription
-    reactivation_result = SubscriptionService.reactivate_subscription(
-        request.user, plan
-    )
-
-    if reactivation_result["success"]:
-        return Response(
-            {
-                "success": True,
-                "message": f"{plan.name} reactivated successfully! No new payment required.",
-                "subscription_id": reactivation_result["subscription"].id,
-                "reactivated": True,
-            }
-        )
-
-    # If no reactivation possible, handle new subscription
-    if plan.is_free:
-        # Create new free subscription
-        try:
-            subscription = PlanService.create_subscription(request.user, plan)
-            return Response(
-                {
-                    "success": True,
-                    "message": f"Free plan activated successfully",
-                    "subscription_id": subscription.id,
-                }
-            )
-        except Exception as e:
-            return Response(
-                {"error": f"Failed to activate free plan: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-
-    # For paid plans, create payment only if no reactivation
-    try:
-        # Create payment for paid plans
-        payment = PaymentService.create_payment(
-            user=request.user, plan=plan, variant=variant
-        )
-
-        # For dummy payments, process immediately
-        if variant == "dummy":
-            payment.change_status("confirmed")
-            subscription = PaymentService.handle_payment_success(payment)
-
-            return Response(
-                {
-                    "success": True,
-                    "message": f"Successfully subscribed to {plan.name}!",
-                    "subscription_id": subscription.id,
-                    "payment_id": payment.id,
-                }
-            )
-        else:
-            return Response(
-                {
-                    "payment_id": payment.id,
-                    "payment_url": f"/plans/payment/process/{payment.id}/",
-                    "message": "Payment created. Please complete payment.",
-                }
-            )
-
-    except Exception as e:
-        return Response(
-            {"error": f"Subscription failed: {str(e)}"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
 
 
 @api_view(["POST"])
@@ -192,39 +93,6 @@ def get_user_subscription(request):
         )
     else:
         return Response({"has_subscription": False, "plan": None})
-
-
-@api_view(["POST"])
-@permission_classes([IsAuthenticated])
-def complete_payment(request):
-    """Complete a payment"""
-    payment_id = request.data.get("payment_id")
-
-    if not payment_id:
-        return Response(
-            {"error": "Payment ID is required"}, status=status.HTTP_400_BAD_REQUEST
-        )
-
-    try:
-        payment = PlanPayment.objects.get(id=payment_id, user=request.user)
-
-        # Mark payment as confirmed
-        payment.change_status("confirmed")
-
-        # Create subscription
-        subscription = PaymentService.handle_payment_success(payment)
-
-        return Response(
-            {
-                "message": "Payment completed successfully",
-                "subscription_id": subscription.id,
-            }
-        )
-
-    except PlanPayment.DoesNotExist:
-        return Response(
-            {"error": "Payment not found"}, status=status.HTTP_404_NOT_FOUND
-        )
 
 
 @api_view(["GET"])
@@ -299,42 +167,90 @@ def get_payment_history(request):
     return Response(serializer.data)
 
 
-# Payment processing views
-@login_required
-def payment_process(request, payment_id):
-    """Process payment through the selected provider"""
-    payment = get_object_or_404(PlanPayment, id=payment_id)
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def create_polar_checkout_session(request):
+    """Create a Polar checkout session for a given plan."""
+    plan_id = request.data.get("plan_id")
+    user = request.user
+    if not plan_id:
+        return Response({"error": "plan_id is required"}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        form = payment.get_form(data=request.POST or None)
-        if form.is_valid():
-            form.save()
-            return redirect("plans:payment-success", payment_id=payment.id)
-    except RedirectNeeded as redirect_to:
-        return redirect(str(redirect_to))
+        plan = Plan.objects.get(id=plan_id, is_active=True)
+    except Plan.DoesNotExist:
+        return Response({"error": "Plan not found"}, status=status.HTTP_404_NOT_FOUND)
 
-    return render(
-        request, "plans/payment_form.html", {"form": form, "payment": payment}
-    )
+    if not plan.polar_price_id:
+        return Response({"error": "Plan is not configured for Polar payments"}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        with Polar(
+            access_token=settings.POLAR_API_KEY,
+            server="sandbox" 
+        ) as polar:
+
+            # Create the checkout session
+            checkout_session = polar.checkouts.create(
+              request = {
+                    "products": [plan.polar_product_id, "d6475bce-fcdc-465e-98b5-b3c5cd3379d0"],
+                    # "discount": {
+                    #     "type": "fixed",
+                    #     "amount": 200,        # e.g. $2 off
+                    #     "currency": "USD"
+                    # },
+                    "customer_metadata": {
+                        "email": user.email,
+                        # "custom_field": "some value"
+                    },
+                    # "attached_custom_fields": [
+                    #     {
+                    #         "custom_field_id": "cf_123",
+                    #         "required": True,
+                    #         "order": 1
+                    #     }
+                    # ],
+                    # You might need success_url and cancel_url
+                    # "success_url": "https://your-site.com/success",
+                    # "cancel_url": "https://your-site.com/cancel",
+                }
+            )
+
+            return Response({
+                "checkout_url": checkout_session.url,
+                "checkout_id": checkout_session.id
+            })
+    except Exception as e:
+        return Response({"error": f"Failed to create checkout session: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@login_required
-def payment_success(request, payment_id):
-    """Handle successful payment"""
-    payment = get_object_or_404(PlanPayment, id=payment_id)
+@csrf_exempt
+@api_view(["POST"])
+def polar_webhook(request):
+    """Handle incoming webhooks from Polar."""
+    try:
+        event = polar_sdk.Webhook.construct_event(
+            payload=request.body,
+            sig_header=request.headers.get("Polar-Signature"),
+            secret=settings.POLAR_WEBHOOK_SECRET,
+        )
+    except ValueError as e:
+        return Response({"error": "Invalid payload"}, status=status.HTTP_400_BAD_REQUEST)
+    except polar_sdk.SignatureVerificationError as e:
+        return Response({"error": "Invalid signature"}, status=status.HTTP_400_BAD_REQUEST)
 
-    if payment.status == "confirmed":
-        # Create or update subscription
-        subscription = PaymentService.handle_payment_success(payment)
+    # Handle the event
+    if event.type in ["subscription.created", "subscription.updated"]:
+        subscription_data = event.payload
+        metadata = subscription_data.get("customer", {}).get("metadata", {})
+        user_id = metadata.get("user_id")
 
-    return render(request, "plans/payment_success.html", {"payment": payment})
+        if not user_id:
+            return Response({"error": "user_id not found in webhook metadata"}, status=status.HTTP_400_BAD_REQUEST)
 
+        SubscriptionService.sync_subscription_from_polar(user_id, subscription_data)
 
-@login_required
-def payment_failure(request, payment_id):
-    """Handle failed payment"""
-    payment = get_object_or_404(PlanPayment, id=payment_id)
-    return render(request, "plans/payment_failure.html", {"payment": payment})
+    return Response({"status": "success"})
 
 
 # Test endpoint for recording usage manually

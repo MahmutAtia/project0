@@ -6,6 +6,10 @@ from typing import Dict, Optional, Tuple
 import uuid
 import logging
 from decimal import Decimal
+from django.utils.timezone import make_aware
+
+from polar_sdk import Polar  as polar_sdk
+from django.conf import settings
 
 from .models import (
     Plan,
@@ -411,3 +415,88 @@ class SubscriptionService:
 
         # Create new subscription
         return PlanService.create_subscription(user, plan, payment)
+
+    @staticmethod
+    def sync_subscription_from_polar(user_id, polar_sub_data):
+        """
+        Creates or updates a user's subscription based on a Polar webhook payload.
+        """
+        try:
+            user = User.objects.get(id=user_id)
+            polar_price_id = polar_sub_data.get("price", {}).get("id")
+            plan = Plan.objects.get(polar_price_id=polar_price_id)
+
+            # Convert timestamps to datetime objects
+            start_date = make_aware(
+                datetime.fromisoformat(polar_sub_data["current_period_start"])
+            )
+            end_date = make_aware(
+                datetime.fromisoformat(polar_sub_data["current_period_end"])
+            )
+
+            subscription, created = UserSubscription.objects.update_or_create(
+                user=user,
+                defaults={
+                    "plan": plan,
+                    "polar_subscription_id": polar_sub_data["id"],
+                    "status": polar_sub_data["status"],
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "auto_renew": not polar_sub_data["cancel_at_period_end"],
+                },
+            )
+
+            logger.info(
+                f"Subscription {'created' if created else 'updated'} for user {user.username} from Polar webhook."
+            )
+
+            # Optionally, log the payment for history
+            PlanPayment.objects.create(
+                user=user,
+                plan=plan,
+                amount=plan.price,
+                status="confirmed",
+                transaction_id=polar_sub_data.get("latest_invoice", {}).get("id")
+                or polar_sub_data["id"],
+                payment_method="polar",
+            )
+            return subscription
+
+        except User.DoesNotExist:
+            logger.error(f"User with ID {user_id} not found for Polar webhook.")
+        except Plan.DoesNotExist:
+            logger.error(f"Plan with Polar Price ID {polar_price_id} not found.")
+        except Exception as e:
+            logger.error(f"Error syncing subscription from Polar: {e}", exc_info=True)
+        return None
+
+    @staticmethod
+    def cancel_subscription(user, immediate=False):
+        """
+        Cancels a user's subscription via the Polar API.
+        Polar only supports cancellation at the end of the period.
+        """
+        try:
+            subscription = UserSubscription.objects.get(user=user, status="active")
+            if not subscription.polar_subscription_id:
+                return {"success": False, "message": "Subscription provider ID not found."}
+
+            polar = polar_sdk.Client(token=settings.POLAR_API_KEY)
+            polar.subscriptions.cancel(subscription.polar_subscription_id)
+
+            # Polar will send a webhook to update the status, but we can update it locally too
+            subscription.auto_renew = False
+            subscription.canceled_at = datetime.now()
+            subscription.save()
+
+            return {
+                "success": True,
+                "message": "Subscription scheduled for cancellation at the end of the period."
+            }
+        except UserSubscription.DoesNotExist:
+            return {"success": False, "message": "No active subscription found."}
+        except Exception as e:
+            logger.error(f"Error canceling Polar subscription for user {user.id}: {e}")
+            return {"success": False, "message": str(e)}
+
+    # ... other existing service methods ...

@@ -39,6 +39,8 @@ class Plan(models.Model):
         max_length=20, choices=BILLING_PERIODS, default="monthly"
     )  # Changed from billing_cycle
     is_active = models.BooleanField(default=True)
+    polar_product_id = models.CharField(max_length=50, blank=True, null=True, help_text="The Product ID from Polar")
+    polar_price_id = models.CharField(max_length=50, blank=True, null=True, help_text="The Price ID from Polar")
     is_free = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -74,22 +76,22 @@ class PlanFeatureLimit(models.Model):
 
 
 class UserSubscription(models.Model):
-    """User's subscription history - allows multiple subscriptions"""
+    """Represents a user's subscription to a plan"""
 
-    STATUS_CHOICES = [
-        ("active", "Active"),
-        ("canceled", "Canceled"),
-        ("expired", "Expired"),
-        ("pending", "Pending Payment"),
-        ("paused", "Paused"),
-    ]
-
-    # Remove OneToOneField, use ForeignKey instead
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="subscriptions"
-    )
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="subscription")
     plan = models.ForeignKey(Plan, on_delete=models.CASCADE)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")
+    polar_subscription_id = models.CharField(max_length=100, blank=True, null=True, unique=True, help_text="The Subscription ID from Polar")
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ("active", "Active"),
+            ("canceled", "Canceled"),
+            ("expired", "Expired"),
+            ("pending", "Pending Payment"),
+            ("paused", "Paused"),
+        ],
+        default="active",
+    )
     start_date = models.DateTimeField(auto_now_add=True)
     end_date = models.DateTimeField(null=True, blank=True)
     is_active = models.BooleanField(default=True)

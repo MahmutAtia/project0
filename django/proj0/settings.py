@@ -295,27 +295,10 @@ APPEND_SLASH = True
 # Example for Redis running locally on default port:
 # CELERY_BROKER_URL = 'redis://localhost:6379/0'
 
-CELERY_ACCEPT_CONTENT = ["json"]
-CELERY_TASK_SERIALIZER = "json"
-CELERY_RESULT_SERIALIZER = "json"
-CELERY_TIMEZONE = TIME_ZONE  # Use Django's timezone
 
-
-# Add these Celery broker connection pool settings
-BROKER_POOL_LIMIT = 1  # Limits the number of connections to Redis
-BROKER_CONNECTION_TIMEOUT = 30  # Seconds
-CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
-CELERY_BROKER_CONNECTION_MAX_RETRIES = 10
-CELERY_BROKER_TRANSPORT_OPTIONS = {
-    "visibility_timeout": 3600,  # 1 hour, prevent task duplication on connection loss
-    "socket_timeout": 30,  # Socket timeout for Redis operations
-    "socket_connect_timeout": 30,  # Connection timeout
-}
-# More conservative Redis visibility
-CELERY_RESULT_EXPIRES = 3600  # Results expire after 1 hour
-
-# Rate limiting for tasks
-CELERY_TASK_DEFAULT_RATE_LIMIT = "10/m"  # Default to max 10 tasks per minute
+# Polar Settings
+POLAR_API_KEY = os.environ.get("POLAR_API_KEY")
+POLAR_WEBHOOK_SECRET = os.environ.get("POLAR_WEBHOOK_SECRET")
 
 
 # Payment settings
