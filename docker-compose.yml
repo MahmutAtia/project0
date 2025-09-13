@@ -47,7 +47,7 @@ services:
   django:
     build: ./django
     image: proj0_django_image
-    command: gunicorn proj0.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers 4 --log-level info
+    command: sh -c "if [ \"${DEBUG:-0}\" = \"1\" ]; then python manage.py runserver 0.0.0.0:8000; else gunicorn proj0.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers 4 --log-level info; fi"
     volumes:
       - ./django:/app
     expose:
@@ -98,6 +98,10 @@ services:
       - SECURE_PROXY_SSL_HEADER=${SECURE_PROXY_SSL_HEADER}
       - SESSION_COOKIE_SECURE=${SESSION_COOKIE_SECURE:-True}
       - CSRF_COOKIE_SECURE=${CSRF_COOKIE_SECURE:-True}
+
+      # POLAR Secret
+      - POLAR_API_KEY=${POLAR_API_KEY}
+      - POLAR_WEBHOOK_SECRET=${POLAR_WEBHOOK_SECRET}
     restart: always
 
   db:
