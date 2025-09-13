@@ -184,7 +184,53 @@ def create_polar_checkout_session(request):
     except Plan.DoesNotExist:
         return Response({"error": "Plan not found"}, status=status.HTTP_404_NOT_FOUND)
 
-    if not plan.polar_price_id:
+    # Check for existing active subscription to same plan
+    existing_subscription = SubscriptionService.get_active_subscription(request.user)
+    if existing_subscription and existing_subscription.plan.id == plan_id:
+            return Response(
+            {
+                "success": True,
+                "message": "You are already subscribed to this plan",
+                "subscription_id": existing_subscription.id,
+                "already_subscribed": True,
+            }
+        )
+        
+    # For ANY plan (free or paid), first try to reactivate recent subscription
+    reactivation_result = SubscriptionService.reactivate_subscription(
+        request.user, plan
+    )
+
+    if reactivation_result["success"]:
+        return Response(
+            {
+                "success": True,
+                "message": f"{plan.name} reactivated successfully! No new payment required.",
+                "subscription_id": reactivation_result["subscription"].id,
+                "reactivated": True,
+            }
+        )
+    
+    # # If no reactivation possible, handle new subscription
+    # if plan.is_free:
+    #     # Create new free subscription
+    #     try:
+    #         subscription = PlanService.create_subscription(request.user, plan)
+    #         return Response(
+    #             {
+    #                 "success": True,
+    #                 "message": f"Free plan activated successfully",
+    #                 "subscription_id": subscription.id,
+    #             }
+    #         )
+    #     except Exception as e:
+    #         return Response(
+    #             {"error": f"Failed to create free subscription: {str(e)}"},
+    #             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+    #         )
+
+    # For paid and free plans, ensure Polar product ID is set
+    if not plan.polar_product_id:
         return Response({"error": "Plan is not configured for Polar payments"}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
@@ -211,8 +257,11 @@ def create_polar_checkout_session(request):
                     #     }
                       "customer_metadata": {
                         "user_id": str(user.id),   # ✅ Include your user ID here
-                        "email": user.email
                     },
+                    "customer_name": user.get_full_name() or user.username,
+                    "customer_email": user.email,
+                    "success_url": f"http://{settings.PAYMENT_HOST}/main/plans/",
+                    "embed_origin": f"http://{settings.PAYMENT_HOST}",
                     # ],
                     # You might need success_url and cancel_url
                     # "success_url": "https://your-site.com/success",
