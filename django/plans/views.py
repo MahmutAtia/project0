@@ -12,6 +12,9 @@ from decimal import Decimal
 from polar_sdk import Polar
 from django.conf import settings
 from django.urls import reverse
+import hmac
+import hashlib
+
 
 from .models import Plan, UserSubscription, PlanPayment, Feature, UsageRecord
 from .serializers import (
@@ -193,22 +196,23 @@ def create_polar_checkout_session(request):
             # Create the checkout session
             checkout_session = polar.checkouts.create(
               request = {
-                    "products": [plan.polar_product_id, "d6475bce-fcdc-465e-98b5-b3c5cd3379d0"],
+                    "products": [plan.polar_product_id],
                     # "discount": {
                     #     "type": "fixed",
                     #     "amount": 200,        # e.g. $2 off
                     #     "currency": "USD"
                     # },
-                    "customer_metadata": {
-                        "email": user.email,
-                        # "custom_field": "some value"
-                    },
+                    
                     # "attached_custom_fields": [
                     #     {
                     #         "custom_field_id": "cf_123",
                     #         "required": True,
                     #         "order": 1
                     #     }
+                      "customer_metadata": {
+                        "user_id": str(user.id),   # ✅ Include your user ID here
+                        "email": user.email
+                    },
                     # ],
                     # You might need success_url and cancel_url
                     # "success_url": "https://your-site.com/success",
@@ -224,33 +228,38 @@ def create_polar_checkout_session(request):
         return Response({"error": f"Failed to create checkout session: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+
+
+
 @csrf_exempt
 @api_view(["POST"])
 def polar_webhook(request):
     """Handle incoming webhooks from Polar."""
-    try:
-        event = polar_sdk.Webhook.construct_event(
-            payload=request.body,
-            sig_header=request.headers.get("Polar-Signature"),
-            secret=settings.POLAR_WEBHOOK_SECRET,
-        )
-    except ValueError as e:
-        return Response({"error": "Invalid payload"}, status=status.HTTP_400_BAD_REQUEST)
-    except polar_sdk.SignatureVerificationError as e:
-        return Response({"error": "Invalid signature"}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Handle the event
-    if event.type in ["subscription.created", "subscription.updated"]:
-        subscription_data = event.payload
+    payload = request.body
+    signature = request.headers.get("Polar-Signature")
+    secret = settings.POLAR_WEBHOOK_SECRET.encode()
+
+    # Verify signature
+    computed_signature = hmac.new(secret, payload, hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(computed_signature, signature):
+        return JsonResponse({"error": "Invalid signature"}, status=400)
+
+    try:
+        event = json.loads(payload)
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid payload"}, status=400)
+
+    event_type = event.get("type")
+    if event_type in ["subscription.created", "subscription.updated"]:
+        subscription_data = event.get("payload", {})
         metadata = subscription_data.get("customer", {}).get("metadata", {})
         user_id = metadata.get("user_id")
 
-        if not user_id:
-            return Response({"error": "user_id not found in webhook metadata"}, status=status.HTTP_400_BAD_REQUEST)
+        if user_id:
+            SubscriptionService.sync_subscription_from_polar(user_id, subscription_data)
 
-        SubscriptionService.sync_subscription_from_polar(user_id, subscription_data)
-
-    return Response({"status": "success"})
+    return JsonResponse({"status": "success"})
 
 
 # Test endpoint for recording usage manually
