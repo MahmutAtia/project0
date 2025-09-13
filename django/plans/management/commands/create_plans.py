@@ -29,6 +29,7 @@ class Command(BaseCommand):
                 "description": "Advanced features for professionals",
                 "price": 29.99,
                 "billing_period": "monthly",
+                "polar_product_id": "1beb3161-3fa0-4ee3-88c8-d8cc9e5225b3",
                 "is_free": False,
                 "features": [
                     "Unlimited Resumes",
@@ -46,6 +47,7 @@ class Command(BaseCommand):
                 "description": "Advanced features for professionals - yearly billing",
                 "price": 299.99,
                 "billing_period": "yearly",
+                "polar_product_id": "d6475bce-fcdc-465e-98b5-b3c5cd3379d0",
                 "is_free": False,
                 "features": [
                     "Unlimited Resumes",
