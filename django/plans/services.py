@@ -7,10 +7,8 @@ import uuid
 import logging
 from decimal import Decimal
 from django.utils.timezone import make_aware
-
-from polar_sdk import Polar  as polar_sdk
+from polar_sdk import Polar
 from django.conf import settings
-
 from .models import (
     Plan,
     Feature,
