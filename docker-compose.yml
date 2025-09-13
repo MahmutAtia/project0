@@ -102,6 +102,7 @@ services:
       # POLAR Secret
       - POLAR_API_KEY=${POLAR_API_KEY}
       - POLAR_WEBHOOK_SECRET=${POLAR_WEBHOOK_SECRET}
+      - PAYMENT_HOST=${PAYMENT_HOST:-localhost:3000}
     restart: always
 
   db:
