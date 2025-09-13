@@ -302,7 +302,7 @@ POLAR_WEBHOOK_SECRET = os.environ.get("POLAR_WEBHOOK_SECRET")
 
 
 # Payment settings
-PAYMENT_HOST = "localhost:8000"  # Your domain
+PAYMENT_HOST = os.getenv("PAYMENT_HOST", "localhost:3000")  # Frontend host for redirects
 PAYMENT_USES_SSL = False  # Set to True in production
 PAYMENT_MODEL = "plans.PlanPayment"
 # Payment variants (providers)
