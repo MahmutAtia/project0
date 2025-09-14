@@ -274,51 +274,52 @@ def create_polar_checkout_session(request):
 @api_view(["POST"])
 def polar_webhook(request):
     """Handle incoming webhooks from Polar using the official SDK for validation."""
-    print("Request headers:", request.headers)
-
     try:
         # Validate the event using the Polar SDK
         # This handles signature verification and payload parsing
-        event_type, payload = validate_event(
+        event = validate_event(
             body=request.body,
             headers=request.headers,
             secret=settings.POLAR_WEBHOOK_SECRET,
         )
+        event_type = event.TYPE
+        payload = event.data
+
+        print(f"Processing event type: {event_type}")
+
+        # Handle all subscription event types
+        subscription_events = [
+            "subscription.created",
+            "subscription.active",
+            "subscription.updated",
+            "subscription.canceled",
+            "subscription.uncanceled",
+            "subscription.revoked",
+        ]
+
+        if event_type in subscription_events:
+            # The 'payload' from validate_event is the 'data' object in the webhook
+            subscription_data = payload.dict()
+            metadata = subscription_data.get("customer", {}).get("metadata", {})
+            user_id = metadata.get("user_id")
+
+            if user_id:
+                print(f"Processing {event_type} for user_id: {user_id}")
+                SubscriptionService.handle_polar_webhook_event(
+                    event_type, user_id, subscription_data
+                )
+            else:
+                print("No user_id found in webhook metadata")
+        
+        # Acknowledge receipt of the webhook, even if we don't process it.
+        return Response({"status": "success", "message": f"Event '{event_type}' received."}, status=status.HTTP_202_ACCEPTED)
 
     except WebhookVerificationError as e:
         print(f"Webhook verification failed: {e}")
-        return JsonResponse({"error": "Invalid signature"}, status=403)
+        return Response({"error": "Invalid signature"}, status=status.HTTP_403_FORBIDDEN)
     except Exception as e:
-        print(f"An unexpected error occurred during webhook validation: {e}")
-        return JsonResponse({"error": "Webhook processing error"}, status=400)
-
-    print(f"Processing event type: {event_type}")
-
-    # Handle all subscription event types
-    subscription_events = [
-        "subscription.created",
-        "subscription.active",
-        "subscription.updated",
-        "subscription.canceled",
-        "subscription.uncanceled",
-        "subscription.revoked",
-    ]
-
-    if event_type in subscription_events:
-        # The 'payload' from validate_event is the 'data' object in the webhook
-        subscription_data = payload
-        metadata = subscription_data.get("customer", {}).get("metadata", {})
-        user_id = metadata.get("user_id")
-
-        if user_id:
-            print(f"Processing {event_type} for user_id: {user_id}")
-            SubscriptionService.handle_polar_webhook_event(
-                event_type, user_id, subscription_data
-            )
-        else:
-            print("No user_id found in webhook metadata")
-
-    return JsonResponse({"status": "success"})
+        print(f"Error processing webhook: {e}")
+        return Response({"error": "Internal server error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # Test endpoint for recording usage manually
