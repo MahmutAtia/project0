@@ -26,12 +26,24 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-u$04p_1&)e*=o+scbzp4x()8w2er8g1l28_$hep47p&fx5&#wp"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DJANGO_DEBUG", "True") == "True"
 
 # filepath: /home/e-kalite/Documents/careerflow/django/proj0/settings.py
 ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 if "django" not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append("django")
+
+
+# For development, allow all ngrok subdomains
+if DEBUG:
+    ALLOWED_HOSTS.extend([
+        "*.ngrok-free.app",
+        "*.ngrok.io", 
+        "*.ngrok.app",
+        ".ngrok-free.app",  # Also add dot prefix versions
+        ".ngrok.io",
+        ".ngrok.app"
+    ])
 
 # Application definition
 
@@ -57,7 +69,6 @@ INSTALLED_APPS = [
     "dj_rest_auth.registration",
     "drf_yasg",
     # third-party apps
-    "payments",
     # custom apps
     "api",
     "accounts",
@@ -303,17 +314,3 @@ POLAR_WEBHOOK_SECRET = os.environ.get("POLAR_WEBHOOK_SECRET")
 
 # Payment settings
 PAYMENT_HOST = os.getenv("PAYMENT_HOST", "localhost:3000")  # Frontend host for redirects
-PAYMENT_USES_SSL = False  # Set to True in production
-PAYMENT_MODEL = "plans.PlanPayment"
-# Payment variants (providers)
-PAYMENT_VARIANTS = {
-    "default": ("payments.dummy.DummyProvider", {}),  # For testing
-    "paypal": (
-        "payments.paypal.PaypalProvider",
-        {
-            "client_id": "your_paypal_client_id",
-            "secret": "your_paypal_secret",
-            "endpoint": "https://api.sandbox.paypal.com",  # sandbox for testing
-        },
-    ),
-}
