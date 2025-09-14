@@ -12,8 +12,7 @@ from decimal import Decimal
 from polar_sdk import Polar
 from django.conf import settings
 from django.urls import reverse
-import hmac
-import hashlib
+from polar_sdk.webhooks import validate_event, WebhookVerificationError
 
 
 from .models import Plan, UserSubscription, PlanPayment, Feature, UsageRecord
@@ -242,6 +241,7 @@ def create_polar_checkout_session(request):
                     # "attached_custom_fields": [
                     #     {
                     #         "custom_field_id": "cf_123",
+                   
                     #         "required": True,
                     #         "order": 1
                     #     }
@@ -273,58 +273,54 @@ def create_polar_checkout_session(request):
 @csrf_exempt
 @api_view(["POST"])
 def polar_webhook(request):
-    """Handle incoming webhooks from Polar."""
-
-    # print("Received webhook:", request.body)  # Debug log
-    # request header  print
+    """Handle incoming webhooks from Polar using the official SDK for validation."""
     print("Request headers:", request.headers)
 
-    payload = request.body
-    signature = request.headers.get("Polar-Signature")
-
-    # Check if signature is present
-    if not signature:
-        print("No Polar-Signature header found")
-        return JsonResponse({"error": "Missing Polar-Signature header"}, status=400)
-
-    secret = settings.POLAR_WEBHOOK_SECRET.encode()
-
-    # Verify signature
-    computed_signature = hmac.new(secret, payload, hashlib.sha256).hexdigest()
-    if not hmac.compare_digest(computed_signature, signature):
-        print("Invalid signature")
-        return JsonResponse({"error": "Invalid signature"}, status=400)
-
     try:
-        event = json.loads(payload)
-    except json.JSONDecodeError:
-        return JsonResponse({"error": "Invalid payload"}, status=400)
+        # Validate the event using the Polar SDK
+        # This handles signature verification and payload parsing
+        event_type, payload = validate_event(
+            body=request.body,
+            headers=request.headers,
+            secret=settings.POLAR_WEBHOOK_SECRET,
+        )
 
-    event_type = event.get("type")
+    except WebhookVerificationError as e:
+        print(f"Webhook verification failed: {e}")
+        return JsonResponse({"error": "Invalid signature"}, status=403)
+    except Exception as e:
+        print(f"An unexpected error occurred during webhook validation: {e}")
+        return JsonResponse({"error": "Webhook processing error"}, status=400)
+
     print(f"Processing event type: {event_type}")
 
     # Handle all subscription event types
     subscription_events = [
         "subscription.created",
-        "subscription.active", 
+        "subscription.active",
         "subscription.updated",
         "subscription.canceled",
         "subscription.uncanceled",
-        "subscription.revoked"
+        "subscription.revoked",
     ]
 
     if event_type in subscription_events:
-        subscription_data = event.get("data", {})
+        # The 'payload' from validate_event is the 'data' object in the webhook
+        subscription_data = payload
         metadata = subscription_data.get("customer", {}).get("metadata", {})
         user_id = metadata.get("user_id")
 
         if user_id:
             print(f"Processing {event_type} for user_id: {user_id}")
-            SubscriptionService.handle_polar_webhook_event(event_type, user_id, subscription_data)
+            SubscriptionService.handle_polar_webhook_event(
+                event_type, user_id, subscription_data
+            )
         else:
             print("No user_id found in webhook metadata")
 
     return JsonResponse({"status": "success"})
+
+
 # Test endpoint for recording usage manually
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
