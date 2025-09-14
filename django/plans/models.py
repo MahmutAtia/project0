@@ -40,7 +40,6 @@ class Plan(models.Model):
     )  # Changed from billing_cycle
     is_active = models.BooleanField(default=True)
     polar_product_id = models.CharField(max_length=50, blank=True, null=True, help_text="The Product ID from Polar")
-    polar_price_id = models.CharField(max_length=50, blank=True, null=True, help_text="The Price ID from Polar")
     is_free = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -80,15 +79,17 @@ class UserSubscription(models.Model):
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="subscription")
     plan = models.ForeignKey(Plan, on_delete=models.CASCADE)
+    
+    # Polar integration
     polar_subscription_id = models.CharField(max_length=100, blank=True, null=True, unique=True, help_text="The Subscription ID from Polar")
     status = models.CharField(
         max_length=20,
         choices=[
-            ("active", "Active"),
-            ("canceled", "Canceled"),
-            ("expired", "Expired"),
-            ("pending", "Pending Payment"),
-            ("paused", "Paused"),
+        ('active', 'Active'),
+        ('canceled', 'Canceled'),
+        ('expired', 'Expired'),
+        ('revoked', 'Revoked'), 
+        ('pending', 'Pending'),
         ],
         default="active",
     )
@@ -134,22 +135,24 @@ class PlanPayment(BasePayment):
         UserSubscription, on_delete=models.CASCADE, null=True, blank=True
     )
 
-    def get_failure_url(self):
-        return f"/plans/payment/failure/{self.id}/"
+    # dj -payments fields
 
-    def get_success_url(self):
-        return f"/plans/payment/success/{self.id}/"
+    # def get_failure_url(self):
+    #     return f"/plans/payment/failure/{self.id}/"
 
-    def get_purchased_items(self):
-        return [
-            PurchasedItem(
-                name=f"{self.plan.name} Subscription",
-                quantity=1,
-                price=self.plan.price,
-                currency="USD",
-                sku=f"plan-{self.plan.id}",
-            )
-        ]
+    # def get_success_url(self):
+    #     return f"/plans/payment/success/{self.id}/"
+
+    # def get_purchased_items(self):
+    #     return [
+    #         PurchasedItem(
+    #             name=f"{self.plan.name} Subscription",
+    #             quantity=1,
+    #             price=self.plan.price,
+    #             currency="USD",
+    #             sku=f"plan-{self.plan.id}",
+    #         )
+    #     ]
 
 
 class UsageRecord(models.Model):

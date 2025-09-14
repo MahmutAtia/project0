@@ -22,8 +22,7 @@ from .serializers import (
     UserSubscriptionSerializer,
     PlanPaymentSerializer,
 )
-from .services import PlanService, PaymentService, UsageService, SubscriptionService
-
+from .services import PlanService, UsageService, SubscriptionService  
 
 class PlanListView(ListView):
     model = Plan
@@ -184,51 +183,33 @@ def create_polar_checkout_session(request):
     except Plan.DoesNotExist:
         return Response({"error": "Plan not found"}, status=status.HTTP_404_NOT_FOUND)
 
-    # Check for existing active subscription to same plan
-    existing_subscription = SubscriptionService.get_active_subscription(request.user)
-    if existing_subscription and existing_subscription.plan.id == plan_id:
-            return Response(
-            {
-                "success": True,
-                "message": "You are already subscribed to this plan",
-                "subscription_id": existing_subscription.id,
-                "already_subscribed": True,
-            }
-        )
+    # # Check for existing active subscription to same plan
+    # existing_subscription = SubscriptionService.get_active_subscription(request.user)
+    # if existing_subscription and existing_subscription.plan.id == plan_id:
+    #         return Response(
+    #         {
+    #             "success": True,
+    #             "message": "You are already subscribed to this plan",
+    #             "subscription_id": existing_subscription.id,
+    #             "already_subscribed": True,
+    #         }
+    #     )
         
-    # For ANY plan (free or paid), first try to reactivate recent subscription
-    reactivation_result = SubscriptionService.reactivate_subscription(
-        request.user, plan
-    )
+    # # For ANY plan (free or paid), first try to reactivate recent subscription
+    # reactivation_result = SubscriptionService.reactivate_subscription(
+    #     request.user, plan
+    # )
 
-    if reactivation_result["success"]:
-        return Response(
-            {
-                "success": True,
-                "message": f"{plan.name} reactivated successfully! No new payment required.",
-                "subscription_id": reactivation_result["subscription"].id,
-                "reactivated": True,
-            }
-        )
+    # if reactivation_result["success"]:
+    #     return Response(
+    #         {
+    #             "success": True,
+    #             "message": f"{plan.name} reactivated successfully! No new payment required.",
+    #             "subscription_id": reactivation_result["subscription"].id,
+    #             "reactivated": True,
+    #         }
+    #     )
     
-    # # If no reactivation possible, handle new subscription
-    # if plan.is_free:
-    #     # Create new free subscription
-    #     try:
-    #         subscription = PlanService.create_subscription(request.user, plan)
-    #         return Response(
-    #             {
-    #                 "success": True,
-    #                 "message": f"Free plan activated successfully",
-    #                 "subscription_id": subscription.id,
-    #             }
-    #         )
-    #     except Exception as e:
-    #         return Response(
-    #             {"error": f"Failed to create free subscription: {str(e)}"},
-    #             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-    #         )
-
     # For paid and free plans, ensure Polar product ID is set
     if not plan.polar_product_id:
         return Response({"error": "Plan is not configured for Polar payments"}, status=status.HTTP_400_BAD_REQUEST)
@@ -285,13 +266,21 @@ def create_polar_checkout_session(request):
 def polar_webhook(request):
     """Handle incoming webhooks from Polar."""
 
+    print("Received webhook:", request.body)  # Debug log
     payload = request.body
     signature = request.headers.get("Polar-Signature")
+
+    # Check if signature is present
+    if not signature:
+        print("No Polar-Signature header found")
+        return JsonResponse({"error": "Missing Polar-Signature header"}, status=400)
+
     secret = settings.POLAR_WEBHOOK_SECRET.encode()
 
     # Verify signature
     computed_signature = hmac.new(secret, payload, hashlib.sha256).hexdigest()
     if not hmac.compare_digest(computed_signature, signature):
+        print("Invalid signature")
         return JsonResponse({"error": "Invalid signature"}, status=400)
 
     try:
@@ -300,17 +289,30 @@ def polar_webhook(request):
         return JsonResponse({"error": "Invalid payload"}, status=400)
 
     event_type = event.get("type")
-    if event_type in ["subscription.created", "subscription.updated"]:
-        subscription_data = event.get("payload", {})
+    print(f"Processing event type: {event_type}")
+
+    # Handle all subscription event types
+    subscription_events = [
+        "subscription.created",
+        "subscription.active", 
+        "subscription.updated",
+        "subscription.canceled",
+        "subscription.uncanceled",
+        "subscription.revoked"
+    ]
+
+    if event_type in subscription_events:
+        subscription_data = event.get("data", {})
         metadata = subscription_data.get("customer", {}).get("metadata", {})
         user_id = metadata.get("user_id")
 
         if user_id:
-            SubscriptionService.sync_subscription_from_polar(user_id, subscription_data)
+            print(f"Processing {event_type} for user_id: {user_id}")
+            SubscriptionService.handle_polar_webhook_event(event_type, user_id, subscription_data)
+        else:
+            print("No user_id found in webhook metadata")
 
     return JsonResponse({"status": "success"})
-
-
 # Test endpoint for recording usage manually
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
