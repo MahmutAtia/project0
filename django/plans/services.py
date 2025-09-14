@@ -263,20 +263,43 @@ class SubscriptionService:
         """
         Handle different types of Polar webhook events for subscriptions.
         """
+        # --- DEBUG ---
+        print(f"\n--- [DEBUG] handle_polar_webhook_event called ---")
+        print(f"--- [DEBUG] Event Type: {event_type}")
+        print(f"--- [DEBUG] User ID: {user_id}")
+        print(f"--- [DEBUG] Incoming Polar Data: {polar_subscription_data}")
+        # --- END DEBUG ---
+
         try:
             from django.contrib.auth import get_user_model
             User = get_user_model()
             
             user = User.objects.get(id=user_id)
+            # --- DEBUG ---
+            print(f"--- [DEBUG] Successfully found user: {user.username} (ID: {user.id})")
+            # --- END DEBUG ---
             
             # Get the product ID from the subscription data
             polar_product_id = polar_subscription_data.get("product_id")
             plan = Plan.objects.get(polar_product_id=polar_product_id)
+            # --- DEBUG ---
+            print(f"--- [DEBUG] Successfully found plan: {plan.name} (Matching Polar Product ID: {polar_product_id})")
+            # --- END DEBUG ---
 
             # Parse the datetime strings
             from django.utils.dateparse import parse_datetime
-            start_date = parse_datetime(polar_subscription_data["current_period_start"])
-            end_date = parse_datetime(polar_subscription_data["current_period_end"])
+            from datetime import datetime
+
+            raw_start_date = polar_subscription_data.get("current_period_start")
+            raw_end_date = polar_subscription_data.get("current_period_end")
+
+            start_date = raw_start_date if isinstance(raw_start_date, datetime) else parse_datetime(raw_start_date)
+            end_date = raw_end_date if isinstance(raw_end_date, datetime) else parse_datetime(raw_end_date)
+
+            # --- DEBUG ---
+            print(f"--- [DEBUG] Parsed Start Date: {start_date}")
+            print(f"--- [DEBUG] Parsed End Date: {end_date}")
+            # --- END DEBUG ---
 
             # Base subscription data
             subscription_defaults = {
@@ -288,6 +311,9 @@ class SubscriptionService:
 
             # Handle different event types
             if event_type == "subscription.created":
+                # --- DEBUG ---
+                print("--- [DEBUG] Matched event logic: subscription.created")
+                # --- END DEBUG ---
                 subscription_defaults.update({
                     "status": "active",
                     "auto_renew": True,
@@ -295,6 +321,9 @@ class SubscriptionService:
                 })
                 
             elif event_type == "subscription.active":
+                # --- DEBUG ---
+                print("--- [DEBUG] Matched event logic: subscription.active")
+                # --- END DEBUG ---
                 subscription_defaults.update({
                     "status": "active",
                     "auto_renew": True,
@@ -302,6 +331,9 @@ class SubscriptionService:
                 })
                 
             elif event_type == "subscription.updated":
+                # --- DEBUG ---
+                print("--- [DEBUG] Matched event logic: subscription.updated")
+                # --- END DEBUG ---
                 # Handle general updates
                 auto_renew = not polar_subscription_data.get("cancel_at_period_end", False)
                 canceled_at = None
@@ -315,6 +347,9 @@ class SubscriptionService:
                 })
                 
             elif event_type == "subscription.canceled":
+                # --- DEBUG ---
+                print("--- [DEBUG] Matched event logic: subscription.canceled")
+                # --- END DEBUG ---
                 # Subscription is canceled but user keeps access until period end
                 canceled_at = None
                 if polar_subscription_data.get("canceled_at"):
@@ -327,6 +362,9 @@ class SubscriptionService:
                 })
                 
             elif event_type == "subscription.uncanceled":
+                # --- DEBUG ---
+                print("--- [DEBUG] Matched event logic: subscription.uncanceled")
+                # --- END DEBUG ---
                 # Subscription is reactivated
                 subscription_defaults.update({
                     "status": "active",
@@ -335,6 +373,9 @@ class SubscriptionService:
                 })
                 
             elif event_type == "subscription.revoked":
+                # --- DEBUG ---
+                print("--- [DEBUG] Matched event logic: subscription.revoked")
+                # --- END DEBUG ---
                 # User loses access immediately
                 canceled_at = None
                 if polar_subscription_data.get("canceled_at"):
@@ -346,6 +387,10 @@ class SubscriptionService:
                     "canceled_at": canceled_at,
                 })
 
+            # --- DEBUG ---
+            print(f"--- [DEBUG] Final data to be saved (defaults): {subscription_defaults}")
+            # --- END DEBUG ---
+
             # Create or update subscription
             subscription, created = UserSubscription.objects.update_or_create(
                 polar_subscription_id=polar_subscription_data["id"],
@@ -353,16 +398,16 @@ class SubscriptionService:
             )
 
             action = "created" if created else "updated"
-            print(f"Subscription {action} for user {user.username} from Polar webhook event: {event_type}")
+            print(f"--- [SUCCESS] Subscription {action} for user {user.username} from Polar webhook event: {event_type}")
 
             return subscription
 
         except User.DoesNotExist:
-            print(f"User with ID {user_id} not found for Polar webhook.")
+            print(f"--- [ERROR] User with ID {user_id} not found for Polar webhook.")
         except Plan.DoesNotExist:
-            print(f"Plan with Polar Product ID {polar_product_id} not found.")
+            print(f"--- [ERROR] Plan with Polar Product ID {polar_product_id} not found.")
         except Exception as e:
-            print(f"Error handling Polar webhook event {event_type}: {e}")
+            print(f"--- [ERROR] An unexpected error occurred in handle_polar_webhook_event for event {event_type}: {e}")
         return None
 
     # Keep the old method for backward compatibility, but make it use the new one
