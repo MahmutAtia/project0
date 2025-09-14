@@ -35,75 +35,13 @@ class PlanService:
 
             # Check if subscription is expired
             if subscription.is_expired:
-                subscription.status = "expired"
+                subscription.status = "revoked"  # Use revoked instead of expired
                 subscription.save()
                 return None
 
             return subscription.plan
         except UserSubscription.DoesNotExist:
             return None
-
-    @staticmethod
-    def create_subscription(
-        user: User, plan: Plan, payment: PlanPayment = None
-    ) -> UserSubscription:
-        """Create a new subscription for a user"""
-        from django.utils import timezone
-
-        # Handle existing active subscription
-        existing_subscription = UserSubscription.objects.filter(
-            user=user, status="active"
-        ).first()
-        if existing_subscription:
-            # If user is subscribing to the same plan, reactivate if recently canceled
-            if existing_subscription.plan == plan:
-                existing_subscription.status = "active"
-                existing_subscription.canceled_at = None
-                existing_subscription.auto_renew = True
-                existing_subscription.save()
-
-                # Link payment if provided
-                if payment:
-                    payment.subscription = existing_subscription
-                    payment.save()
-
-                return existing_subscription
-            else:
-                # Cancel existing subscription for different plan
-                existing_subscription.status = "canceled"
-                existing_subscription.canceled_at = timezone.now()
-                existing_subscription.save()
-
-        # Calculate period based on billing period
-        start_date = timezone.now()
-        if plan.billing_period == "monthly":
-            end_date = start_date + timedelta(days=30)
-        elif plan.billing_period == "yearly":
-            end_date = start_date + timedelta(days=365)
-        elif plan.billing_period == "weekly":
-            end_date = start_date + timedelta(days=7)
-        elif plan.billing_period == "daily":
-            end_date = start_date + timedelta(days=1)
-        else:
-            end_date = start_date + timedelta(days=30)
-
-        # Create new subscription
-        subscription = UserSubscription.objects.create(
-            user=user,
-            plan=plan,
-            status="active",
-            start_date=start_date,
-            end_date=end_date,
-        )
-
-        # Link payment to subscription if provided
-        if payment:
-            payment.subscription = subscription
-            payment.save()
-
-        return subscription
-
-
 
 class UsageService:
     """Service for tracking and checking feature usage"""
@@ -263,7 +201,7 @@ class SubscriptionService:
         if subscription:
             # Check if subscription is actually expired
             if subscription.end_date and timezone.now() > subscription.end_date:
-                subscription.status = "expired"
+                subscription.status = "revoked"  # Use revoked instead of expired
                 subscription.save()
                 return None
 
@@ -277,8 +215,8 @@ class SubscriptionService:
                 if subscription.end_date and timezone.now() <= subscription.end_date:
                     return subscription
                 else:
-                    # Period has ended, mark as expired
-                    subscription.status = "expired"
+                    # Period has ended, mark as revoked
+                    subscription.status = "revoked"  # Use revoked instead of expired
                     subscription.save()
                     return None
 
@@ -293,18 +231,17 @@ class SubscriptionService:
         try:
             # Find the most recently canceled subscription for the target plan
             last_canceled_sub = (
-                UserSubscription.objects.filter(user=user, plan=plan_to_activate)
-                .exclude(status="active")
+                UserSubscription.objects.filter(
+                    user=user, 
+                    plan=plan_to_activate,
+                    status__in=["canceled", "revoked"]  # Use revoked instead of expired
+                )
                 .order_by("-end_date")
                 .first()
             )
 
-            if not last_canceled_sub:
+            if not last_canceled_sub or not last_canceled_sub.end_date:
                 return {"success": False, "message": "No previous subscription found."}
-
-            # --- FIX: Ensure end_date is not None before comparison ---
-            if last_canceled_sub.end_date is None:
-                return {"success": False, "message": "Subscription has no end date."}
 
             # Check if the subscription ended within the grace period
             grace_period_end = last_canceled_sub.end_date + timedelta(
@@ -312,44 +249,14 @@ class SubscriptionService:
             )
 
             if timezone.now() <= grace_period_end:
-                # Reactivate the subscription
-                last_canceled_sub.status = "active"
-                last_canceled_sub.auto_renew = True
-                last_canceled_sub.canceled_at = None
-                # Optionally extend the end_date if needed, or reset it based on plan
-                # For simplicity, we'll just reactivate it here.
-                last_canceled_sub.save()
+                # Just mark as reactivatable - actual reactivation happens via Polar checkout
                 return {"success": True, "subscription": last_canceled_sub}
             else:
-                return {
-                    "success": False,
-                    "message": "Reactivation period has expired.",
-                }
+                return {"success": False, "message": "Reactivation period has expired."}
 
-        except UserSubscription.DoesNotExist:
-            return {"success": False, "message": "No subscription history found."}
         except Exception as e:
-            # Log the exception e
             return {"success": False, "message": str(e)}
 
-
-    @staticmethod
-    def handle_payment_and_subscription(
-        user: User, plan: Plan, payment: PlanPayment
-    ) -> UserSubscription:
-        """Handle payment success and subscription creation/reactivation"""
-
-        # First try to reactivate recent subscription
-        reactivation_result = SubscriptionService.reactivate_subscription(user, plan)
-
-        if reactivation_result["success"]:
-            subscription = reactivation_result["subscription"]
-            payment.subscription = subscription
-            payment.save()
-            return subscription
-
-        # Create new subscription
-        return PlanService.create_subscription(user, plan, payment)
 
     @staticmethod
     def handle_polar_webhook_event(event_type: str, user_id: str, polar_subscription_data: dict):
@@ -434,7 +341,7 @@ class SubscriptionService:
                     canceled_at = parse_datetime(polar_subscription_data["canceled_at"])
                     
                 subscription_defaults.update({
-                    "status": "revoked",  # or "canceled" - choose based on your model
+                    "status": "revoked",  # Keep as revoked exactly as Polar sends
                     "auto_renew": False,
                     "canceled_at": canceled_at,
                 })
@@ -466,33 +373,3 @@ class SubscriptionService:
         """
         return SubscriptionService.handle_polar_webhook_event("subscription.updated", user_id, polar_subscription_data)
 
-    @staticmethod
-    def cancel_subscription(user, immediate=False):
-        """
-        Cancels a user's subscription via the Polar API.
-        Polar only supports cancellation at the end of the period.
-        """
-        try:
-            subscription = UserSubscription.objects.get(user=user, status="active")
-            if not subscription.polar_subscription_id:
-                return {"success": False, "message": "Subscription provider ID not found."}
-
-            polar = polar_sdk.Client(token=settings.POLAR_API_KEY)
-            polar.subscriptions.cancel(subscription.polar_subscription_id)
-
-            # Polar will send a webhook to update the status, but we can update it locally too
-            subscription.auto_renew = False
-            subscription.canceled_at = datetime.now()
-            subscription.save()
-
-            return {
-                "success": True,
-                "message": "Subscription scheduled for cancellation at the end of the period."
-            }
-        except UserSubscription.DoesNotExist:
-            return {"success": False, "message": "No active subscription found."}
-        except Exception as e:
-            logger.error(f"Error canceling Polar subscription for user {user.id}: {e}")
-            return {"success": False, "message": str(e)}
-
-    # ... other existing service methods ...
