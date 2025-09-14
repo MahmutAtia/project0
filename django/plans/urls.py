@@ -10,6 +10,8 @@ urlpatterns = [
     path("usage/", views.get_usage_stats, name="usage-stats"),
     path("payments/", views.get_payment_history, name="payment-history"),
     path("cancel/", views.cancel_subscription, name="cancel-subscription"),
+    path("reactivate/", views.reactivate_subscription, name="reactivate-subscription"),
+
 
     # Polar Integration URLs
     path("polar/create-checkout/", views.create_polar_checkout_session, name="polar-create-checkout"),

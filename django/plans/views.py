@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework import status
 import json
 from decimal import Decimal
+import polar_sdk
 from polar_sdk import Polar
 from django.conf import settings
 from django.urls import reverse
@@ -22,6 +23,9 @@ from .serializers import (
     PlanPaymentSerializer,
 )
 from .services import PlanService, UsageService, SubscriptionService  
+import logging
+logger = logging.getLogger(__name__)
+
 
 class PlanListView(ListView):
     model = Plan
@@ -47,26 +51,71 @@ def get_plans(request):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def cancel_subscription(request):
-    """Cancel user's current subscription - this will be handled by Polar"""
+    """
+    Cancels a user's subscription, either immediately (revoked) or at the end of the period.
+    """
+    user = request.user
+    immediate = request.data.get("immediate", False)
+    reason = request.data.get("reason")
+    comment = request.data.get("comment")
+
     try:
-        subscription = SubscriptionService.get_active_subscription(request.user)
-        if not subscription:
-            return Response({"error": "No active subscription found"}, status=status.HTTP_404_NOT_FOUND)
-
+        subscription = UserSubscription.objects.get(user=user, status__in=['active', 'pending'])
         if not subscription.polar_subscription_id:
-            return Response({"error": "Cannot cancel: Subscription not linked to payment provider"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Subscription is not linked to a payment provider."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Use Polar SDK to cancel subscription
         with Polar(access_token=settings.POLAR_API_KEY, server="sandbox") as polar:
-            polar.subscriptions.cancel(subscription.polar_subscription_id)
+                # Cancel at period end using the update method
+                subscription_update = {"cancel_at_period_end": True}
+                if reason:
+                    subscription_update["customer_cancellation_reason"] = reason
+                if comment:
+                    subscription_update["customer_cancellation_comment"] = comment
+                
+                polar.subscriptions.update(
+                    id=subscription.polar_subscription_id, 
+                    subscription_update=subscription_update
+                )
+                message = "Subscription will be canceled at the end of the current period."
+        
+        return Response({"success": True, "message": message})
 
-        return Response({
-            "success": True,
-            "message": "Subscription will be canceled at the end of the current period. You'll receive a confirmation email shortly."
-        })
-
+    except UserSubscription.DoesNotExist:
+        return Response({"error": "No active subscription found to cancel."}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
-        return Response({"error": f"Failed to cancel subscription: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        logger.error(f"General error canceling subscription for user {user.id}: {e}")
+        return Response({"error": "An unexpected error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def reactivate_subscription(request):
+    """
+    Reactivates (uncancels) a subscription that was set to cancel at the end of the period.
+    """
+    user = request.user
+    try:
+        # Find a subscription that is active but marked for cancellation.
+        subscription = UserSubscription.objects.get(user=user, status='active', auto_renew=False)
+        if not subscription.polar_subscription_id:
+            return Response({"error": "Subscription is not linked to a payment provider."}, status=status.HTTP_400_BAD_REQUEST)
+
+        with Polar(access_token=settings.POLAR_API_KEY, server="sandbox") as polar:
+            # Reactivate (uncancel) using the update method
+            polar.subscriptions.update(
+                id=subscription.polar_subscription_id, 
+                subscription_update={"cancel_at_period_end": False}
+            )
+        
+        return Response({"success": True, "message": "Subscription has been reactivated."})
+
+    except UserSubscription.DoesNotExist:
+        return Response({"error": "No subscription found to reactivate."}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger.error(f"General error reactivating subscription for user {user.id}: {e}")
+        return Response({"error": "An unexpected error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_user_subscription(request):

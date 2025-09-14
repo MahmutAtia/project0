@@ -82,6 +82,7 @@ class UserSubscription(models.Model):
     
     # Polar integration
     polar_subscription_id = models.CharField(max_length=100, blank=True, null=True, unique=True, help_text="The Subscription ID from Polar")
+    polar_customer_id = models.CharField(max_length=100, blank=True, null=True, help_text="The Customer ID from Polar")
     status = models.CharField(
         max_length=20,
         choices=[
