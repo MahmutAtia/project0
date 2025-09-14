@@ -286,15 +286,19 @@ class SubscriptionService:
             print(f"--- [DEBUG] Successfully found plan: {plan.name} (Matching Polar Product ID: {polar_product_id})")
             # --- END DEBUG ---
 
-            # Parse the datetime strings
+            # --- Helper function for safe parsing ---
             from django.utils.dateparse import parse_datetime
             from datetime import datetime
 
-            raw_start_date = polar_subscription_data.get("current_period_start")
-            raw_end_date = polar_subscription_data.get("current_period_end")
+            def safe_parse_datetime(date_value):
+                if date_value is None:
+                    return None
+                # The SDK can return datetime objects, so we handle both strings and datetimes
+                return date_value if isinstance(date_value, datetime) else parse_datetime(date_value)
 
-            start_date = raw_start_date if isinstance(raw_start_date, datetime) else parse_datetime(raw_start_date)
-            end_date = raw_end_date if isinstance(raw_end_date, datetime) else parse_datetime(raw_end_date)
+            # Parse the datetime strings safely
+            start_date = safe_parse_datetime(polar_subscription_data.get("current_period_start"))
+            end_date = safe_parse_datetime(polar_subscription_data.get("current_period_end"))
 
             # --- DEBUG ---
             print(f"--- [DEBUG] Parsed Start Date: {start_date}")
@@ -336,12 +340,10 @@ class SubscriptionService:
                 # --- END DEBUG ---
                 # Handle general updates
                 auto_renew = not polar_subscription_data.get("cancel_at_period_end", False)
-                canceled_at = None
-                if polar_subscription_data.get("canceled_at"):
-                    canceled_at = parse_datetime(polar_subscription_data["canceled_at"])
+                canceled_at = safe_parse_datetime(polar_subscription_data.get("canceled_at"))
                     
                 subscription_defaults.update({
-                    "status": polar_subscription_data.get("status", "active"),
+                    "status": str(polar_subscription_data.get("status", "active")),
                     "auto_renew": auto_renew,
                     "canceled_at": canceled_at,
                 })
@@ -351,9 +353,7 @@ class SubscriptionService:
                 print("--- [DEBUG] Matched event logic: subscription.canceled")
                 # --- END DEBUG ---
                 # Subscription is canceled but user keeps access until period end
-                canceled_at = None
-                if polar_subscription_data.get("canceled_at"):
-                    canceled_at = parse_datetime(polar_subscription_data["canceled_at"])
+                canceled_at = safe_parse_datetime(polar_subscription_data.get("canceled_at"))
                     
                 subscription_defaults.update({
                     "status": "active",  # Still active until period end
@@ -377,9 +377,7 @@ class SubscriptionService:
                 print("--- [DEBUG] Matched event logic: subscription.revoked")
                 # --- END DEBUG ---
                 # User loses access immediately
-                canceled_at = None
-                if polar_subscription_data.get("canceled_at"):
-                    canceled_at = parse_datetime(polar_subscription_data["canceled_at"])
+                canceled_at = safe_parse_datetime(polar_subscription_data.get("canceled_at"))
                     
                 subscription_defaults.update({
                     "status": "revoked",  # Keep as revoked exactly as Polar sends
