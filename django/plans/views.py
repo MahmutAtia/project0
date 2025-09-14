@@ -48,17 +48,26 @@ def get_plans(request):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def cancel_subscription(request):
-    """Cancel user's current subscription with options"""
-    immediate = request.data.get("immediate", False)
+    """Cancel user's current subscription - this will be handled by Polar"""
+    try:
+        subscription = SubscriptionService.get_active_subscription(request.user)
+        if not subscription:
+            return Response({"error": "No active subscription found"}, status=status.HTTP_404_NOT_FOUND)
 
-    result = SubscriptionService.cancel_subscription(request.user, immediate)
+        if not subscription.polar_subscription_id:
+            return Response({"error": "Cannot cancel: Subscription not linked to payment provider"}, status=status.HTTP_400_BAD_REQUEST)
 
-    if result["success"]:
-        return Response(result)
-    else:
-        return Response({"error": result["message"]}, status=status.HTTP_404_NOT_FOUND)
+        # Use Polar SDK to cancel subscription
+        with Polar(access_token=settings.POLAR_API_KEY, server="sandbox") as polar:
+            polar.subscriptions.cancel(subscription.polar_subscription_id)
 
+        return Response({
+            "success": True,
+            "message": "Subscription will be canceled at the end of the current period. You'll receive a confirmation email shortly."
+        })
 
+    except Exception as e:
+        return Response({"error": f"Failed to cancel subscription: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_user_subscription(request):
@@ -266,7 +275,10 @@ def create_polar_checkout_session(request):
 def polar_webhook(request):
     """Handle incoming webhooks from Polar."""
 
-    print("Received webhook:", request.body)  # Debug log
+    # print("Received webhook:", request.body)  # Debug log
+    # request header  print
+    print("Request headers:", request.headers)
+
     payload = request.body
     signature = request.headers.get("Polar-Signature")
 
