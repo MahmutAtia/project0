@@ -1,0 +1,105 @@
+name: CareerFlow CI/CD Pipeline
+
+# This workflow will be triggered on a push to the 'prod2' branch.
+# This ensures that any code merged into the production branch automatically starts a new deployment.
+on:
+  push:
+    branches:
+      - 'prod2'
+
+# Define the environment variables that will be available to all jobs.
+# You will set these in GitHub repository secrets for security.
+env:
+  PROJECT_DIR: 'prod' # The directory where the backend code will be deployed.
+  FRONTEND_DIR: 'careerflow' # The subdirectory for the frontend code.
+  DOMAIN: 'vbs.attiais.me' # Your application's domain.
+
+# Define the jobs for the workflow.
+jobs:
+  build-and-deploy:
+    # Set the name of the job to be descriptive.
+    name: Build and Deploy to Production
+    
+    # Specify the runner environment. ubuntu-latest is a good choice for most projects.
+    runs-on: ubuntu-latest
+
+    # The steps within this job will be executed in order.
+    steps:
+    
+      # Step 1: Checkout the backend repository.
+      # This action checks out your repository code, making it available in the runner's workspace.
+      - name: Checkout Backend Repository
+        uses: actions/checkout@v4
+        with:
+          # Use a personal access token (PAT) with 'repo' scope if the backend is private.
+          # If public, no token is needed. We use a secret for best practice.
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ env.PROJECT_DIR }}
+
+      # Step 2: Checkout the frontend repository into the correct subdirectory.
+      # We check out the frontend code into the 'careerflow' directory inside the 'prod' folder
+      # to match the structure expected by your docker-compose file.
+      - name: Checkout Frontend Repository
+        uses: actions/checkout@v4
+        with:
+          repository: MahmutAtia/proj0_front
+          ref: 'prod2'
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ env.PROJECT_DIR }}/${{ env.FRONTEND_DIR }}
+
+      # Step 3: Set up the .env file.
+      # This is crucial for securely handling your environment variables.
+      # We use a secret named 'ENV_VARS' that contains the content of your production .env file.
+      - name: Create .env file from secret
+        run: |
+          echo "${{ secrets.ENV_VARS }}" > ${{ env.PROJECT_DIR }}/.env
+        shell: bash
+        
+      # Step 4: Login to Docker Hub.
+      # This allows the workflow to push images to your Docker Hub account.
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      # Step 5: Build and tag Docker images.
+      # We build the images based on the docker-compose file.
+      - name: Build and Tag Docker Images
+        run: |
+          docker compose -f ${{ env.PROJECT_DIR }}/docker-compose.prod.yml build
+        
+      # Step 6: Push Docker images to Docker Hub.
+      # This step uploads the built images to Docker Hub, making them available for the server to pull.
+      # Tagging the images with the commit SHA is a good practice for versioning.
+      - name: Push Docker Images
+        run: |
+          docker compose -f ${{ env.PROJECT_DIR }}/docker-compose.prod.yml push
+
+      # Step 7: Deploy to the production server via SSH.
+      # This is the final step that connects to your server to pull the images and restart the services.
+      # We use an SSH action to securely connect to the remote host.
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            # Navigate to the deployment directory on the server.
+            cd ${{ env.PROJECT_DIR }} # <- Replace this with the actual path on your server.
+
+            # Login to Docker Hub on the server to be able to pull images.
+            docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_TOKEN }}
+            
+            # Pull the latest images from Docker Hub.
+            docker compose pull
+            
+            # Run database migrations before starting the new services.
+            docker compose run --rm django python manage.py migrate
+            
+            # Collect static files.
+            docker compose run --rm django python manage.py collectstatic --noinput --clear
+            
+            # Restart all services to use the new images.
+            docker compose up -d --force-recreate --build
