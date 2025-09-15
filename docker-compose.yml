@@ -30,7 +30,7 @@ services:
 
   api:
     build: ./api
-    image: proj0_api_image
+    image: mahmutatia/proj0_api_image
     ports:
       - "580:80"
     volumes:
@@ -46,7 +46,7 @@ services:
 
   django:
     build: ./django
-    image: proj0_django_image
+    image: mahmutatia/proj0_django_image
     command: sh -c "if [ \"${DEBUG:-0}\" = \"1\" ]; then python manage.py runserver 0.0.0.0:8000; else gunicorn proj0.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers 4 --log-level info; fi"
     volumes:
       - ./django:/app
@@ -154,7 +154,7 @@ services:
       - NEXT_PUBLIC_AI_API_URL=${NEXT_PUBLIC_AI_API_URL}
       - NEXT_PUBLIC_IPDATA_API_KEY=${NEXT_PUBLIC_IPDATA_API_KEY}
       
-    image: careerflow_frontend_image
+    image: mahmutatia/careerflow_frontend_image
     ports:
       - "3000:3000"
     depends_on:
