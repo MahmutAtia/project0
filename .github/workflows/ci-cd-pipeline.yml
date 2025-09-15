@@ -87,10 +87,10 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
-          passphrase: ${{ secrets.SSH_PASSPHRASE }} 
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
           script: |
             # Navigate to the deployment directory on the server.
-            cd ${{ env.PROJECT_DIR }} # <- Replace this with the actual path on your server.
+            cd ${{ env.PROJECT_DIR }}
 
             # Login to Docker Hub on the server to be able to pull images.
             docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_TOKEN }}
@@ -98,11 +98,32 @@ jobs:
             # Pull the latest images from Docker Hub.
             docker compose pull
             
-            # Run database migrations before starting the new services.
+            # Restart all services (without building) to use the new images.
+            docker compose up -d --no-build --remove-orphans --force-recreate
+
+            # Wait for the database to be ready before running migrations.
+            echo "Waiting for database to be ready..."
+            for i in $(seq 1 30); do
+              docker compose exec db pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB} && break || sleep 2
+            done
+            
+            # Run migrations
+            echo "Running migrations..."
             docker compose run --rm django python manage.py migrate
             
-            # Collect static files.
+            # Setup initial data
+            echo "Setting up initial data..."
+            docker compose run --rm django python manage.py create_features
+            docker compose run --rm django python manage.py create_plans
+
+            # Collect static files
+            echo "Collecting static files..."
             docker compose run --rm django python manage.py collectstatic --noinput --clear
             
-            # Restart all services to use the new images.
-            docker compose up -d --force-recreate --build
+            # Download external assets (if script exists)
+            if [ -f "django/script.py" ]; then
+              echo "Downloading external assets..."
+              docker compose run --rm django python script.py
+            fi
+            
+            echo "Deployment completed!"
