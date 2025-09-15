@@ -11,6 +11,7 @@ urlpatterns = [
     path("payments/", views.get_payment_history, name="payment-history"),
     path("cancel/", views.cancel_subscription, name="cancel-subscription"),
     path("reactivate/", views.reactivate_subscription, name="reactivate-subscription"),
+    path("update-plan/", views.update_subscription_plan, name="update-subscription-plan"),
 
 
     # Polar Integration URLs
