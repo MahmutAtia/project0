@@ -69,14 +69,14 @@ jobs:
       # We build the images based on the docker-compose file.
       - name: Build and Tag Docker Images
         run: |
-          docker compose -f ${{ env.PROJECT_DIR }}/docker-compose.prod.yml build
+          docker compose -f ${{ env.PROJECT_DIR }}/docker-compose.yml build
         
       # Step 6: Push Docker images to Docker Hub.
       # This step uploads the built images to Docker Hub, making them available for the server to pull.
       # Tagging the images with the commit SHA is a good practice for versioning.
       - name: Push Docker Images
         run: |
-          docker compose -f ${{ env.PROJECT_DIR }}/docker-compose.prod.yml push
+          docker compose -f ${{ env.PROJECT_DIR }}/docker-compose.yml push
 
       # Step 7: Deploy to the production server via SSH.
       # This is the final step that connects to your server to pull the images and restart the services.
