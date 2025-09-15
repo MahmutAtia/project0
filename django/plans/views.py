@@ -116,6 +116,56 @@ def reactivate_subscription(request):
         return Response({"error": "An unexpected error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def update_subscription_plan(request):
+    """
+    Updates (upgrades or downgrades) a user's subscription to a new plan.
+    """
+    user = request.user
+    new_plan_id = request.data.get("new_plan_id")
+
+    if not new_plan_id:
+        return Response({"error": "new_plan_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        # Get the user's current subscription
+        current_subscription = UserSubscription.objects.get(user=user, status='active')
+        if not current_subscription.polar_subscription_id:
+            return Response({"error": "Current subscription is not linked to a payment provider."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get the new plan and its Polar product ID
+        new_plan = Plan.objects.get(id=new_plan_id, is_active=True)
+        if not new_plan.polar_product_id:
+            return Response({"error": "New plan is not configured for payments."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        # Prevent updating to the same plan
+        if current_subscription.plan.id == new_plan.id:
+            return Response({"error": "You are already subscribed to this plan."}, status=status.HTTP_400_BAD_REQUEST)
+
+        print(f"Updating subscription {current_subscription.polar_subscription_id} to new plan {new_plan.polar_product_id}")
+        with Polar(access_token=settings.POLAR_API_KEY, server="sandbox") as polar:
+
+                subscription_update = {"product_id": new_plan.polar_product_id}
+
+                polar.subscriptions.update(
+                    id=current_subscription.polar_subscription_id, 
+                    subscription_update=subscription_update
+                )
+                message = f"Your subscription has been updated to the {new_plan.name} plan."
+        
+        # The webhook will handle the database update.
+        return Response({"success": True, "message": message})
+
+    except UserSubscription.DoesNotExist:
+        return Response({"error": "No active subscription found to update."}, status=status.HTTP_404_NOT_FOUND)
+    except Plan.DoesNotExist:
+        return Response({"error": "The selected plan was not found."}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger.error(f"General error updating subscription for user {user.id}: {e}")
+        return Response({"error": "An unexpected error occurred while updating the plan."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_user_subscription(request):
