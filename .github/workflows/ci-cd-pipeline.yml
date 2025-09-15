@@ -87,6 +87,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }} 
           script: |
             # Navigate to the deployment directory on the server.
             cd ${{ env.PROJECT_DIR }} # <- Replace this with the actual path on your server.
