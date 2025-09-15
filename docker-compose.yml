@@ -33,8 +33,6 @@ services:
     image: mahmutatia/proj0_api_image
     ports:
       - "580:80"
-    volumes:
-      - ./api:/api
     environment:
       - DEBUG=${DEBUG:-0}
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
@@ -48,8 +46,6 @@ services:
     build: ./django
     image: mahmutatia/proj0_django_image
     command: sh -c "if [ \"${DEBUG:-0}\" = \"1\" ]; then python manage.py runserver 0.0.0.0:8000; else gunicorn proj0.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers 4 --log-level info; fi"
-    volumes:
-      - ./django:/app
     expose:
       - "8000"
     ports:
