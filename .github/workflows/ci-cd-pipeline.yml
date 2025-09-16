@@ -94,24 +94,29 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           script: |
-            set -e # Exit immediately if a command exits with a non-zero status.
+            set -e
             echo "### Starting Deployment on Server ###"
 
             echo "--> Navigating to deployment directory: ${{ env.PROJECT_DIR }}"
             cd ${{ env.PROJECT_DIR }}
 
+            echo "--> Current directory:"
+            pwd
+            echo "--> Directory contents:"
+            ls -la
+
             echo "--> Logging in to Docker Hub..."
             docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_TOKEN }}
             
             echo "--> Pulling latest Docker images..."
-            docker compose pull
+            docker compose -f docker-compose.yml pull
             
             echo "--> Restarting all services with new images..."
-            docker compose up -d --no-build --remove-orphans --force-recreate
+            docker compose -f docker-compose.yml up -d --no-build --remove-orphans --force-recreate
 
             echo "--> Waiting for database to be ready..."
             for i in $(seq 1 30); do
-              if docker compose exec db pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}; then
+              if docker compose -f docker-compose.yml exec db pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}; then
                 echo "Database is ready."
                 break
               fi
@@ -119,31 +124,27 @@ jobs:
             done
             
             echo "--> Syncing database collation version..."
-            # This command prevents errors from collation version mismatches that can occur
-            # when the underlying OS/glibc in the Postgres Docker image is updated.
-            # It refreshes the database's stored collation version to match the OS,
-            # resolving potential "database was created using collation version X, but the operating system provides version Y" warnings.
-            docker compose exec db psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "ALTER DATABASE ${POSTGRES_DB} REFRESH COLLATION VERSION;"
+            docker compose -f docker-compose.yml exec db psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "ALTER DATABASE ${POSTGRES_DB} REFRESH COLLATION VERSION;"
 
             echo "--> Checking database collation version..."
-            docker compose exec db psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "SELECT datname, datcollversion FROM pg_database WHERE datname = '${POSTGRES_DB}';"
+            docker compose -f docker-compose.yml exec db psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "SELECT datname, datcollversion FROM pg_database WHERE datname = '${POSTGRES_DB}';"
 
             echo "--> Running database migrations..."
-            docker compose run --rm django python manage.py migrate
+            docker compose -f docker-compose.yml run --rm django python manage.py migrate
             
             echo "--> Setting up initial data (Features and Plans)..."
-            docker compose run --rm django python manage.py create_features
-            docker compose run --rm django python manage.py create_plans
+            docker compose -f docker-compose.yml run --rm django python manage.py create_features
+            docker compose -f docker-compose.yml run --rm django python manage.py create_plans
 
             echo "--> Collecting static files..."
-            docker compose run --rm django python manage.py collectstatic --noinput --clear
+            docker compose -f docker-compose.yml run --rm django python manage.py collectstatic --noinput --clear
             
             if [ -f "django/script.py" ]; then
               echo "--> Downloading external assets..."
-              docker compose run --rm django python script.py
+              docker compose -f docker-compose.yml run --rm django python script.py
             fi
             
             echo "--> Restarting all services to apply changes..."
-            docker compose restart
+            docker compose -f docker-compose.yml restart
           
             echo "### Deployment Completed Successfully! ###"
