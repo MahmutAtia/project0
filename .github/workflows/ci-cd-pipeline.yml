@@ -15,6 +15,7 @@ env:
   PROJECT_DIR: 'prod' # The directory where the backend code will be deployed.
   FRONTEND_DIR: 'careerflow' # The subdirectory for the frontend code.
   DOMAIN: 'vbs.attiais.me' # Your application's domain.
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }} # Add this line
 
 # Define the jobs for the workflow.
 jobs:
@@ -70,6 +71,8 @@ jobs:
       - name: Build and Tag Docker Images
         run: |
           docker compose -f ${{ env.PROJECT_DIR }}/docker-compose.yml build
+        env: # Add this env block
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
         
       # Step 6: Push Docker images to Docker Hub.
       # This step uploads the built images to Docker Hub, making them available for the server to pull.
@@ -77,6 +80,8 @@ jobs:
       - name: Push Docker Images
         run: |
           docker compose -f ${{ env.PROJECT_DIR }}/docker-compose.yml push
+        env: # Add this env block
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
 
       # Step 7: Deploy to the production server via SSH.
       # This is the final step that connects to your server to pull the images and restart the services.
@@ -113,6 +118,13 @@ jobs:
               sleep 2
             done
             
+            echo "--> Syncing database collation version..."
+            # This command prevents errors from collation version mismatches that can occur
+            # when the underlying OS/glibc in the Postgres Docker image is updated.
+            # It refreshes the database's stored collation version to match the OS,
+            # resolving potential "database was created using collation version X, but the operating system provides version Y" warnings.
+            docker compose exec db psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "ALTER DATABASE ${POSTGRES_DB} REFRESH COLLATION VERSION;"
+
             echo "--> Checking database collation version..."
             docker compose exec db psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "SELECT datname, datcollversion FROM pg_database WHERE datname = '${POSTGRES_DB}';"
 
