@@ -89,41 +89,49 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           script: |
-            # Navigate to the deployment directory on the server.
+            set -e # Exit immediately if a command exits with a non-zero status.
+            echo "### Starting Deployment on Server ###"
+
+            echo "--> Navigating to deployment directory: ${{ env.PROJECT_DIR }}"
             cd ${{ env.PROJECT_DIR }}
 
-            # Login to Docker Hub on the server to be able to pull images.
+            echo "--> Logging in to Docker Hub..."
             docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_TOKEN }}
             
-            # Pull the latest images from Docker Hub.
+            echo "--> Pulling latest Docker images..."
             docker compose pull
             
-            # Restart all services (without building) to use the new images.
+            echo "--> Restarting all services with new images..."
             docker compose up -d --no-build --remove-orphans --force-recreate
 
-            # Wait for the database to be ready before running migrations.
-            echo "Waiting for database to be ready..."
+            echo "--> Waiting for database to be ready..."
             for i in $(seq 1 30); do
-              docker compose exec db pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB} && break || sleep 2
+              if docker compose exec db pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}; then
+                echo "Database is ready."
+                break
+              fi
+              sleep 2
             done
             
-            # Run migrations
-            echo "Running migrations..."
+            echo "--> Checking database collation version..."
+            docker compose exec db psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "SELECT datname, datcollversion FROM pg_database WHERE datname = '${POSTGRES_DB}';"
+
+            echo "--> Running database migrations..."
             docker compose run --rm django python manage.py migrate
             
-            # Setup initial data
-            echo "Setting up initial data..."
+            echo "--> Setting up initial data (Features and Plans)..."
             docker compose run --rm django python manage.py create_features
             docker compose run --rm django python manage.py create_plans
 
-            # Collect static files
-            echo "Collecting static files..."
+            echo "--> Collecting static files..."
             docker compose run --rm django python manage.py collectstatic --noinput --clear
             
-            # Download external assets (if script exists)
             if [ -f "django/script.py" ]; then
-              echo "Downloading external assets..."
+              echo "--> Downloading external assets..."
               docker compose run --rm django python script.py
             fi
             
-            echo "Deployment completed!"
+            echo "--> Restarting all services to apply changes..."
+            docker compose restart
+          
+            echo "### Deployment Completed Successfully! ###"
