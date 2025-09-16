@@ -100,6 +100,14 @@ jobs:
             echo "--> Navigating to deployment directory: ${{ env.PROJECT_DIR }}"
             cd ${{ env.PROJECT_DIR }}
 
+            # Load environment variables from the .env file for this script session
+            echo "--> Loading environment variables from .env file..."
+            if [ -f .env ]; then
+              export $(cat .env | sed 's/#.*//g' | xargs)
+            else
+              echo "!!! .env file not found on server. Deployment may fail. !!!"
+            fi
+
             echo "--> Current directory:"
             pwd
             echo "--> Directory contents:"
@@ -116,6 +124,7 @@ jobs:
 
             echo "--> Waiting for database to be ready..."
             for i in $(seq 1 30); do
+              # The POSTGRES_USER and POSTGRES_DB variables are now available here
               if docker compose -f docker-compose.yml exec db pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}; then
                 echo "Database is ready."
                 break
