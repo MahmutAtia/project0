@@ -150,20 +150,23 @@ jobs:
             docker compose -f docker-compose.yml exec db psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "SELECT datname, datcollversion FROM pg_database WHERE datname = '${POSTGRES_DB}';"
 
             echo "--> Running database migrations..."
-            docker compose -f docker-compose.yml run --rm django python manage.py migrate
+            docker compose -f docker-compose.yml --env-file .env run --rm django python manage.py migrate
             
             echo "--> Setting up initial data (Features and Plans)..."
-            docker compose -f docker-compose.yml run --rm django python manage.py create_features
-            docker compose -f docker-compose.yml run --rm django python manage.py create_plans
+            docker compose -f docker-compose.yml --env-file .env run --rm django python manage.py create_features
+            docker compose -f docker-compose.yml --env-file .env run --rm django python manage.py create_plans
 
             echo "--> Collecting static files..."
-            docker compose -f docker-compose.yml run --rm django python manage.py collectstatic --noinput --clear
+            docker compose -f docker-compose.yml --env-file .env run --rm django python manage.py collectstatic --noinput --clear
             
             if [ -f "django/script.py" ]; then
               echo "--> Downloading external assets..."
-              docker compose -f docker-compose.yml run --rm django python script.py
+              docker compose -f docker-compose.yml --env-file .env run --rm django python script.py
             fi
-            
+
+            echo "--> Restarting all services to apply changes..."
+            docker compose -f docker-compose.yml --env-file .env up --force-recreate -d
+
             echo "--> Deployment services are up and running."
           
             echo "### Deployment Completed Successfully! ###"

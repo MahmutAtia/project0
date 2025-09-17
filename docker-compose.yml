@@ -8,6 +8,7 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ./nginx/ssl:/etc/nginx/ssl
       - ./django/static:/usr/share/nginx/html/static
+      - ./django/static:/usr/share/nginx/html/static 
       - web-root:/var/www/certbot
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
@@ -45,10 +46,9 @@ services:
     build: ./django
     image: ${DOCKER_USERNAME:-mahmutatia}/proj0_django_image
     command: sh -c "if [ \"${DEBUG:-0}\" = \"1\" ]; then python manage.py runserver 0.0.0.0:8000; else gunicorn proj0.wsgi:application --bind 0.0.0.0:8000 --workers 5 --log-level info; fi"
-    expose:
-      - "8000"
-    ports:
-      - "8000:8000"
+    volumes:
+      - ./django/static:/app/static
+      - ./django/media:/app/media
     depends_on:
       - db
     environment:
