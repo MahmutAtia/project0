@@ -27,11 +27,6 @@ import io
 import yaml
 
 
-
-
-import httpx  # Add httpx for async requests
-from asgiref.sync import sync_to_async  # For wrapping sync code if needed
-
 from rest_framework import permissions
 from django.core.cache import cache
 
