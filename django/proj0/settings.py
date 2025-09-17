@@ -29,10 +29,10 @@ SECRET_KEY = "django-insecure-u$04p_1&)e*=o+scbzp4x()8w2er8g1l28_$hep47p&fx5&#wp
 DEBUG = os.getenv("DJANGO_DEBUG", "True") == "True"
 
 # Update this with your actual domain(s) in production
-CSRF_TRUSTED_ORIGINS = os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS").split(",")
+CSRF_TRUSTED_ORIGINS = os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",")
 
 # filepath: /home/e-kalite/Documents/careerflow/django/proj0/settings.py
-ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS").split(",")
+ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "").split(",")
 if "django" not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append("django")
 
