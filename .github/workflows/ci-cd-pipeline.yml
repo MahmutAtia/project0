@@ -17,12 +17,9 @@ env:
   DOMAIN: 'vbs.attiais.me' # Your application's domain.
   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
   DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
-  NEXT_PUBLIC_BACKEND_URL: ${{ secrets.NEXT_PUBLIC_BACKEND_URL }}
-  NEXT_PUBLIC_AI_API_URL: ${{ secrets.NEXT_PUBLIC_AI_API_URL }}
+  NEXT_PUBLIC_BACKEND_URL: https://${DOMAIN}
+  NEXT_PUBLIC_AI_API_URL: https://${DOMAIN}/ai-api
   NEXT_PUBLIC_IPDATA_API_KEY: ${{ secrets.NEXT_PUBLIC_IPDATA_API_KEY }}
-
-
-
 
 # Define the jobs for the workflow.
 jobs:
