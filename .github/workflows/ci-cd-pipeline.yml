@@ -158,7 +158,6 @@ jobs:
               docker compose -f docker-compose.yml run --rm django python script.py
             fi
             
-            echo "--> Restarting all services to apply changes..."
-            docker compose -f docker-compose.yml restart
+            echo "--> Deployment services are up and running."
           
             echo "### Deployment Completed Successfully! ###"
