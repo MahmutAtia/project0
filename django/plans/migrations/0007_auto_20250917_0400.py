@@ -1,5 +1,7 @@
 from django.db import migrations
 
+from django.contrib.auth.models import User
+
 def assign_free_plan_to_existing_users(apps, schema_editor):
     """
     Find all users that do not have a UserSubscription and assign them
@@ -24,7 +26,7 @@ def assign_free_plan_to_existing_users(apps, schema_editor):
         free_plan = Plan.objects.filter(is_free=True).first()
 
     # Get all users who do NOT have a related subscription.
-    users_without_subscription = User.objects.filter(usersubscription__isnull=True)
+    users_without_subscription = User.objects.filter(subscription__isnull=True)
     
     print(f"\nFound {users_without_subscription.count()} users without a subscription. Assigning free plan...")
 
