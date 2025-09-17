@@ -24,6 +24,7 @@ from .serializers import (
 )
 from .services import PlanService, UsageService, SubscriptionService  
 import logging
+from django.utils import timezone
 logger = logging.getLogger(__name__)
 
 
@@ -52,33 +53,25 @@ def get_plans(request):
 @permission_classes([IsAuthenticated])
 def cancel_subscription(request):
     """
-    Cancels a user's subscription, either immediately (revoked) or at the end of the period.
+    Cancels a user's subscription. For paid plans, it cancels at period end.
+    For free plans, it does nothing as the free plan is perpetual.
     """
     user = request.user
-    immediate = request.data.get("immediate", False)
-    reason = request.data.get("reason")
-    comment = request.data.get("comment")
-
     try:
         subscription = UserSubscription.objects.get(user=user, status__in=['active', 'pending'])
-        if not subscription.polar_subscription_id:
-            return Response({"error": "Subscription is not linked to a payment provider."}, status=status.HTTP_400_BAD_REQUEST)
-
-        with Polar(access_token=settings.POLAR_API_KEY, server="sandbox") as polar:
-                # Cancel at period end using the update method
-                subscription_update = {"cancel_at_period_end": True}
-                if reason:
-                    subscription_update["customer_cancellation_reason"] = reason
-                if comment:
-                    subscription_update["customer_cancellation_comment"] = comment
-                
+        
+        # If it's a paid plan with a Polar ID, cancel it at period end
+        if subscription.polar_subscription_id:
+            with Polar(access_token=settings.POLAR_API_KEY, server="sandbox") as polar:
                 polar.subscriptions.update(
                     id=subscription.polar_subscription_id, 
-                    subscription_update=subscription_update
+                    subscription_update={"cancel_at_period_end": True}
                 )
-                message = "Subscription will be canceled at the end of the current period."
+            message = "Your paid subscription will be canceled at the end of the current period."
+            return Response({"success": True, "message": message})
         
-        return Response({"success": True, "message": message})
+        # If it's a free plan, do nothing.
+        return Response({"success": True, "message": "Your free plan remains active."})
 
     except UserSubscription.DoesNotExist:
         return Response({"error": "No active subscription found to cancel."}, status=status.HTTP_404_NOT_FOUND)
@@ -91,14 +84,16 @@ def cancel_subscription(request):
 @permission_classes([IsAuthenticated])
 def reactivate_subscription(request):
     """
-    Reactivates (uncancels) a subscription that was set to cancel at the end of the period.
+    Reactivates a paid subscription that was set to cancel at the end of the period.
     """
     user = request.user
     try:
         # Find a subscription that is active but marked for cancellation.
         subscription = UserSubscription.objects.get(user=user, status='active', auto_renew=False)
+        
+        # Only reactivate if it's a paid Polar subscription
         if not subscription.polar_subscription_id:
-            return Response({"error": "Subscription is not linked to a payment provider."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Only paid subscriptions can be reactivated."}, status=status.HTTP_400_BAD_REQUEST)
 
         with Polar(access_token=settings.POLAR_API_KEY, server="sandbox") as polar:
             # Reactivate (uncancel) using the update method
@@ -121,6 +116,7 @@ def reactivate_subscription(request):
 def update_subscription_plan(request):
     """
     Updates (upgrades or downgrades) a user's subscription to a new plan.
+    Handles transitions between free and paid plans.
     """
     user = request.user
     new_plan_id = request.data.get("new_plan_id")
@@ -129,33 +125,58 @@ def update_subscription_plan(request):
         return Response({"error": "new_plan_id is required"}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        # Get the user's current subscription
-        current_subscription = UserSubscription.objects.get(user=user, status='active')
-        if not current_subscription.polar_subscription_id:
-            return Response({"error": "Current subscription is not linked to a payment provider."}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Get the new plan and its Polar product ID
+        current_subscription = UserSubscription.objects.get(user=user)
         new_plan = Plan.objects.get(id=new_plan_id, is_active=True)
+
+        if current_subscription.plan.id == new_plan.id:
+            return Response({"error": "You are already on this plan."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # --- Logic for switching TO a free plan ---
+        if new_plan.is_free:
+            # If the current plan is a paid Polar plan, revoke it.
+            if current_subscription.polar_subscription_id:
+                with Polar(access_token=settings.POLAR_API_KEY, server="sandbox") as polar:
+                    polar.subscriptions.update(
+                        id=current_subscription.polar_subscription_id,
+                        subscription_update={"revoke": True}
+                    )
+            
+            # Update local subscription to the free plan
+            current_subscription.plan = new_plan
+            current_subscription.status = 'active'
+            current_subscription.auto_renew = False
+            current_subscription.polar_subscription_id = None
+            current_subscription.polar_customer_id = None
+            current_subscription.canceled_at = None
+            current_subscription.start_date = timezone.now()
+            current_subscription.end_date = None
+            current_subscription.save()
+            
+            return Response({"success": True, "message": f"You have been switched to the {new_plan.name} plan."})
+
+        # --- Logic for switching TO a paid plan ---
         if not new_plan.polar_product_id:
             return Response({"error": "New plan is not configured for payments."}, status=status.HTTP_400_BAD_REQUEST)
-            
-        # Prevent updating to the same plan
-        if current_subscription.plan.id == new_plan.id:
-            return Response({"error": "You are already subscribed to this plan."}, status=status.HTTP_400_BAD_REQUEST)
 
-        print(f"Updating subscription {current_subscription.polar_subscription_id} to new plan {new_plan.polar_product_id}")
-        with Polar(access_token=settings.POLAR_API_KEY, server="sandbox") as polar:
-
-                subscription_update = {"product_id": new_plan.polar_product_id}
-
+        # If current plan is paid, update it. This handles active and canceling (grace period) plans.
+        if current_subscription.polar_subscription_id:
+            with Polar(access_token=settings.POLAR_API_KEY, server="sandbox") as polar:
                 polar.subscriptions.update(
-                    id=current_subscription.polar_subscription_id, 
-                    subscription_update=subscription_update
+                    id=current_subscription.polar_subscription_id,
+                    subscription_update={
+                        "product_id": new_plan.polar_product_id,
+                        "cancel_at_period_end": False # Ensure it's active
+                    }
                 )
-                message = f"Your subscription has been updated to the {new_plan.name} plan."
+            message = f"Your subscription has been updated to the {new_plan.name} plan."
+            return Response({"success": True, "message": message})
         
-        # The webhook will handle the database update.
-        return Response({"success": True, "message": message})
+        # If current plan is free, user must go through checkout.
+        # This case should be handled by the frontend, but we block it here for safety.
+        return Response(
+            {"error": "Please use the checkout process to upgrade from a free plan."}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
     except UserSubscription.DoesNotExist:
         return Response({"error": "No active subscription found to update."}, status=status.HTTP_404_NOT_FOUND)
@@ -290,34 +311,11 @@ def create_polar_checkout_session(request):
     except Plan.DoesNotExist:
         return Response({"error": "Plan not found"}, status=status.HTTP_404_NOT_FOUND)
 
-    # # Check for existing active subscription to same plan
-    # existing_subscription = SubscriptionService.get_active_subscription(request.user)
-    # if existing_subscription and existing_subscription.plan.id == plan_id:
-    #         return Response(
-    #         {
-    #             "success": True,
-    #             "message": "You are already subscribed to this plan",
-    #             "subscription_id": existing_subscription.id,
-    #             "already_subscribed": True,
-    #         }
-    #     )
-        
-    # # For ANY plan (free or paid), first try to reactivate recent subscription
-    # reactivation_result = SubscriptionService.reactivate_subscription(
-    #     request.user, plan
-    # )
+    # Prevent checkout for free plans
+    if plan.is_free:
+        return Response({"error": "Free plans do not require checkout."}, status=status.HTTP_400_BAD_REQUEST)
 
-    # if reactivation_result["success"]:
-    #     return Response(
-    #         {
-    #             "success": True,
-    #             "message": f"{plan.name} reactivated successfully! No new payment required.",
-    #             "subscription_id": reactivation_result["subscription"].id,
-    #             "reactivated": True,
-    #         }
-    #     )
-    
-    # For paid and free plans, ensure Polar product ID is set
+    # For paid plans, ensure Polar product ID is set
     if not plan.polar_product_id:
         return Response({"error": "Plan is not configured for Polar payments"}, status=status.HTTP_400_BAD_REQUEST)
 

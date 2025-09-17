@@ -358,9 +358,14 @@ class SubscriptionService:
 
             print(f"--- [DEBUG] Final subscription_defaults before DB save: {subscription_defaults}")
 
+            # Use user object to find and update the subscription, ensuring only one exists.
+            # This correctly handles the transition from a free plan (no polar_id) to a paid one.
             subscription, created = UserSubscription.objects.update_or_create(
-                polar_subscription_id=polar_subscription_data["id"],
-                defaults=subscription_defaults,
+                user=user,
+                defaults={
+                    **subscription_defaults,
+                    "polar_subscription_id": polar_subscription_data["id"],
+                },
             )
 
             action = "created" if created else "updated"
