@@ -105,10 +105,14 @@ jobs:
             echo "--> Navigating to deployment directory: ${{ env.PROJECT_DIR }}"
             cd ${{ env.PROJECT_DIR }}
 
-            # Load environment variables from the .env file for this script session
-            echo "--> Loading environment variables from .env file..."
+            # Check for and load environment variables from the .env file
+            echo "--> Checking for .env file..."
             if [ -f .env ]; then
+              echo "--> .env file found. Loading variables for script session."
               export $(cat .env | sed 's/#.*//g' | xargs)
+              echo "--> POSTGRES_USER is: ${POSTGRES_USER}" # Example to check if a variable is loaded
+              echo "--> DJANGO_ALLOWED_HOSTS is: ${DJANGO_ALLOWED_HOSTS}"
+              echo "--> DJANGO_CSRF_TRUSTED_ORIGINS is: ${DJANGO_CSRF_TRUSTED_ORIGINS}"
             else
               echo "!!! .env file not found on server. Deployment may fail. !!!"
             fi
@@ -123,9 +127,11 @@ jobs:
             
             echo "--> Pulling latest Docker images..."
             docker compose -f docker-compose.yml pull
+
+            # 
             
             echo "--> Restarting all services with new images..."
-            docker compose -f docker-compose.yml up -d --no-build --remove-orphans --force-recreate
+            docker compose -f docker-compose.yml --env-file .env up -d --no-build --remove-orphans --force-recreate
 
             echo "--> Waiting for database to be ready..."
             for i in $(seq 1 30); do
