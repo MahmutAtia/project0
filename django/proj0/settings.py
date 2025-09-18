@@ -38,20 +38,16 @@ if "django" not in ALLOWED_HOSTS:
 
 if not DEBUG:
     # 1. Critical: Mark cookies as Secure (HTTPS only)
-    # This is necessary because Nginx is terminating the SSL connection (HTTPS),
-    # and Django must set the cookie's 'Secure' flag for the browser to accept it.
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-
     # 2. Critical: Tell Django it is behind an HTTPS proxy
-    # This tells Django to trust the 'X-Forwarded-Proto' header set by Nginx.
-    # Your Nginx config sets 'X-Forwarded-Proto https', and this setting makes Django use it.
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
-    # 3. Optional but Recommended: For the Admin site
-    # If you are using the Django admin specifically, this helps prevent mixed content warnings.
-    # Only set this if the above fixes don't fully resolve the admin issue.
-    SECURE_SSL_REDIRECT = True
+    # 3. Remove SSL redirect for admin issues
+    # SECURE_SSL_REDIRECT = True
+else:
+    # Development settings - allow HTTP cookies
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
 
 # For development, allow all ngrok subdomains
 if DEBUG:
@@ -193,8 +189,10 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 
-SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-SESSION_CACHE_ALIAS = "default"
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
+SESSION_COOKIE_AGE = 86400  # 24 hours
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
 
 # Auth Settings

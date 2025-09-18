@@ -167,6 +167,9 @@ jobs:
             echo "--> Restarting all services to apply changes..."
             docker compose -f docker-compose.yml --env-file .env up --force-recreate -d
 
+            echo "--> Cleaning up unused Docker resources..."
+            docker system prune -a -f --volumes
+
             echo "--> Deployment services are up and running."
           
             echo "### Deployment Completed Successfully! ###"
