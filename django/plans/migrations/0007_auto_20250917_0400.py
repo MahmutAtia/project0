@@ -26,7 +26,7 @@ def assign_free_plan_to_existing_users(apps, schema_editor):
         free_plan = Plan.objects.filter(is_free=True).first()
 
     # Get all users who do NOT have a related subscription.
-    users_without_subscription = User.objects.filter(subscription__isnull=True)
+    users_without_subscription = User.objects.filter(subscriptions__isnull=True)
     
     print(f"\nFound {users_without_subscription.count()} users without a subscription. Assigning free plan...")
 
