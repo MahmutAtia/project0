@@ -7,7 +7,6 @@ import uuid
 import logging
 from decimal import Decimal
 from django.utils.timezone import make_aware
-from polar_sdk import Polar
 from django.conf import settings
 from .models import (
     Plan,
@@ -22,6 +21,12 @@ logger = logging.getLogger(__name__)
 
 # Define a constant for the reactivation grace period
 REACTIVATION_GRACE_PERIOD_DAYS = 7
+
+
+def get_polar_client():
+    from polar_sdk import Polar
+
+    return Polar(access_token=settings.POLAR_API_KEY)
 
 
 class PlanService:
@@ -42,6 +47,7 @@ class PlanService:
             return subscription.plan
         except UserSubscription.DoesNotExist:
             return None
+
 
 class UsageService:
     """Service for tracking and checking feature usage"""
@@ -185,6 +191,15 @@ class UsageService:
         )
         return True
 
+    def __init__(self):
+        # Remove the polar_sdk import from here
+        pass
+
+    def get_subscription_info(self, user):
+        # Use lazy loading
+        polar = get_polar_client()
+        # ...rest of method...
+
 
 class SubscriptionService:
     """Service for subscription lifecycle management"""
@@ -232,7 +247,7 @@ class SubscriptionService:
             # Find the most recently canceled subscription for the target plan
             last_canceled_sub = (
                 UserSubscription.objects.filter(
-                    user=user, 
+                    user=user,
                     plan=plan_to_activate,
                     status__in=["canceled", "revoked"]  # Use revoked instead of expired
                 )
@@ -256,7 +271,6 @@ class SubscriptionService:
 
         except Exception as e:
             return {"success": False, "message": str(e)}
-
 
     @staticmethod
     def handle_polar_webhook_event(event_type: str, user_id: str, polar_subscription_data: dict):
