@@ -51,13 +51,11 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           path: ${{ env.PROJECT_DIR }}/${{ env.FRONTEND_DIR }}
 
-      # Step 3: Set up the .env file.
-      # This is crucial for securely handling your environment variables.
-      # We use a secret named 'ENV_VARS' that contains the content of your production .env file.
-      - name: Create .env file from secret
-        run: |
-          echo "${{ secrets.ENV_VARS }}" > ${{ env.PROJECT_DIR }}/.env
-        shell: bash
+      # Step 3: This step is removed to use the .env from the server.
+      # - name: Create .env file from secret
+      #   run: |
+      #     echo "${{ secrets.ENV_VARS }}" > ${{ env.PROJECT_DIR }}/.env
+      #   shell: bash
         
       # Step 4: Login to Docker Hub.
       # This allows the workflow to push images to your Docker Hub account.
@@ -108,38 +106,32 @@ jobs:
             # Check for and load environment variables from the .env file
             echo "--> Checking for .env file..."
             if [ -f .env ]; then
-              echo "--> .env file found. Loading variables for script session."
-              export $(cat .env | sed 's/#.*//g' | xargs)
-              echo "--> POSTGRES_USER is: ${POSTGRES_USER}" # Example to check if a variable is loaded
-              echo "--> DJANGO_ALLOWED_HOSTS is: ${DJANGO_ALLOWED_HOSTS}"
-              echo "--> DJANGO_CSRF_TRUSTED_ORIGINS is: ${DJANGO_CSRF_TRUSTED_ORIGINS}"
+              echo "--> .env file found. Exporting variables to the runtime..."
+              set -a
+              source .env
+              set +a
+              echo "--> Variables exported. POSTGRES_USER is: ${POSTGRES_USER}"
             else
-              echo "!!! .env file not found on server. Deployment may fail. !!!"
+              echo "!!! CRITICAL: .env file not found on server. Deployment cannot continue. !!!"
+              exit 1
             fi
-
-            echo "--> Current directory:"
-            pwd
-            echo "--> Directory contents:"
-            ls -la
 
             echo "--> Logging in to Docker Hub..."
             docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_TOKEN }}
             
             echo "--> Pulling latest Docker images..."
             docker compose -f docker-compose.yml pull
-
-            # 
             
             echo "--> Restarting all services with new images..."
             docker compose -f docker-compose.yml --env-file .env up -d --no-build --remove-orphans --force-recreate
 
             echo "--> Waiting for database to be ready..."
             for i in $(seq 1 30); do
-              # The POSTGRES_USER and POSTGRES_DB variables are now available here
-              if docker compose -f docker-compose.yml exec db pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}; then
+              if docker compose -f docker-compose.yml exec db pg_isready -U "${POSTGRES_USER}" -d "${POSTGRES_DB}"; then
                 echo "Database is ready."
                 break
               fi
+              echo "Waiting for DB... attempt $i"
               sleep 2
             done
             
@@ -163,9 +155,6 @@ jobs:
               echo "--> Downloading external assets..."
               docker compose -f docker-compose.yml --env-file .env run --rm django python script.py
             fi
-
-            echo "--> Restarting all services to apply changes..."
-            docker compose -f docker-compose.yml --env-file .env up --force-recreate -d
 
             echo "--> Cleaning up unused Docker resources..."
             docker system prune -a -f --volumes
