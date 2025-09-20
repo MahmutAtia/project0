@@ -13,6 +13,7 @@ class Command(BaseCommand):
                 "description": "Basic features to get started",
                 "price": 0,
                 "billing_period": "monthly",
+                "polar_product_id": "387a234b-5549-465a-9ad0-898d67e6b3fd",
                 "is_free": True,
                 "features": [
                     "3 AI Resumes",
@@ -29,6 +30,7 @@ class Command(BaseCommand):
                 "description": "Advanced features for professionals",
                 "price": 29.99,
                 "billing_period": "monthly",
+                "polar_product_id": "1beb3161-3fa0-4ee3-88c8-d8cc9e5225b3",
                 "is_free": False,
                 "features": [
                     "Unlimited Resumes",
@@ -46,6 +48,7 @@ class Command(BaseCommand):
                 "description": "Advanced features for professionals - yearly billing",
                 "price": 299.99,
                 "billing_period": "yearly",
+                "polar_product_id": "d6475bce-fcdc-465e-98b5-b3c5cd3379d0",
                 "is_free": False,
                 "features": [
                     "Unlimited Resumes",
@@ -62,17 +65,19 @@ class Command(BaseCommand):
         ]
 
         created_plans = []
+        updated_plans = []
         for plan_data in plans_data:
-            plan, created = Plan.objects.get_or_create(
-                name=plan_data["name"], defaults=plan_data
+            plan_name = plan_data.pop("name")  # Remove name for defaults
+            plan, created = Plan.objects.update_or_create(
+                name=plan_name, defaults=plan_data
             )
+            
             if created:
                 created_plans.append(plan)
                 self.stdout.write(self.style.SUCCESS(f"Created plan: {plan.name}"))
             else:
-                self.stdout.write(
-                    self.style.WARNING(f"Plan already exists: {plan.name}")
-                )
+                updated_plans.append(plan)
+                self.stdout.write(self.style.SUCCESS(f"Updated plan: {plan.name}"))
 
         # Create feature limits
         feature_limits = {
@@ -108,7 +113,7 @@ class Command(BaseCommand):
                 for feature_code, limit in limits.items():
                     try:
                         feature = Feature.objects.get(code=feature_code)
-                        plan_limit, created = PlanFeatureLimit.objects.get_or_create(
+                        plan_limit, created = PlanFeatureLimit.objects.update_or_create(
                             plan=plan, feature=feature, defaults={"limit": limit}
                         )
 
@@ -116,6 +121,12 @@ class Command(BaseCommand):
                             self.stdout.write(
                                 self.style.SUCCESS(
                                     f"Created limit for {plan.name} - {feature.name}: {limit}"
+                                )
+                            )
+                        else:
+                            self.stdout.write(
+                                self.style.SUCCESS(
+                                    f"Updated limit for {plan.name} - {feature.name}: {limit}"
                                 )
                             )
                     except Feature.DoesNotExist:
@@ -127,6 +138,6 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"Successfully created {len(created_plans)} new plans with feature limits"
+                f"Successfully created {len(created_plans)} and updated {len(updated_plans)} plans."
             )
         )

@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import Resume, GeneratedDocument, GeneratedWebsite, UserProfile
+import io
+import yaml
 
 User = get_user_model()
 
@@ -9,12 +11,23 @@ class UserProfileSerializer(serializers.ModelSerializer):
     """Serializer for user profile with avatar support"""
     username = serializers.CharField(source='user.username', read_only=True)
     email = serializers.CharField(source='user.email', read_only=True)
-    first_name = serializers.CharField(source='user.first_name')
-    last_name = serializers.CharField(source='user.last_name')
+    first_name = serializers.CharField(source='user.first_name', max_length=30, required=False, allow_blank=True)
+    last_name = serializers.CharField(source='user.last_name', max_length=30, required=False, allow_blank=True)
     
+    # UserProfile fields
+    phone = serializers.CharField(max_length=20, required=False, allow_blank=True)
+    company = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    job_title = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    timezone = serializers.CharField(max_length=50, required=False, allow_blank=True)
+    language = serializers.CharField(max_length=10, required=False, allow_blank=True)
+    avatar = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+
     class Meta:
         model = UserProfile
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'avatar']
+        fields = [
+            'id', 'first_name', 'last_name', 'email', 'username',
+            'phone', 'company', 'job_title', 'timezone', 'language', 'avatar'
+        ]
         read_only_fields = ['id', 'username', 'email']
     
     def validate_avatar(self, value):
@@ -39,17 +52,19 @@ class UserProfileSerializer(serializers.ModelSerializer):
         return value
     
     def update(self, instance, validated_data):
-        # Handle nested user data
+        # Extract user data
         user_data = {}
         if 'user' in validated_data:
             user_data = validated_data.pop('user')
         
-        # Update user fields
-        for attr, value in user_data.items():
-            setattr(instance.user, attr, value)
-        instance.user.save()
+        # Update User fields
+        if user_data:
+            user = instance.user
+            for attr, value in user_data.items():
+                setattr(user, attr, value)
+            user.save()
         
-        # Update profile fields
+        # Update UserProfile fields
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
@@ -74,6 +89,7 @@ class ResumeSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(
         read_only=True
     )  # Option 2: Display user ID (default for FK)
+    resume = serializers.CharField(required=False, allow_blank=True) # Make it a writable field
     generated_documents_data = serializers.SerializerMethodField(
         read_only=True
     )  # New field
@@ -101,6 +117,41 @@ class ResumeSerializer(serializers.ModelSerializer):
             "personal_website_uuid",  # New field
         ]
         # 'user' is read-only as it's set by the view during creation.
+
+    def to_representation(self, instance):
+        """
+        Convert the `resume` YAML string from the model into a Python object for the JSON response.
+        """
+        ret = super().to_representation(instance)
+        resume_yaml_string = instance.resume
+        if resume_yaml_string:
+            try:
+                ret['resume'] = yaml.safe_load(resume_yaml_string)
+            except yaml.YAMLError:
+                ret['resume'] = None # Or some error indicator
+        else:
+            ret['resume'] = None
+        return ret
+
+    def to_internal_value(self, data):
+        """
+        Convert the incoming `resume` object/string into a YAML string to be saved in the database.
+        """
+        resume_data = data.get('resume')
+        if resume_data and isinstance(resume_data, dict):
+            # If 'resume' is an object, convert it to a YAML string
+            try:
+                string_stream = io.StringIO()
+                yaml.dump(resume_data, string_stream, sort_keys=False, default_flow_style=False)
+                data['resume'] = string_stream.getvalue()
+            except Exception as e:
+                raise serializers.ValidationError({"resume": f"Could not serialize resume object to YAML: {e}"})
+
+        # The incoming request from FastAPI sends the resume as a string already.
+        # If it were an object, we would dump it to YAML here.
+        # This method ensures the field is correctly processed.
+        return super().to_internal_value(data)
+
 
     def get_generated_documents_data(self, obj: Resume):  # Renamed method
         """
@@ -141,32 +192,33 @@ class ResumeSerializer(serializers.ModelSerializer):
     # It's better to rely on the view's perform_create.
 
 
-class UserProfileSerializer(serializers.ModelSerializer):
-    """Serializer for user profile with avatar support"""
+# class UserProfileSerializer(serializers.ModelSerializer):
+#     """Serializer for user profile with avatar support"""
 
-    class Meta:
-        model = User
-        fields = ["id", "username", "email", "first_name", "last_name", "avatar"]
-        read_only_fields = ["id", "username"]
+#     class Meta:
+#         model = User
+#         fields = ["id", "username", "email", "first_name", "last_name", "avatar"]
+#         read_only_fields = ["id", "username"]
+        
 
-    def validate_avatar(self, value):
-        """Validate base64 avatar image"""
-        if value:
-            # Basic validation for base64 image
-            if not value.startswith("data:image/"):
-                raise serializers.ValidationError("Avatar must be a valid base64 image data URL")
+#     def validate_avatar(self, value):
+#         """Validate base64 avatar image"""
+#         if value:
+#             # Basic validation for base64 image
+#             if not value.startswith("data:image/"):
+#                 raise serializers.ValidationError("Avatar must be a valid base64 image data URL")
 
-            # Check file size (approximate, base64 is ~33% larger than binary)
-            import base64
+#             # Check file size (approximate, base64 is ~33% larger than binary)
+#             import base64
 
-            try:
-                # Extract base64 data after comma
-                header, data = value.split(",", 1)
-                decoded = base64.b64decode(data)
-                # Limit to 5MB
-                if len(decoded) > 5 * 1024 * 1024:
-                    raise serializers.ValidationError("Avatar image is too large. Maximum size is 5MB")
-            except Exception:
-                raise serializers.ValidationError("Invalid base64 image format")
+#             try:
+#                 # Extract base64 data after comma
+#                 header, data = value.split(",", 1)
+#                 decoded = base64.b64decode(data)
+#                 # Limit to 5MB
+#                 if len(decoded) > 5 * 1024 * 1024:
+#                     raise serializers.ValidationError("Avatar image is too large. Maximum size is 5MB")
+#             except Exception:
+#                 raise serializers.ValidationError("Invalid base64 image format")
 
-        return value
+#         return value

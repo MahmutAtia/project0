@@ -1,21 +1,19 @@
-version: "3.8"
-
 services:
   nginx:
     image: nginx:alpine
     ports:
-      - "${NGINX_HTTP_PORT:-880}:80"
-      - "${NGINX_HTTPS_PORT:-8443}:443"
+      - "80:80"
+      - "443:443"
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ./nginx/ssl:/etc/nginx/ssl
       - ./django/static:/usr/share/nginx/html/static
+      - ./django/static:/usr/share/nginx/html/static 
       - web-root:/var/www/certbot
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
     depends_on:
       - careerflow
-      - django
     restart: always
     environment:
       - DOMAIN=${DOMAIN:-localhost}
@@ -31,53 +29,49 @@ services:
     restart: "no"
 
   api:
-    build: 
-      context: ./api
-      dockerfile: Dockerfile
-    image: proj0_api_image:prod
+    build: ./api
+    image: ${DOCKER_USERNAME:-mahmutatia}/proj0_api_image
     ports:
       - "580:80"
     environment:
-      - DEBUG=0
+      - DEBUG=${DEBUG:-0}
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
       - LANGCHAIN_TRACING_V2=${LANGCHAIN_TRACING_V2:-false}
       - LANGCHAIN_ENDPOINT=${LANGCHAIN_ENDPOINT}
       - LANGCHAIN_API_KEY=${LANGCHAIN_API_KEY}
       - LANGCHAIN_PROJECT=${LANGCHAIN_PROJECT}
     restart: always
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   django:
-    build: 
-      context: ./django
-      dockerfile: dockerfile
-    image: proj0_django_image:prod
-    command: gunicorn proj0.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers 4 --log-level info
-    expose:
-      - "8000"
+    build: ./django
+    image: ${DOCKER_USERNAME:-mahmutatia}/proj0_django_image
+    command: sh -c "if [ \"${DEBUG:-0}\" = \"1\" ]; then python manage.py runserver 0.0.0.0:8000; else gunicorn proj0.wsgi:application --bind 0.0.0.0:8000 --workers 3 --log-level info; fi"
+    volumes:
+      - ./django/static:/app/static
+      - ./django/media:/app/media
+    deploy:
+      resources:
+        limits:
+          memory: 2048m  # Set a 2 GB limit (adjust based on total host RAM and other services)
     depends_on:
       - db
-      - redis
     environment:
-      # Django Core Settings (Production)
+      # Django Core Settings
       - DEBUG=${DEBUG:-0}
       - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
+      - DJANGO_CSRF_TRUSTED_ORIGINS=${DJANGO_CSRF_TRUSTED_ORIGINS}
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
-      - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-proj0.settings.production}
+      - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-proj0.settings}
       - PYTHONUNBUFFERED=${PYTHONUNBUFFERED:-1}
       
-      # Database Settings
+      # Database Settings (using corrected variable names)
       - DJANGO_DB_NAME=${DJANGO_DB_NAME}
       - DJANGO_DB_USER=${DJANGO_DB_USER}
       - DJANGO_DB_PASSWORD=${DJANGO_DB_PASSWORD}
       - DJANGO_DB_HOST=${DJANGO_DB_HOST:-db}
       - DJANGO_DB_PORT=${DJANGO_DB_PORT:-5432}
       
-      # Email Settings (Production)
+      # Email Settings
       - EMAIL_HOST=${EMAIL_HOST}
       - EMAIL_PORT=${EMAIL_PORT:-587}
       - EMAIL_HOST_USER=${EMAIL_HOST_USER}
@@ -99,21 +93,22 @@ services:
       - DJANGO_SUPERUSER_EMAIL=${DJANGO_SUPERUSER_EMAIL}
       - DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD}
       
-      # Security Settings (Production)
+      # Security Settings
       - SECURE_SSL_REDIRECT=${SECURE_SSL_REDIRECT:-True}
       - SECURE_PROXY_SSL_HEADER=${SECURE_PROXY_SSL_HEADER}
       - SESSION_COOKIE_SECURE=${SESSION_COOKIE_SECURE:-True}
       - CSRF_COOKIE_SECURE=${CSRF_COOKIE_SECURE:-True}
+
+      # POLAR Secret
+      - POLAR_API_KEY=${POLAR_API_KEY}
+      - POLAR_WEBHOOK_SECRET=${POLAR_WEBHOOK_SECRET}
+      - PAYMENT_HOST=${PAYMENT_HOST:-localhost:3000}
     restart: always
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   db:
     image: postgres:16
     environment:
+      # Fixed: Use POSTGRES_* variables (not DJANGO_DB_*)
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
@@ -126,97 +121,20 @@ services:
       timeout: 5s
       retries: 5
 
-  redis:
-    image: redis:6.2-alpine
-    volumes:
-      - redis_data:/data
-    command: redis-server --appendonly yes
-    restart: always
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-
-  celery:
-    build: 
-      context: ./django
-      dockerfile: dockerfile
-    image: proj0_django_image:prod
-    command: celery -A proj0 worker -l info --concurrency=4
-    depends_on:
-      - db
-      - redis
-    environment:
-      # Mirror Django's production environment
-      - DEBUG=${DEBUG:-0}
-      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
-      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
-      - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-proj0.settings.production}
-      - PYTHONUNBUFFERED=${PYTHONUNBUFFERED:-1}
-      
-      # Database Settings
-      - DJANGO_DB_NAME=${DJANGO_DB_NAME}
-      - DJANGO_DB_USER=${DJANGO_DB_USER}
-      - DJANGO_DB_PASSWORD=${DJANGO_DB_PASSWORD}
-      - DJANGO_DB_HOST=${DJANGO_DB_HOST:-db}
-      - DJANGO_DB_PORT=${DJANGO_DB_PORT:-5432}
-      
-      # Service URLs
-      - AI_SERVICE_URL=${AI_SERVICE_URL:-http://api:80/resumes/}
-      
-      # Celery-specific
-      - C_FORCE_ROOT=1
-    restart: always
-    healthcheck:
-      test: ["CMD", "celery", "-A", "proj0", "inspect", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  celery-beat:
-    build: 
-      context: ./django
-      dockerfile: dockerfile
-    image: proj0_django_image:prod
-    command: celery -A proj0 beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
-    depends_on:
-      - db
-      - redis
-    environment:
-      # Mirror Django's production environment
-      - DEBUG=${DEBUG:-0}
-      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
-      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
-      - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-proj0.settings.production}
-      - PYTHONUNBUFFERED=${PYTHONUNBUFFERED:-1}
-      
-      # Database Settings
-      - DJANGO_DB_NAME=${DJANGO_DB_NAME}
-      - DJANGO_DB_USER=${DJANGO_DB_USER}
-      - DJANGO_DB_PASSWORD=${DJANGO_DB_PASSWORD}
-      - DJANGO_DB_HOST=${DJANGO_DB_HOST:-db}
-      - DJANGO_DB_PORT=${DJANGO_DB_PORT:-5432}
-      
-      # Celery-specific
-      - C_FORCE_ROOT=1
-    restart: always
 
   careerflow:
     build:
       context: ./careerflow
       args:
-        # Build-time arguments for production
+        # Build-time arguments (embedded in static build)
         - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL}
-        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-        - NEXT_PUBLIC_DJANGO_URL=${NEXT_PUBLIC_DJANGO_URL}
         - NEXT_PUBLIC_AI_API_URL=${NEXT_PUBLIC_AI_API_URL}
         - NEXT_PUBLIC_IPDATA_API_KEY=${NEXT_PUBLIC_IPDATA_API_KEY}
-        - NODE_ENV=production
+        - NODE_ENV=${NODE_ENV:-production}
         
     environment:
-      # Runtime environment variables for production
-      - NODE_ENV=production
+      # Runtime environment variables
+      - NODE_ENV=${NODE_ENV:-production}
       - NEXT_TELEMETRY_DISABLED=${NEXT_TELEMETRY_DISABLED:-1}
       
       # Authentication
@@ -234,22 +152,16 @@ services:
       - NEXT_PUBLIC_AI_API_URL=${NEXT_PUBLIC_AI_API_URL}
       - NEXT_PUBLIC_IPDATA_API_KEY=${NEXT_PUBLIC_IPDATA_API_KEY}
       
-    image: careerflow_frontend_image:prod
-    expose:
-      - "3000"
+    image: ${DOCKER_USERNAME:-mahmutatia}/proj0_careerflow_image
+    ports:
+      - "3000:3000"
     depends_on:
       - api
       - django
     restart: always
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
 volumes:
   postgres_data:
-  redis_data:
   certbot-etc:
   certbot-var:
   web-root:

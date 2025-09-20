@@ -1,0 +1,164 @@
+name: CareerFlow CI/CD Pipeline
+
+# This workflow will be triggered on a push to the 'prod2' branch.
+# This ensures that any code merged into the production branch automatically starts a new deployment.
+on:
+  push:
+    branches:
+      - 'prod2'
+  workflow_dispatch:
+  # Allows manual triggering of the workflow from the GitHub Actions tab.
+
+# Define the environment variables that will be available to all jobs.
+# You will set these in GitHub repository secrets for security.
+env:
+  PROJECT_DIR: 'prod' # The directory where the backend code will be deployed.
+  FRONTEND_DIR: 'careerflow' # The subdirectory for the frontend code.
+  DOMAIN: 'vbs.attiais.me' # Your application's domain.
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+
+# Define the jobs for the workflow.
+jobs:
+  build-and-deploy:
+    # Set the name of the job to be descriptive.
+    name: Build and Deploy to Production
+    
+    # Specify the runner environment. ubuntu-latest is a good choice for most projects.
+    runs-on: ubuntu-latest
+
+    # The steps within this job will be executed in order.
+    steps:
+    
+      # Step 1: Checkout the backend repository.
+      # This action checks out your repository code, making it available in the runner's workspace.
+      - name: Checkout Backend Repository
+        uses: actions/checkout@v4
+        with:
+          # Use a personal access token (PAT) with 'repo' scope if the backend is private.
+          # If public, no token is needed. We use a secret for best practice.
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ env.PROJECT_DIR }}
+
+      # Step 2: Checkout the frontend repository into the correct subdirectory.
+      # We check out the frontend code into the 'careerflow' directory inside the 'prod' folder
+      # to match the structure expected by your docker-compose file.
+      - name: Checkout Frontend Repository
+        uses: actions/checkout@v4
+        with:
+          repository: MahmutAtia/proj0_front
+          ref: 'prod2'
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ env.PROJECT_DIR }}/${{ env.FRONTEND_DIR }}
+
+      # Step 3: This step is removed to use the .env from the server.
+      # - name: Create .env file from secret
+      #   run: |
+      #     echo "${{ secrets.ENV_VARS }}" > ${{ env.PROJECT_DIR }}/.env
+      #   shell: bash
+        
+      # Step 4: Login to Docker Hub.
+      # This allows the workflow to push images to your Docker Hub account.
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      # Step 5: Build and tag Docker images.
+      # We build the images based on the docker-compose file.
+      - name: Build and Tag Docker Images
+        run: |
+          docker compose -f ${{ env.PROJECT_DIR }}/docker-compose.yml build
+        env: # Add this env block
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          NEXT_PUBLIC_BACKEND_URL: https://${{ env.DOMAIN }}
+          NEXT_PUBLIC_AI_API_URL: https://${{ env.DOMAIN }}/ai-api
+          NEXT_PUBLIC_IPDATA_API_KEY: ${{ secrets.NEXT_PUBLIC_IPDATA_API_KEY }}
+
+        
+      # Step 6: Push Docker images to Docker Hub.
+      # This step uploads the built images to Docker Hub, making them available for the server to pull.
+      # Tagging the images with the commit SHA is a good practice for versioning.
+      - name: Push Docker Images
+        run: |
+          docker compose -f ${{ env.PROJECT_DIR }}/docker-compose.yml push
+        env: # Add this env block
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+
+      # Step 7: Deploy to the production server via SSH.
+      # This is the final step that connects to your server to pull the images and restart the services.
+      # We use an SSH action to securely connect to the remote host.
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          script: |
+            set -e
+            echo "### Starting Deployment on Server ###"
+
+            echo "--> Navigating to deployment directory: ${{ env.PROJECT_DIR }}"
+            cd ${{ env.PROJECT_DIR }}
+
+            # Check for and load environment variables from the .env file
+            echo "--> Checking for .env file..."
+            if [ -f .env ]; then
+              echo "--> .env file found. Exporting variables to the runtime..."
+              set -a
+              source .env
+              set +a
+              echo "--> Variables exported. POSTGRES_USER is: ${POSTGRES_USER}"
+            else
+              echo "!!! CRITICAL: .env file not found on server. Deployment cannot continue. !!!"
+              exit 1
+            fi
+
+            echo "--> Logging in to Docker Hub..."
+            docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_TOKEN }}
+            
+            echo "--> Pulling latest Docker images..."
+            docker compose -f docker-compose.yml pull
+            
+            echo "--> Restarting all services with new images..."
+            docker compose -f docker-compose.yml --env-file .env up -d --no-build --remove-orphans --force-recreate
+
+            echo "--> Waiting for database to be ready..."
+            for i in $(seq 1 30); do
+              if docker compose -f docker-compose.yml exec db pg_isready -U "${POSTGRES_USER}" -d "${POSTGRES_DB}"; then
+                echo "Database is ready."
+                break
+              fi
+              echo "Waiting for DB... attempt $i"
+              sleep 2
+            done
+            
+            echo "--> Syncing database collation version..."
+            docker compose -f docker-compose.yml exec db psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "ALTER DATABASE ${POSTGRES_DB} REFRESH COLLATION VERSION;"
+
+            echo "--> Checking database collation version..."
+            docker compose -f docker-compose.yml exec db psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "SELECT datname, datcollversion FROM pg_database WHERE datname = '${POSTGRES_DB}';"
+
+            echo "--> Running database migrations..."
+            docker compose -f docker-compose.yml --env-file .env run --rm django python manage.py migrate
+            
+            echo "--> Setting up initial data (Features and Plans)..."
+            docker compose -f docker-compose.yml --env-file .env run --rm django python manage.py create_features
+            docker compose -f docker-compose.yml --env-file .env run --rm django python manage.py create_plans
+
+            echo "--> Collecting static files..."
+            docker compose -f docker-compose.yml --env-file .env run --rm django python manage.py collectstatic --noinput --clear
+            
+            if [ -f "django/script.py" ]; then
+              echo "--> Downloading external assets..."
+              docker compose -f docker-compose.yml --env-file .env run --rm django python script.py
+            fi
+
+            echo "--> Cleaning up unused Docker resources..."
+            docker system prune -a -f --volumes
+
+            echo "--> Deployment services are up and running."
+          
+            echo "### Deployment Completed Successfully! ###"

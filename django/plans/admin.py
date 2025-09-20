@@ -13,10 +13,12 @@ from .models import (
 
 @admin.register(Feature)
 class FeatureAdmin(admin.ModelAdmin):
-    list_display = ["name", "code", "is_active", "created_at"]
-    list_filter = ["is_active", "created_at"]
-    search_fields = ["name", "code"]
-    readonly_fields = ["created_at"]
+    """
+    Admin configuration for the Feature model.
+    """
+    list_display = ('name', 'code', 'is_active')
+    list_filter = ('is_active',)
+    search_fields = ('name', 'code')
 
 
 class PlanFeatureLimitInline(admin.TabularInline):
@@ -33,18 +35,13 @@ class PlanFeatureLimitInline(admin.TabularInline):
 
 @admin.register(Plan)
 class PlanAdmin(admin.ModelAdmin):
-    list_display = [
-        "name",
-        "price",
-        "billing_period",
-        "is_active",
-        "is_free",
-        "is_popular",
-        "created_at",
-    ]
-    list_filter = ["is_active", "is_free", "billing_period", "is_popular", "created_at"]
-    search_fields = ["name", "description"]
-    readonly_fields = ["created_at", "updated_at"]
+    """
+    Admin configuration for the Plan model.
+    """
+    list_display = ('name', 'price', 'billing_period', 'is_active', 'is_free')
+    list_filter = ('is_active', 'is_free', 'billing_period')
+    search_fields = ('name', 'description')
+    ordering = ('price',)
     inlines = [PlanFeatureLimitInline]
 
     actions = ["activate_plans", "deactivate_plans"]
@@ -64,17 +61,13 @@ class PlanAdmin(admin.ModelAdmin):
 
 @admin.register(UserSubscription)
 class UserSubscriptionAdmin(admin.ModelAdmin):
-    list_display = [
-        "user",
-        "plan",
-        "status",
-        "get_status_display",
-        "end_date",
-        "created_at",
-    ]  # Changed from current_period_end
-    list_filter = ["status", "plan", "created_at"]
-    search_fields = ["user__username", "user__email", "plan__name"]
-    readonly_fields = ["created_at", "updated_at"]
+    """
+    Admin configuration for UserSubscription.
+    """
+    list_display = ('user', 'plan', 'status', 'auto_renew', 'start_date', 'end_date')
+    list_filter = ('status', 'auto_renew', 'plan')
+    search_fields = ('user__username', 'plan__name', 'polar_subscription_id')
+    readonly_fields = ('start_date', 'end_date', 'canceled_at')
 
     actions = ["activate_subscriptions", "cancel_subscriptions", "extend_subscriptions"]
 
@@ -194,16 +187,9 @@ class PlanPaymentAdmin(admin.ModelAdmin):
 
 @admin.register(UsageRecord)
 class UsageRecordAdmin(admin.ModelAdmin):
-    list_display = ["user", "feature", "count", "period_start", "period_end"]
-    list_filter = ["feature", "period_start"]
-    search_fields = ["user__username", "feature__name"]
-    readonly_fields = ["created_at", "updated_at"]
-    date_hierarchy = "period_start"
-
-    actions = ["reset_usage"]
-
-    def reset_usage(self, request, queryset):
-        updated = queryset.update(count=0)
-        self.message_user(request, f"{updated} usage records were reset to 0.")
-
-    reset_usage.short_description = "Reset usage count to 0"
+    """
+    Admin configuration for UsageRecord.
+    """
+    list_display = ('user', 'feature', 'count', 'period_start', 'period_end')
+    list_filter = ('feature', 'period_start')
+    search_fields = ('user__username', 'feature__name')
