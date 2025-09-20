@@ -33,6 +33,9 @@ services:
     image: ${DOCKER_USERNAME:-mahmutatia}/proj0_api_image
     ports:
       - "580:80"
+
+    volumes:
+      - ./api:/app
     environment:
       - DEBUG=${DEBUG:-0}
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
@@ -49,6 +52,12 @@ services:
     volumes:
       - ./django/static:/app/static
       - ./django/media:/app/media
+      - ./django:app
+    expose:
+      - "8000"
+    ports:
+      - "8000:8000"
+
     deploy:
       resources:
         limits:
