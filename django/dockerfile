@@ -31,8 +31,8 @@ RUN apt-get update && \
     libjpeg-dev \
     libopenjp2-7-dev \
     zlib1g-dev \
-    fontconfig \ 
-    && rm -rf /var/lib/apt/lists/*
+    fontconfig && rm -rf /var/lib/apt/lists/*
+
 
 # Copy the project's requirements file into the container at the /app directory
 COPY requirements.txt /app/

@@ -1,4 +1,3 @@
-
 services:
   nginx:
     image: nginx:alpine
@@ -9,6 +8,7 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ./nginx/ssl:/etc/nginx/ssl
       - ./django/static:/usr/share/nginx/html/static
+      - ./django/static:/usr/share/nginx/html/static 
       - web-root:/var/www/certbot
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
@@ -30,11 +30,12 @@ services:
 
   api:
     build: ./api
-    image: proj0_api_image
+    image: ${DOCKER_USERNAME:-mahmutatia}/proj0_api_image
     ports:
       - "580:80"
+
     volumes:
-      - ./api:/api
+      - ./api:/app
     environment:
       - DEBUG=${DEBUG:-0}
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
@@ -46,20 +47,28 @@ services:
 
   django:
     build: ./django
-    image: proj0_django_image
-    command: sh -c "if [ \"${DEBUG:-0}\" = \"1\" ]; then python manage.py runserver 0.0.0.0:8000; else gunicorn proj0.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers 4 --log-level info; fi"
+    image: ${DOCKER_USERNAME:-mahmutatia}/proj0_django_image
+    command: sh -c "if [ \"${DEBUG:-0}\" = \"1\" ]; then python manage.py runserver 0.0.0.0:8000; else gunicorn proj0.wsgi:application --bind 0.0.0.0:8000 --workers 3 --log-level info; fi"
     volumes:
-      - ./django:/app
+      - ./django/static:/app/static
+      - ./django/media:/app/media
+      - ./django:app
     expose:
       - "8000"
     ports:
       - "8000:8000"
+
+    deploy:
+      resources:
+        limits:
+          memory: 2048m  # Set a 2 GB limit (adjust based on total host RAM and other services)
     depends_on:
       - db
     environment:
       # Django Core Settings
       - DEBUG=${DEBUG:-0}
       - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
+      - DJANGO_CSRF_TRUSTED_ORIGINS=${DJANGO_CSRF_TRUSTED_ORIGINS}
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
       - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-proj0.settings}
       - PYTHONUNBUFFERED=${PYTHONUNBUFFERED:-1}
@@ -128,8 +137,6 @@ services:
       args:
         # Build-time arguments (embedded in static build)
         - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL}
-        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-        - NEXT_PUBLIC_DJANGO_URL=${NEXT_PUBLIC_DJANGO_URL}
         - NEXT_PUBLIC_AI_API_URL=${NEXT_PUBLIC_AI_API_URL}
         - NEXT_PUBLIC_IPDATA_API_KEY=${NEXT_PUBLIC_IPDATA_API_KEY}
         - NODE_ENV=${NODE_ENV:-production}
@@ -154,7 +161,7 @@ services:
       - NEXT_PUBLIC_AI_API_URL=${NEXT_PUBLIC_AI_API_URL}
       - NEXT_PUBLIC_IPDATA_API_KEY=${NEXT_PUBLIC_IPDATA_API_KEY}
       
-    image: careerflow_frontend_image
+    image: ${DOCKER_USERNAME:-mahmutatia}/proj0_careerflow_image
     ports:
       - "3000:3000"
     depends_on:

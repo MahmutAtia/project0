@@ -75,7 +75,8 @@ def generate_pdf_from_resume_data(
     scale="medium",
     show_icons=False,
     show_avatar=False,
-    font_family=None  # Add new parameter
+    font_family=None,  
+    is_document=False  # New parameter to indicate if generating for document
 ):
    
     """
@@ -121,8 +122,13 @@ def generate_pdf_from_resume_data(
         template_config = get_template_config(template_theme)
         
         # All our templates now use the universal system
-        template = env.get_template('universal_template.html')
-        
+        template = None
+        if is_document:
+            template = env.get_template(template_theme)
+        else:
+            template = env.get_template('universal_template.html')
+
+
         # Map scale to CSS class
         scale_class_map = {
             "small": "font-size-small",
@@ -463,7 +469,7 @@ def generate_docx_from_template(
     try:
         # First generate PDF using existing function
         pdf_content = generate_pdf_from_resume_data(
-            resume_data, template_theme, chosen_theme, sections_sort, hidden_sections
+            resume_data, template_theme, chosen_theme, sections_sort, hidden_sections, is_document=True  # Indicate this is for a document
         )
 
         if pdf_content:

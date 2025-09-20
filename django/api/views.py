@@ -27,15 +27,16 @@ import io
 import yaml
 
 
-
-
-import httpx  # Add httpx for async requests
-from asgiref.sync import sync_to_async  # For wrapping sync code if needed
-
 from rest_framework import permissions
 from django.core.cache import cache
 
 from plans.decorators import require_feature
+
+import zipfile
+import json
+import tempfile
+import os
+from django.core.serializers import serialize
 
 import logging  # For logging errors and info
 logger = logging.getLogger(__name__)
@@ -262,7 +263,8 @@ def generate_pdf(request):
         scale=scale,
         show_icons=show_icons,
         show_avatar=show_avatar,
-        font_family=font_family  # Pass font family to PDF generation
+        font_family=font_family,  # Pass font family to PDF generation
+        is_document=False  # Indicate this is for a resume
     )
     
     # Handle PDF generation result
@@ -480,7 +482,7 @@ def get_document_pdf(request, document_id):
 
         # Convert YAML content to PDF
         pdf_data = generate_pdf_from_resume_data(
-            json_data, template_name, chosen_theme="", sections_sort=None, hidden_sections=None
+            json_data, template_name, chosen_theme="", sections_sort=None, hidden_sections=None, is_document=True  # Indicate this is for a document
         )
 
         if pdf_data:
@@ -847,3 +849,450 @@ def internal_update_task(request):
         return Response({"message": "Task updated"})
     except BackgroundTask.DoesNotExist:
         return Response({"error": "Task not found"}, status=status.HTTP_404_NOT_FOUND)
+    
+
+
+######################### Data Export  And Deletion Endpoint #########################
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def export_user_data(request):
+    """
+    Export all user data as a downloadable ZIP file
+    """
+    user = request.user
+    
+    try:
+        # Create a temporary directory for the export
+        with tempfile.TemporaryDirectory() as temp_dir:
+            export_data = {}
+            
+            # 1. User Profile Data
+            try:
+                profile = UserProfile.objects.get(user=user)
+                export_data['profile'] = {
+                    'user_info': {
+                        'username': user.username,
+                        'email': user.email,
+                        'first_name': user.first_name,
+                        'last_name': user.last_name,
+                        'date_joined': user.date_joined.isoformat(),
+                        'last_login': user.last_login.isoformat() if user.last_login else None,
+                    },
+                    'profile_info': {
+                        'phone': getattr(profile, 'phone', ''),
+                        'company': getattr(profile, 'company', ''),
+                        'job_title': getattr(profile, 'job_title', ''),
+                        'timezone': getattr(profile, 'timezone', ''),
+                        'language': getattr(profile, 'language', ''),
+                        'created_at': profile.created_at.isoformat(),
+                        'updated_at': profile.updated_at.isoformat(),
+                        'has_avatar': bool(profile.avatar),
+                    }
+                }
+            except UserProfile.DoesNotExist:
+                export_data['profile'] = {
+                    'user_info': {
+                        'username': user.username,
+                        'email': user.email,
+                        'first_name': user.first_name,
+                        'last_name': user.last_name,
+                        'date_joined': user.date_joined.isoformat(),
+                        'last_login': user.last_login.isoformat() if user.last_login else None,
+                    },
+                    'profile_info': None
+                }
+            
+            # 2. Resumes Data
+            resumes = Resume.objects.filter(user=user)
+            export_data['resumes'] = []
+            for resume in resumes:
+                resume_data = {
+                    'id': resume.id,
+                    'title': resume.title,
+                    'json_content': resume.resume,
+                    'created_at': resume.created_at.isoformat(),
+                    'updated_at': resume.updated_at.isoformat(),
+                }
+                export_data['resumes'].append(resume_data)
+            
+            # 3. Generated Documents
+            try:
+                documents = GeneratedDocument.objects.filter(user=user)
+                export_data['generated_documents'] = []
+                for doc in documents:
+                    doc_data = {
+                        'id': doc.id,
+                        'document_type': doc.document_type,
+                        'file_name': doc.file_name,
+                        'created_at': doc.created_at.isoformat(),
+                        'file_size': doc.file_path.size if doc.file_path else 0,
+                    }
+                    export_data['generated_documents'].append(doc_data)
+            except:
+                export_data['generated_documents'] = []
+            
+            # 4. Subscription Data
+            try:
+                from plans.models import UserSubscription, PlanPayment
+                subscriptions = UserSubscription.objects.filter(user=user)
+                export_data['subscriptions'] = []
+                for sub in subscriptions:
+                    sub_data = {
+                        'id': sub.id,
+                        'plan_name': sub.plan.name if sub.plan else None,
+                        'status': sub.status,
+                        'start_date': sub.start_date.isoformat() if sub.start_date else None,
+                        'end_date': sub.end_date.isoformat() if sub.end_date else None,
+                        'auto_renew': sub.auto_renew,
+                        'created_at': sub.created_at.isoformat() if hasattr(sub, 'created_at') else None,
+                    }
+                    export_data['subscriptions'].append(sub_data)
+                
+                # 5. Payment History
+                payments = PlanPayment.objects.filter(user=user)
+                export_data['payments'] = []
+                for payment in payments:
+                    payment_data = {
+                        'id': payment.id,
+                        'amount': str(payment.amount),
+                        'currency': payment.currency,
+                        'status': payment.status,
+                        'payment_method': getattr(payment, 'payment_method', 'unknown'),
+                        'created_at': payment.created_at.isoformat(),
+                    }
+                    export_data['payments'].append(payment_data)
+                
+                # 6. Usage Statistics
+                from plans.models import UsageRecord
+                usage_records = UsageRecord.objects.filter(user=user)
+                export_data['usage_records'] = []
+                for usage in usage_records:
+                    usage_data = {
+                        'id': usage.id,
+                        'feature_name': usage.feature.name if usage.feature else None,
+                        'usage_count': usage.usage_count,
+                        'period_start': usage.period_start.isoformat() if usage.period_start else None,
+                        'period_end': usage.period_end.isoformat() if usage.period_end else None,
+                        'created_at': usage.created_at.isoformat() if hasattr(usage, 'created_at') else None,
+                    }
+                    export_data['usage_records'].append(usage_data)
+            except:
+                export_data['subscriptions'] = []
+                export_data['payments'] = []
+                export_data['usage_records'] = []
+            
+            # 7. Background Tasks
+            try:
+                tasks = BackgroundTask.objects.filter(user=user)
+                export_data['background_tasks'] = []
+                for task in tasks:
+                    task_data = {
+                        'id': task.id,
+                        'task_type': task.task_type,
+                        'status': task.status,
+                        'created_at': task.created_at.isoformat(),
+                        'completed_at': task.completed_at.isoformat() if task.completed_at else None,
+                    }
+                    export_data['background_tasks'].append(task_data)
+            except:
+                export_data['background_tasks'] = []
+            
+            # Add export metadata
+            export_data['export_info'] = {
+                'exported_at': timezone.now().isoformat(),
+                'export_version': '1.0',
+                'user_id': user.id,
+                'total_resumes': len(export_data['resumes']),
+                'total_documents': len(export_data['generated_documents']),
+                'total_subscriptions': len(export_data['subscriptions']),
+                'total_payments': len(export_data['payments']),
+            }
+            
+            # Create JSON file
+            json_file_path = os.path.join(temp_dir, 'user_data.json')
+            with open(json_file_path, 'w', encoding='utf-8') as f:
+                json.dump(export_data, f, indent=2, ensure_ascii=False)
+            
+            # Create ZIP file
+            zip_file_path = os.path.join(temp_dir, f'carerflow_data_export_{user.id}_{timezone.now().strftime("%Y%m%d_%H%M%S")}.zip')
+            
+            with zipfile.ZipFile(zip_file_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                zipf.write(json_file_path, 'user_data.json')
+                
+                # Add a README file
+                readme_content = f"""
+CarerFlow Data Export
+====================
+
+Export Date: {timezone.now().strftime("%Y-%m-%d %H:%M:%S UTC")}
+User: {user.email}
+Export Version: 1.0
+
+This archive contains all your data from CarerFlow:
+
+1. user_data.json - Complete data export in JSON format containing:
+   - Profile information
+   - Resume data
+   - Generated documents metadata
+   - Subscription history
+   - Payment records
+   - Usage statistics
+   - Background tasks
+
+For questions about this export, please contact support@carerflow.com
+"""
+                readme_path = os.path.join(temp_dir, 'README.txt')
+                with open(readme_path, 'w') as f:
+                    f.write(readme_content)
+                zipf.write(readme_path, 'README.txt')
+            
+            # Return the ZIP file
+            response = FileResponse(
+                open(zip_file_path, 'rb'),
+                as_attachment=True,
+                filename=os.path.basename(zip_file_path),
+                content_type='application/zip'
+            )
+            
+            return response
+            
+    except Exception as e:
+        logger.error(f"Error exporting user data for user {user.id}: {str(e)}")
+        return Response({
+            'error': 'Failed to export data',
+            'message': 'An error occurred while preparing your data export.'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def request_account_deletion(request):
+    """
+    Request account deletion with password verification
+    """
+    user = request.user
+    password = request.data.get('password')
+    confirmation_text = request.data.get('confirmation_text', '')
+    
+    # Verify password
+    if not user.check_password(password):
+        return Response({
+            'error': 'Invalid password',
+            'message': 'Please enter your current password to confirm account deletion.'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Verify confirmation text
+    if confirmation_text.lower() != 'delete my account':
+        return Response({
+            'error': 'Invalid confirmation',
+            'message': 'Please type "delete my account" to confirm.'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        # Send confirmation email (implement this based on your email service)
+        from django.core.mail import send_mail
+        from django.conf import settings
+        import uuid
+        
+        # Generate a unique deletion token
+        deletion_token = str(uuid.uuid4())
+        
+        # Store the token temporarily (you might want to use Redis or a model for this)
+        from django.core.cache import cache
+        cache.set(f'deletion_token_{user.id}', deletion_token, timeout=3600)  # 1 hour
+        
+        # Create deletion confirmation URL
+        deletion_url = f"{settings.FRONTEND_URL}/confirm-deletion?token={deletion_token}&user_id={user.id}"
+        
+        # Send email
+        email_subject = "Confirm Account Deletion - CarerFlow"
+        email_body = f"""
+Hello {user.first_name or user.username},
+
+You have requested to delete your CarerFlow account. This action cannot be undone.
+
+To confirm the deletion of your account, please click the link below:
+
+{deletion_url}
+
+This link will expire in 1 hour.
+
+If you did not request this deletion, please ignore this email and contact our support team immediately.
+
+Best regards,
+CarerFlow Team
+"""
+        
+        send_mail(
+            email_subject,
+            email_body,
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            fail_silently=False,
+        )
+        
+        return Response({
+            'message': 'Confirmation email sent',
+            'detail': f'We have sent a confirmation email to {user.email}. Please check your email and click the confirmation link to complete the account deletion.'
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        logger.error(f"Error sending deletion confirmation email for user {user.id}: {str(e)}")
+        return Response({
+            'error': 'Failed to send confirmation email',
+            'message': 'An error occurred while sending the confirmation email. Please try again later.'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+def confirm_account_deletion(request):
+    """
+    Confirm account deletion via email token
+    """
+    token = request.data.get('token')
+    user_id = request.data.get('user_id')
+    
+    if not token or not user_id:
+        return Response({
+            'error': 'Missing parameters',
+            'message': 'Invalid deletion request.'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        # Verify the token
+        from django.core.cache import cache
+        stored_token = cache.get(f'deletion_token_{user_id}')
+        
+        if not stored_token or stored_token != token:
+            return Response({
+                'error': 'Invalid or expired token',
+                'message': 'The deletion link is invalid or has expired.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Get the user
+        user = User.objects.get(id=user_id)
+        
+        # Perform the deletion
+        deletion_result = delete_user_account(user)
+        
+        if deletion_result['success']:
+            # Clear the token
+            cache.delete(f'deletion_token_{user_id}')
+            
+            return Response({
+                'message': 'Account deleted successfully',
+                'detail': 'Your account and all associated data have been permanently deleted.'
+            }, status=status.HTTP_200_OK)
+        else:
+            return Response({
+                'error': 'Deletion failed',
+                'message': deletion_result.get('message', 'An error occurred during account deletion.')
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+    except User.DoesNotExist:
+        return Response({
+            'error': 'User not found',
+            'message': 'Invalid deletion request.'
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger.error(f"Error confirming account deletion for user {user_id}: {str(e)}")
+        return Response({
+            'error': 'Deletion failed',
+            'message': 'An error occurred during account deletion.'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+def delete_user_account(user):
+    """
+    Perform the actual account deletion with all related data cleanup
+    """
+    try:
+        from django.db import transaction
+        
+        with transaction.atomic():
+            # 1. Cancel active subscriptions
+            try:
+                from plans.models import UserSubscription
+                from plans.services import SubscriptionService
+                
+                active_subscriptions = UserSubscription.objects.filter(
+                    user=user, 
+                    status='active'
+                )
+                
+                for subscription in active_subscriptions:
+                    # Cancel subscription with payment provider if needed
+                    if subscription.polar_subscription_id:
+                        # TODO: Implement Polar subscription cancellation
+                        pass
+                    
+                    subscription.status = 'canceled'
+                    subscription.save()
+                    
+            except Exception as e:
+                logger.error(f"Error canceling subscriptions for user {user.id}: {str(e)}")
+            
+            # 2. Delete user-related data
+            # Delete resumes
+            Resume.objects.filter(user=user).delete()
+            
+            # Delete generated documents
+            try:
+                documents = GeneratedDocument.objects.filter(user=user)
+                for doc in documents:
+                    # Delete actual files
+                    if doc.file_path:
+                        try:
+                            os.remove(doc.file_path.path)
+                        except:
+                            pass
+                documents.delete()
+            except:
+                pass
+            
+            # Delete generated websites
+            try:
+                GeneratedWebsite.objects.filter(user=user).delete()
+            except:
+                pass
+            
+            # Delete background tasks
+            try:
+                BackgroundTask.objects.filter(user=user).delete()
+            except:
+                pass
+            
+            # Delete user profile
+            try:
+                UserProfile.objects.filter(user=user).delete()
+            except:
+                pass
+            
+            # Delete subscription-related data
+            try:
+                from plans.models import UserSubscription, PlanPayment, UsageRecord
+                UserSubscription.objects.filter(user=user).delete()
+                PlanPayment.objects.filter(user=user).delete()
+                UsageRecord.objects.filter(user=user).delete()
+            except:
+                pass
+            
+            # 3. Finally, delete the user account
+            user_email = user.email
+            user.delete()
+            
+            # 4. Log the deletion
+            logger.info(f"Successfully deleted user account: {user_email} (ID: {user.id})")
+            
+            return {
+                'success': True,
+                'message': 'Account deleted successfully'
+            }
+            
+    except Exception as e:
+        logger.error(f"Error deleting user account {user.id}: {str(e)}")
+        return {
+            'success': False,
+            'message': f'Failed to delete account: {str(e)}'
+        }
