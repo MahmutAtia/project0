@@ -4,15 +4,23 @@
     {% for engagement in speaking_engagements %}
     <article class="item">
         <div class="item-header">
-            <div class="item-title-org">
-                {% if engagement.title %}<span class="title">{{ engagement.title }}</span>{% endif %}
-                {% if engagement.event %}<span class="organization">{{ engagement.event }}</span>{% endif %}
+            <div class="item-header-row">
+                <div class="item-title-org">
+                    {% if engagement.title %}<span class="title">{{ engagement.title }}</span>{% endif %}
+                </div>
+                <div class="item-date-location">
+                    {% if engagement.date %}
+                    <span class="date">{{ engagement.date }}</span>
+                    {% endif %}
+                </div>
             </div>
-            <div class="item-date-location">
-                {% if engagement.date %}
-                <span class="date">{{ engagement.date }}</span>
-                {% endif %}
-                {% if engagement.location %}<span class="location"> | {{ engagement.location }}</span>{% endif %}
+            <div class="item-header-row">
+                <div class="item-title-org">
+                    {% if engagement.event %}<span class="organization">{{ engagement.event }}</span>{% endif %}
+                </div>
+                <div class="item-date-location">
+                    {% if engagement.location %}<span class="location">{{ engagement.location }}</span>{% endif %}
+                </div>
             </div>
         </div>
         {% if engagement.description %}

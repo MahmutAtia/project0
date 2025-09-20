@@ -4,14 +4,20 @@
     {% for pub in publications %}
     <article class="item">
         <div class="item-header">
-            <div class="item-title-org">
-                {% if pub.title %}<span class="title">{{ pub.title }}</span>{% endif %}
-                {% if pub.publisher %}<span class="organization">{{ pub.publisher }}</span>{% endif %}
+            <div class="item-header-row">
+                <div class="item-title-org">
+                    {% if pub.title %}<span class="title">{{ pub.title }}</span>{% endif %}
+                </div>
+                <div class="item-date-location">
+                    {% if pub.publication_date %}
+                    <span class="date">{{ pub.publication_date }}</span>
+                    {% endif %}
+                </div>
             </div>
-            <div class="item-date-location">
-                {% if pub.publication_date %}
-                <span class="date">{{ pub.publication_date }}</span>
-                {% endif %}
+            <div class="item-header-row">
+                <div class="item-title-org">
+                    {% if pub.publisher %}<span class="organization">{{ pub.publisher }}</span>{% endif %}
+                </div>
             </div>
         </div>
         {% if pub.authors %}

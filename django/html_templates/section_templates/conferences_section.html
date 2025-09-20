@@ -4,14 +4,16 @@
     {% for conf in conferences %}
     <article class="item">
         <div class="item-header">
-            <div class="item-title-org">
-                {% if conf.name %}<span class="title">{{ conf.name }}</span>{% endif %}
-            </div>
-            <div class="item-date-location">
-                {% if conf.date %}
-                <span class="date">{{ conf.date }}</span>
-                {% endif %}
-                {% if conf.location %}<span class="location"> | {{ conf.location }}</span>{% endif %}
+            <div class="item-header-row">
+                <div class="item-title-org">
+                    {% if conf.name %}<span class="title">{{ conf.name }}</span>{% endif %}
+                </div>
+                <div class="item-date-location">
+                    {% if conf.date %}
+                    <span class="date">{{ conf.date }}</span>
+                    {% endif %}
+                    {% if conf.location %}<span class="location"> | {{ conf.location }}</span>{% endif %}
+                </div>
             </div>
         </div>
         {% if conf.description %}

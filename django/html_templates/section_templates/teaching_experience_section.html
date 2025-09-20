@@ -4,15 +4,23 @@
     {% for teaching in teaching_experience %}
     <article class="item">
         <div class="item-header">
-            <div class="item-title-org">
-                {% if teaching.position %}<span class="title">{{ teaching.position }}</span>{% endif %}
-                {% if teaching.institution %}<span class="organization">{{ teaching.institution }}</span>{% endif %}
+            <div class="item-header-row">
+                <div class="item-title-org">
+                    {% if teaching.position %}<span class="title">{{ teaching.position }}</span>{% endif %}
+                </div>
+                <div class="item-date-location">
+                    {% if teaching.start_date or teaching.end_date %}
+                    <span class="date">{{ teaching.start_date }}{% if teaching.start_date and teaching.end_date %} – {% endif %}{{ teaching.end_date | default('Present') }}</span>
+                    {% endif %}
+                </div>
             </div>
-            <div class="item-date-location">
-                {% if teaching.start_date or teaching.end_date %}
-                <span class="date">{{ teaching.start_date }}{% if teaching.start_date and teaching.end_date %} – {% endif %}{{ teaching.end_date | default('Present') }}</span>
-                {% endif %}
-                {% if teaching.location %}<span class="location"> | {{ teaching.location }}</span>{% endif %}
+            <div class="item-header-row">
+                <div class="item-title-org">
+                    {% if teaching.institution %}<span class="organization">{{ teaching.institution }}</span>{% endif %}
+                </div>
+                <div class="item-date-location">
+                    {% if teaching.location %}<span class="location"> | {{ teaching.location }}</span>{% endif %}
+                </div>
             </div>
         </div>
         {% if teaching.courses %}

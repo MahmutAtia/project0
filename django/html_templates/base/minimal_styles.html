@@ -307,12 +307,20 @@ body.karla-spectral {
     .item:last-child { margin-bottom: 0; }
 
     .item-header {
+        /* display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        flex-wrap: wrap; */
+        margin-bottom: var(--spacing-sm);
+        /* gap: var(--spacing-xs); */
+    }
+
+    .item-header-row {
         display: flex;
         justify-content: space-between;
         align-items: baseline;
-        flex-wrap: wrap;
-        margin-bottom: var(--spacing-sm);
-        gap: var(--spacing-xs);
+        width: 100%;
+
     }
     
     .item-title-org { flex-grow: 1; }
@@ -321,36 +329,39 @@ body.karla-spectral {
         font-size: var(--h3-font-size); 
         font-weight: 600; 
         color: var(--heading-color); 
+        text-align: start;
     }
     
     .item-title-org .organization { 
         font-size: 1rem; 
         font-weight: 400; 
         color: var(--text-color); 
-        margin-left: var(--spacing-md); 
+        /* margin-left: var(--spacing-md);  */
         font-style: italic; 
+        text-align: start;
     }
     
     html[lang="ar"] .item-title-org .organization { 
         margin-left: 0; 
-        margin-right: var(--spacing-md); 
+        /* margin-right: var(--spacing-md);  */
     }
 
     .item-date-location {
         font-size: 0.85rem;
         color: var(--muted-color);
-        text-align: right;
+        text-align: end;
         flex-shrink: 0;
-        margin-left: var(--spacing-xl);
+        /* margin-left: var(--spacing-xl); */
+        margin-left: auto;
         font-weight: 500;
         text-transform: uppercase;
         letter-spacing: 0.6px;
     }
     
     html[lang="ar"] .item-date-location { 
-        text-align: left; 
+        text-align: end; 
         margin-left: 0; 
-        margin-right: var(--spacing-xl); 
+        /* margin-right: var(--spacing-xl);  */
     }
 
     .item .description { 

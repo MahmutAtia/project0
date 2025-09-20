@@ -4,25 +4,40 @@
     {% for job in experience %}
     <article class="item">
         <div class="item-header">
-            <div class="item-title-org">
-                {% if job.title %}<span class="title">{{ job.title }}</span>{% endif %}
-                {% if job.company %}<span class="organization">@ {{ job.company }}</span>{% endif %}
+            <div class="item-header-row">
+                <div class="item-title-org">
+                    {% if job.title %}<span class="title">{{ job.title }}</span>{% endif %}
+                </div>
+                <div class="item-date-location">
+                    {% if job.start_date or job.end_date %}
+                    <span class="date">{{ job.start_date }}{% if job.start_date and job.end_date %} – {% endif %}{{ job.end_date | default('Present') }}</span>
+                    {% endif %}
+                </div>
             </div>
-            <div class="item-date-location">
-                {% if job.start_date or job.end_date %}
-                <span class="date">{{ job.start_date }}{% if job.start_date and job.end_date %} – {% endif %}{{ job.end_date | default('Present') }}</span>
-                {% endif %}
-                {% if job.location %}<span class="location"> | {{ job.location }}</span>{% endif %}
+            <div class="item-header-row">
+                <div class="item-title-org">
+                    {% if job.company %}<span class="organization">@ {{ job.company }}</span>{% endif %}
+                </div>
+                <div class="item-date-location">
+                    {% if job.location %}<span class="location"> {{ job.location }}</span>{% endif %}
+                </div>
             </div>
         </div>
         {% if job.description %}
             <div class="description">
                 {% if '\n' in job.description %}
-                    {% for paragraph in job.description.split('\n') %}
+                <!-- TODO: decide between paragraphs or bullet points -->
+
+                    <!-- {% for paragraph in job.description.split('\n') %}
                         {% if paragraph.strip() %}
                             <p>{{ paragraph.strip() }}</p>
                         {% endif %}
+                    {% endfor %} -->
+                    <ul>
+                    {% for point in job.description.split('\n') if point.strip() %}
+                        <li>{{ point.strip() }}</li>
                     {% endfor %}
+                    </ul>
                 {% else %}
                     <p>{{ job.description }}</p>
                 {% endif %}

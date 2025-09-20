@@ -4,14 +4,20 @@
     {% for cert in certifications %}
     <article class="item">
         <div class="item-header">
-            <div class="item-title-org">
-                {% if cert.name %}<span class="title">{{ cert.name }}</span>{% endif %}
-                {% if cert.issuing_authority %}<span class="organization">{{ cert.issuing_authority }}</span>{% endif %}
+            <div class="item-header-row">
+                <div class="item-title-org">
+                    {% if cert.name %}<span class="title">{{ cert.name }}</span>{% endif %}
+                </div>
+                <div class="item-date-location">
+                    {% if cert.date_obtained %}
+                    <span class="date">{{ cert.date_obtained }}{% if cert.expiry_date %} - {{ cert.expiry_date }}{% endif %}</span>
+                    {% endif %}
+                </div>
             </div>
-            <div class="item-date-location">
-                {% if cert.date_obtained %}
-                <span class="date">{{ cert.date_obtained }}{% if cert.expiry_date %} - {{ cert.expiry_date }}{% endif %}</span>
-                {% endif %}
+            <div class="item-header-row">
+                <div class="item-title-org">
+                    {% if cert.issuing_authority %}<span class="organization">{{ cert.issuing_authority }}</span>{% endif %}
+                </div>
             </div>
         </div>
         {% if cert.description %}

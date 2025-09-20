@@ -288,11 +288,19 @@
     }
 
     .item-header {
+        /* display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        flex-wrap: wrap; */
+        margin-bottom: 0.3em;
+    }
+    .item-header-row {
         display: flex;
         justify-content: space-between;
         align-items: baseline;
+        width: 100%;
         flex-wrap: wrap;
-        margin-bottom: 0.3em;
+        gap: var(--spacing-sm);
     }
     .item-title-org { flex-grow: 1; }
     .item-title-org .title { 

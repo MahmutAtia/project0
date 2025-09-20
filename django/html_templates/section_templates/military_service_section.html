@@ -4,15 +4,23 @@
     {% for service in military_service %}
     <article class="item">
         <div class="item-header">
-            <div class="item-title-org">
-                {% if service.rank %}<span class="title">{{ service.rank }}</span>{% endif %}
-                {% if service.branch %}<span class="organization">{{ service.branch }}</span>{% endif %}
+            <div class="item-header-row">
+                <div class="item-title-org">
+                    {% if service.rank %}<span class="title">{{ service.rank }}</span>{% endif %}
+                </div>
+                <div class="item-date-location">
+                    {% if service.start_date or service.end_date %}
+                    <span class="date">{{ service.start_date }}{% if service.start_date and service.end_date %} – {% endif %}{{ service.end_date | default('Present') }}</span>
+                    {% endif %}
+                </div>
             </div>
-            <div class="item-date-location">
-                {% if service.start_date or service.end_date %}
-                <span class="date">{{ service.start_date }}{% if service.start_date and service.end_date %} – {% endif %}{{ service.end_date | default('Present') }}</span>
-                {% endif %}
-                {% if service.location %}<span class="location"> | {{ service.location }}</span>{% endif %}
+            <div class="item-header-row">
+                <div class="item-title-org">
+                    {% if service.branch %}<span class="organization">{{ service.branch }}</span>{% endif %}
+                </div>
+                <div class="item-date-location">
+                    {% if service.location %}<span class="location">{{ service.location }}</span>{% endif %}
+                </div>
             </div>
         </div>
         {% if service.description %}

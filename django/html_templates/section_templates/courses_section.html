@@ -4,14 +4,20 @@
     {% for course in courses %}
     <article class="item">
         <div class="item-header">
-            <div class="item-title-org">
-                {% if course.title %}<span class=" course-title">{{ course.title }}</span>{% endif %}
-                {% if course.institution %}<span class="organization">{{ course.institution }}</span>{% endif %}
+            <div class="item-header-row">
+                <div class="item-title-org">
+                    {% if course.title %}<span class="title">{{ course.title }}</span>{% endif %}
+                </div>
+                <div class="item-date-location">
+                    {% if course.completion_date %}
+                    <span class="date">{{ course.completion_date }}</span>
+                    {% endif %}
+                </div>
             </div>
-            <div class="item-date-location">
-                {% if course.completion_date %}
-                <span class="date">{{ course.completion_date }}</span>
-                {% endif %}
+            <div class="item-header-row">
+                <div class="item-title-org">
+                    {% if course.institution %}<span class="organization">{{ course.institution }}</span>{% endif %}
+                </div>
             </div>
         </div>
         {% if course.description %}
