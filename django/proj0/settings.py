@@ -35,6 +35,8 @@ ALLOWED_HOSTS = [host for host in os.getenv("DJANGO_ALLOWED_HOSTS", "").split(",
 if "django" not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append("django")
 
+# Frame options - Allow embedding for generated sites
+X_FRAME_OPTIONS = 'SAMEORIGIN'  # Change from default 'DENY' to allow same-origin framing
 
 if not DEBUG:
     # 1. Critical: Mark cookies as Secure (HTTPS only)
@@ -89,7 +91,6 @@ INSTALLED_APPS = [
     "accounts",
     "plans",
 ]
-
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -98,7 +99,8 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
-    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # "django.middleware.clickjacking.XFrameOptionsMiddleware",  # Remove this line
+    "proj0.middleware.CustomXFrameOptionsMiddleware",  # Add this line
     "allauth.account.middleware.AccountMiddleware",
 ]
 
