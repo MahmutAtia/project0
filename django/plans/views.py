@@ -133,12 +133,12 @@ def update_subscription_plan(request):
 
         # --- Logic for switching TO a free plan ---
         if new_plan.is_free:
-            # If the current plan is a paid Polar plan, revoke it.
+            # If the current plan is a paid Polar plan, cancel it at period end 
             if current_subscription.polar_subscription_id:
                 with Polar(access_token=settings.POLAR_API_KEY, server="sandbox") as polar:
                     polar.subscriptions.update(
                         id=current_subscription.polar_subscription_id,
-                        subscription_update={"revoke": True}
+                        subscription_update={"cancel_at_period_end": True}
                     )
             
             # Update local subscription to the free plan
@@ -347,8 +347,8 @@ def create_polar_checkout_session(request):
                     },
                     "customer_name": user.get_full_name() or user.username,
                     "customer_email": user.email,
-                    "success_url": f"http://{settings.PAYMENT_HOST}/main/plans/",
-                    "embed_origin": f"http://{settings.PAYMENT_HOST}",
+                    "success_url": f"https://{settings.PAYMENT_HOST}/main/plans/",
+                    "embed_origin": f"https://{settings.PAYMENT_HOST}",
                     # ],
                     # You might need success_url and cancel_url
                     # "success_url": "https://your-site.com/success",
