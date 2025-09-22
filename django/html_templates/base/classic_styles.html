@@ -1,197 +1,384 @@
 <style>
-    /* --- Gridline Modern Template --- */
+    /* --- Classic Theme V2 --- */
+    /* Enhanced with scalable fonts and better theming while preserving original design */
+
+    /* --- Base Variables --- */
     :root {
-        /* Default theme is Slate & Crimson */
-        /* --- Color Palette --- */
-        --primary-color: #DC2626;  /* Crimson Red */
-        --heading-color: #111827;  /* Almost Black */
-        --text-color: #374151;    /* Dark Slate */
-        --muted-color: #6B7280;   /* Medium Slate */
-        --border-color: #E5E7EB;   /* Light Slate */
-        --page-bg-color: #FFFFFF;
-        --skill-tag-bg: #F9FAFB;
-        --skill-tag-border: #F3F4F6;
-        --header-bg: #F9FAFB;
-
-        /* Default font is Roboto & Raleway */
-        /* --- Font Families --- */
-        --font-family-main: 'Roboto', sans-serif;
-        --font-family-heading: 'Raleway', sans-serif;
+        --font-family-main: 'Crimson Text', 'Georgia', 'Times New Roman', serif;
+        --font-family-heading: 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        --font-family-sans: 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
         
-        /* --- Font Size Variables (Compact) --- */
-        --base-font-size: 10pt;
-        --h1-font-size: 2rem;
-        --h2-font-size: 1rem;
+        /* --- Font Size Variables --- */
+        --font-size-sm: 9pt;
+        --font-size-md: 10.5pt;
+        --font-size-lg: 12pt;
+
+        /* Default to medium font size */
+        --base-font-size: var(--font-size-md);
+        --h1-font-size: 2.4rem;
+        --h2-font-size: 1.2rem;
+        --h3-font-size: 1.1rem;
         
-        /* --- Spacing (Hyper-Compact) --- */
-        --spacing-xs: 0.2rem;
-        --spacing-sm: 0.35rem;
-        --spacing-md: 0.5rem;
-        --spacing-lg: 0.8rem;
-        --spacing-xl: 1.4rem;
+        /* Content font sizes that scale */
+        --headline-font-size: 1.1rem;
+        --contact-font-size: 0.95rem;
+        --item-title-font-size: 1.1rem;
+        --item-org-font-size: 1.05rem;
+        --item-date-font-size: 0.9rem;
+        --item-description-font-size: 1rem;
+        --skill-category-font-size: 1.05rem;
+        --skill-item-font-size: 1rem;
+        --skill-level-font-size: 0.95em;
+
+        /* Spacing variables that scale with font size */
+        --spacing-xs: 0.15em;
+        --spacing-sm: 0.25em;
+        --spacing-md: 0.35em;
+        --spacing-lg: 0.6em;
+        --spacing-xl: 0.8em;
+
+        --line-height: 1.6;
+        --border-color-base: #d8d8d8;
+        --text-color-base: #222222;
+        --muted-color-base: #666666;
+        --page-bg-color: #ffffff;
+        --section-spacing: 1.4em;
+        --item-spacing: 1.2em;
+    }
+
+    /* --- Font Size Options with scaled spacing --- */
+    body.font-size-small {
+        --base-font-size: var(--font-size-sm);
+        --h1-font-size: 2.1rem;
+        --h2-font-size: 1.1rem;
+        --h3-font-size: 1rem;
         
-        --line-height: 1.35;
+        /* Scale all content fonts down */
+        --headline-font-size: 1rem;
+        --contact-font-size: 0.85rem;
+        --item-title-font-size: 1rem;
+        --item-org-font-size: 0.95rem;
+        --item-date-font-size: 0.8rem;
+        --item-description-font-size: 0.9rem;
+        --skill-category-font-size: 0.95rem;
+        --skill-item-font-size: 0.9rem;
+        --skill-level-font-size: 0.85em;
+        
+        --line-height: 1.5;
+        --section-spacing: 1.2em;
+        --item-spacing: 1em;
+    }
+    body.font-size-large {
+        --base-font-size: var(--font-size-lg);
+        --h1-font-size: 2.7rem;
+        --h2-font-size: 1.3rem;
+        --h3-font-size: 1.2rem;
+        
+        /* Scale all content fonts up */
+        --headline-font-size: 1.2rem;
+        --contact-font-size: 1.05rem;
+        --item-title-font-size: 1.2rem;
+        --item-org-font-size: 1.15rem;
+        --item-date-font-size: 1rem;
+        --item-description-font-size: 1.1rem;
+        --skill-category-font-size: 1.15rem;
+        --skill-item-font-size: 1.1rem;
+        --skill-level-font-size: 1.05em;
+        
+        --line-height: 1.65;
+        --section-spacing: 1.6em;
+        --item-spacing: 1.4em;
     }
 
-    /* --- THEME DEFINITIONS --- */
-    body.theme-slate-crimson { /* This is the default */ }
-    body.theme-forest-mint {
-        --primary-color: #10B981;  /* Mint Green */
-        --heading-color: #064E3B;  /* Deep Forest Green */
-        --text-color: #374151;
-        --muted-color: #6B7280;
-        --border-color: #E5E7EB;
-        --skill-tag-bg: #F0FDF4;
-        --skill-tag-border: #D1FAE5;
-        --header-bg: #F0FDF4;
+    /* --- Enhanced Theme Definitions --- */
+    body.theme-default, :root {
+        --primary-color: #2c3e50; /* Deep Slate Blue */
+        --secondary-color: #7f8c8d; /* Muted Grey */
+        --heading-color: #2c3e50;
+        --text-color: var(--text-color-base);
+        --muted-color: var(--muted-color-base);
+        --border-color: var(--border-color-base);
     }
-    body.theme-midnight-gold {
-        --primary-color: #D97706;  /* Warm Gold */
-        --heading-color: #1E3A8A;  /* Midnight Blue */
-        --text-color: #374151;
-        --muted-color: #6B7280;
-        --border-color: #E5E7EB;
-        --skill-tag-bg: #FEFCE8;
-        --skill-tag-border: #FEF9C3;
-        --header-bg: #FEFCE8;
+    body.theme-blue {
+        --primary-color: #1a365d; /* Richer Blue */
+        --secondary-color: #4299e1; /* Brighter Blue accent */
+        --heading-color: #1a365d;
+        --text-color: var(--text-color-base);
+        --muted-color: #4a5568;
+        --border-color: #cbd5e0;
+    }
+    body.theme-green {
+        --primary-color: #22543d; /* Forest Green */
+        --secondary-color: #48bb78; /* Fresh Green */
+        --heading-color: #22543d;
+        --text-color: var(--text-color-base);
+        --muted-color: #4a5568;
+        --border-color: #c6f6d5;
+    }
+    body.theme-grey {
+        --primary-color: #2d3748; /* Sophisticated Dark Grey */
+        --secondary-color: #718096; /* Medium Grey */
+        --heading-color: #2d3748;
+        --text-color: var(--text-color-base);
+        --muted-color: #4a5568;
+        --border-color: #e2e8f0;
     }
 
-    /* --- FONT FAMILY DEFINITIONS --- */
-    body.font-roboto-raleway { /* This is the default */ }
-    body.font-lato-merriweather {
-        --font-family-main: 'Lato', sans-serif;
-        --font-family-heading: 'Merriweather', serif;
+    @page {
+        size: A4;
+        margin: 0.8cm 1.2cm; /* Better margins like default template */
+        orphans: 3;
+        widows: 3;
     }
-    body.font-sourcesans-oswald {
-        --font-family-main: 'Source Sans Pro', sans-serif;
-        --font-family-heading: 'Oswald', sans-serif;
-    }
-
-    @page { size: A4; margin: 1.6cm; }
     
     body {
         font-family: var(--font-family-main);
-        font-size: var(--base-font-size); 
+        font-size: var(--base-font-size);
         line-height: var(--line-height);
-        color: var(--text-color); 
+        color: var(--text-color);
         background-color: var(--page-bg-color);
-        margin: 0; padding: 0;
-        -webkit-print-color-adjust: exact; 
+        margin: 0;
+        padding: 0;
+        -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
     }
+    html[lang="ar"] body { direction: rtl; text-align: right; }
+    html[lang="ar"] ul { padding-left: 0; padding-right: 20px; }
 
-    h1, h2 {
-        font-family: var(--font-family-heading);
+    h1, h2, h3 {
         margin: 0;
         color: var(--heading-color);
+        font-family: var(--font-family-heading);
+        page-break-after: avoid;
     }
-    h1 { font-size: var(--h1-font-size); font-weight: 700; margin-bottom: var(--spacing-sm); }
-    h2 {
-        font-size: var(--h2-font-size); 
-        font-weight: 700;
+    h1 {
+        font-size: var(--h1-font-size);
+        text-align: center;
+        margin-bottom: var(--spacing-xs);
+        font-weight: 900;
+        letter-spacing: var(--spacing-xs);
         text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-top: var(--spacing-xl);
-        margin-bottom: var(--spacing-lg);
-        padding-left: var(--spacing-md);
-        padding-bottom: var(--spacing-sm);
-        border-left: 2px solid var(--primary-color);
-        border-bottom: 1px solid var(--border-color);
     }
-    h2:first-of-type { margin-top: var(--spacing-md); }
-    a { color: var(--primary-color); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    
+    h2 {
+        font-size: var(--h2-font-size);
+        color: var(--primary-color);
+        border-bottom: 2px solid var(--primary-color);
+        padding-bottom: var(--spacing-xs);
+        margin-top: var(--section-spacing);
+        margin-bottom: var(--spacing-lg);
+        font-variant: small-caps;
+        letter-spacing: var(--spacing-xs);
+        font-weight: 700;
+    }
+    h2:first-of-type { margin-top: var(--spacing-lg); }
+    h2 i { margin-right: var(--spacing-sm); font-size: 0.95em; }
+    html[lang="ar"] h2 i { margin-right: 0; margin-left: var(--spacing-sm); }
+    h3 {
+        font-size: var(--h3-font-size);
+        color: var(--heading-color);
+        margin-bottom: var(--spacing-xs);
+        font-weight: 700;
+    }
+
+    p { margin: 0 0 var(--spacing-sm) 0; }
+    a { color: var(--secondary-color); text-decoration: none; }
+    a:hover { color: var(--primary-color); text-decoration: underline; }
+    ul { padding-left: 22px; margin-top: 0; margin-bottom: 0.9em; }
+    li { margin-bottom: 0.35em; }
+
     /* --- Header Section --- */
     .resume-header {
-        margin-bottom: var(--spacing-xl);
-        padding: var(--spacing-lg);
-        background-color: var(--header-bg);
-        border-bottom: 1px solid var(--border-color);
+        text-align: center;
+        padding-bottom: 1em;
+        margin-bottom: 1em;
+        border-bottom: 1.5px solid var(--border-color);
     }
 
+    /* Add avatar support while keeping centered layout */
     .header-content-wrapper {
         display: flex;
+        flex-direction: column;
         align-items: center;
-        gap: var(--spacing-lg);
+        gap: var(--spacing-md);
     }
+
     .header-avatar-side {
-        width: 6em; height: 6em;
-        border-radius: 50%; object-fit: cover;
-        flex-shrink: 0; border: 2px solid var(--border-color);
+        width: 6em;
+        height: 6em;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 1px solid var(--primary-color);
+        background: var(--page-bg-color);
+        margin-bottom: var(--spacing-sm);
     }
     .header-text-content {
+        text-align: center;
         width: 100%;
     }
+
     .header-text-content .headline {
-        margin-bottom: var(--spacing-md);
-        color: var(--text-color);
-        font-size: 1.05em;
+        font-family: var(--font-family-main);
+        font-size: var(--headline-font-size);
+        color: var(--muted-color);
+        margin-top: 0.3em;
+        margin-bottom: 1em;
+        font-style: italic;
     }
-    .contact-info {
-        list-style: none; padding: 0; margin: 0;
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: var(--spacing-xs) var(--spacing-lg);
-        font-size: 0.9em;
+    
+    .header-text-content .contact-info {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.6em 1.8em;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        font-size: var(--contact-font-size);
+        color: var(--muted-color);
+        font-family: var(--font-family-sans);
     }
-    .contact-info li, .contact-info i { padding: 0; text-indent: 0; }
-    .contact-info i { color: var(--muted-color); margin-right: var(--spacing-sm); }
+    .header-text-content .contact-info li { display: flex; align-items: center; margin-bottom: 0; }
+    .header-text-content .contact-info i { color: var(--secondary-color); opacity: 0.85; margin-right: 7px; }
+    html[lang="ar"] .header-text-content .contact-info i { margin-right: 0; margin-left: 7px; }
+    .header-text-content .contact-info a { color: var(--muted-color); }
+    .header-text-content .contact-info a:hover { color: var(--primary-color); }
 
     /* --- Main Content Sections --- */
-    .item { margin-bottom: var(--spacing-lg); }
-    .item:last-child { margin-bottom: 0; }
+    .resume-section { margin-bottom: var(--section-spacing); }
+    .item {
+        margin-bottom: var(--item-spacing);
+        page-break-inside: auto;
+        position: relative;
+        padding-left: 28px; /* Space for the timeline */
+    }
+    .item::before { /* Timeline line */
+        content: '';
+        position: absolute;
+        left: 6px;
+        top: 9px;
+        bottom: -9px;
+        width: 1.5px;
+        background: var(--border-color);
+    }
+     .item:last-child::before {
+        display: none; /* Hide line for last item in a section */
+    }
+    .item::after { /* Timeline dot */
+        content: '';
+        position: absolute;
+        left: 0px;
+        top: 7px;
+        width: 13px;
+        height: 13px;
+        background-color: var(--secondary-color);
+        border-radius: 50%;
+        border: 2.5px solid var(--page-bg-color);
+    }
+    html[lang="ar"] .item {
+        padding-left: 0;
+        padding-right: 28px;
+    }
+    html[lang="ar"] .item::before {
+        left: auto;
+        right: 6px;
+    }
+    html[lang="ar"] .item::after {
+        left: auto;
+        right: 0px;
+    }
 
+    .item-header {
+        /* display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        flex-wrap: wrap; */
+        margin-bottom: 0.3em;
+    }
     .item-header-row {
         display: flex;
         justify-content: space-between;
         align-items: baseline;
-        margin-bottom: var(--spacing-xs);
-    }
-    .item-title-org .title {
-        font-family: var(--font-family-heading);
-        font-weight: 600;
-        font-size: 1.05em;
-        color: var(--heading-color);
-    }
-    .item-title-org .organization {
-        color: var(--text-color);
-        margin-left: var(--spacing-sm);
-    }
-    .item-date-location {
-        font-size: 0.9em; color: var(--muted-color);
-        text-align: right; flex-shrink: 0;
-    }
-    
-    /* --- TWO-TIER HIERARCHY IMPLEMENTATION --- */
-    .item .description ul { list-style: none; padding: 0; margin: 0; }
-    .item .description ul li { display: inline; padding: 0; text-indent: 0; margin: 0; }
-    .item .description ul li::before { content: ""; width: 0; margin: 0; }
-    .item .description ul li:not(:last-child)::after { content: "; "; white-space: pre; }
-    .item .description ul li:last-child::after { content: "."; }
-    
-    /* --- Skills Section --- */
-    .skill-group { margin-bottom: var(--spacing-md); }
-    .skill-category-title {
-        font-family: var(--font-family-heading);
-        font-weight: 600;
-        font-size: 1em;
-        margin-bottom: var(--spacing-sm);
-        color: var(--heading-color);
-    }
-    .skill-keywords {
-        list-style: none; padding: 0; margin: 0;
-        display: flex; flex-wrap: wrap;
+        width: 100%;
+        flex-wrap: wrap;
         gap: var(--spacing-sm);
     }
-    .skill-keywords li {
-        font-size: 0.9em;
-        background-color: var(--skill-tag-bg);
-        color: var(--text-color);
-        padding: var(--spacing-xs) var(--spacing-md);
-        border-radius: 2px; /* Sharp corners */
-        border: 1px solid var(--skill-tag-border);
-        margin: 0; padding-left: var(--spacing-md); text-indent: 0;
+    .item-title-org { flex-grow: 1; }
+    .item-title-org .title { 
+        font-size: var(--item-title-font-size); 
+        font-weight: 700; 
+        color: var(--heading-color); 
+        font-family: var(--font-family-sans); 
     }
-    .skill-keywords li::before { content: ""; display: none; }
+    .item-title-org .organization { 
+        font-size: var(--item-org-font-size); 
+        font-style: italic; 
+        color: var(--text-color); 
+        margin-left: 0.6em; 
+    }
+    html[lang="ar"] .item-title-org .organization { margin-left: 0; margin-right: 0.6em; }
+
+    .item-date-location {
+        font-family: var(--font-family-sans);
+        font-size: var(--item-date-font-size);
+        color: var(--muted-color);
+        text-align: right;
+        flex-shrink: 0;
+        margin-left: 1.2em;
+        font-weight: 500;
+    }
+    html[lang="ar"] .item-date-location { text-align: left; margin-left: 0; margin-right: 1.2em; }
+
+    .item .description { 
+        margin-top: 0.5em; 
+        font-size: var(--item-description-font-size); 
+    }
+    .item .description ul { margin-top: 0.4em; margin-bottom: 0; list-style: disc; }
+    .item .description ul li { margin-bottom: 0.25em; }
+
+    /* Skills Section - Enhanced but keeping original structure */
+    .skills-container {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        columns: 2;
+        column-gap: 3em;
+    }
+    .skill-group {
+        margin-bottom: 0.35em;
+        font-size: var(--skill-item-font-size);
+        break-inside: avoid;
+    }
+    .skill-category-title {
+        font-weight: 700;
+        font-family: var(--font-family-sans);
+        margin-top: 0.9em;
+        font-size: var(--skill-category-font-size);
+        color: var(--heading-color);
+    }
+    .skill-category-title:first-child { margin-top: 0; }
+    
+    /* Enhanced skill keywords while keeping original look */
+    .skill-keywords {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.3em;
+    }
+    .skill-keywords li {
+        font-family: var(--font-family-main);
+        color: var(--text-color);
+        font-size: var(--skill-item-font-size);
+        margin-bottom: 0;
+    }
+    .skill-keywords .skill-level {
+        color: var(--muted-color);
+        font-size: var(--skill-level-font-size);
+        margin-left: 7px;
+    }
+    html[lang="ar"] .skill-keywords .skill-level {
+        margin-left: 0;
+        margin-right: 7px;
+    }
 </style>

@@ -1,295 +1,475 @@
 <style>
+        /* --- Base Variables --- */
+        :root {
+            --font-family-main: 'Roboto', 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --font-family-heading: 'Open Sans', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            
+            /* --- Font Size Variables --- */
+            --font-size-sm: 8.5pt;
+            --font-size-md: 10pt;
+            --font-size-lg: 11.5pt;
 
-/*
- * This is a LaTeX-inspired CSS template for a resume.
- * It's designed to be clean, professional, and highly customizable.
- * The structure mimics common LaTeX resume classes, using CSS variables for easy styling.
- * The goal is to provide a "smarter" version of the Monoline Compact template by:
- * - Improving semantic clarity and organization.
- * - Using more standardized and robust CSS practices.
- * - Enhancing the typographical hierarchy and spacing for a more refined look.
- * - Maintaining the core monoline, compact aesthetic while introducing subtle improvements.
- */
+            /* Default to medium font size and spacing */
+            --base-font-size: var(--font-size-md);
+            --h1-font-size: 2.2rem;
+            --h2-font-size: 1.4rem;
+            --h3-font-size: 1.1rem;
 
-:root {
-  /* --- Color Palette (Default: #333333, Slate Gray) --- */
-  --primary-color: #5d6d7e; /* A slightly darker, professional blue-gray */
-  --border-color: #d1d9e2;
-  --heading-color: #2c3e50; /* Dark, professional heading color */
-  --text-color: #333333; /* Standard dark text */
-  --muted-color: #7f8c8d; /* Muted gray for dates and secondary info */
-  --page-bg-color: #ffffff;
+            /* Spacing variables that scale with font size */
+            --spacing-xs: 0.15em;
+            --spacing-sm: 0.25em;
+            --spacing-md: 0.4em;
+            --spacing-lg: 0.6em;
+            --spacing-xl: 0.8em;
 
-  /* --- Font Families (Default: Fira Sans + Merriweather) --- */
-  --font-family-main: 'Fira Sans', sans-serif;
-  --font-family-heading: 'Merriweather', serif;
+            --line-height: 1.3;
+            --border-color-base: #e0e0e0;
+            --skill-tag-bg-base: #e9ecef;
+            --text-color-base: #333;
+            --muted-color-base: #777;
+            --page-bg-color: #ffffff;
+            --header-bg-color-base: #f9f9f9;
+        }
 
-  /* --- Font Size Variables (Compact) --- */
-  --font-size-sm: 9pt;
-  --font-size-md: 10pt;
-  --font-size-lg: 11pt;
+        /* --- Font Size Options with scaled spacing --- */
+        body.font-size-small {
+            --base-font-size: var(--font-size-sm);
+            --h1-font-size: 2rem;
+            --h2-font-size: 1.3rem;
+            --h3-font-size: 1rem;
+            /* Tighter spacing for small fonts */
+            --spacing-xs: 0.1em;
+            --spacing-sm: 0.2em;
+            --spacing-md: 0.3em;
+            --spacing-lg: 0.45em;
+            --spacing-xl: 0.6em;
+            --line-height: 1.25;
+        }
+        body.font-size-large {
+            --base-font-size: var(--font-size-lg);
+            --h1-font-size: 2.4rem;
+            --h2-font-size: 1.5rem;
+            --h3-font-size: 1.2rem;
+            /* More generous spacing for large fonts */
+            --spacing-xs: 0.2em;
+            --spacing-sm: 0.3em;
+            --spacing-md: 0.5em;
+            --spacing-lg: 0.75em;
+            --spacing-xl: 1em;
+            --line-height: 1.35;
+        }
 
-  /* Default to medium font size */
-  --base-font-size: var(--font-size-md);
-  --h1-font-size: 2.2rem;
-  --h2-font-size: 1.15rem;
+        /* --- Theme Definitions --- */
+        /* Default Theme (Dark Blue/Grey) */
+        body.theme-default, :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --text-color: var(--text-color-base);
+            --muted-color: var(--muted-color-base);
+            --border-color: var(--border-color-base);
+            --skill-tag-bg: var(--skill-tag-bg-base);
+            --heading-color: #2c3e50;
+            --header-bg-color: var(--header-bg-color-base);
+        }
+        /* Blue Theme */
+        body.theme-blue {
+            --primary-color: #1a5276;
+            --secondary-color: #5dade2;
+            --text-color: var(--text-color-base);
+            --muted-color: var(--muted-color-base);
+            --border-color: var(--border-color-base);
+            --skill-tag-bg: #d6eaf8;
+            --heading-color: #1a5276;
+            --header-bg-color: #ebf5fb;
+        }
+        /* Green Theme */
+        body.theme-green {
+             --primary-color: #1e8449;
+             --secondary-color: #58d68d;
+             --text-color: var(--text-color-base);
+             --muted-color: var(--muted-color-base);
+             --border-color: var(--border-color-base);
+             --skill-tag-bg: #d4efdf;
+             --heading-color: #1e8449;
+             --header-bg-color: #e8f8f5;
+         }
+         /* Grey Theme */
+         body.theme-grey {
+             --primary-color: #566573;
+             --secondary-color: #85929e;
+             --text-color: var(--text-color-base);
+             --muted-color: #616a71;
+             --border-color: #cacfd2;
+             --skill-tag-bg: #e5e8e8;
+             --heading-color: #34495e;
+             --header-bg-color: #f4f6f6;
+         }
 
-  /* Component-specific font sizes for scaling */
-  --headline-font-size: 1.1rem;
-  --contact-font-size: 0.95rem;
-  --item-title-font-size: 1.05rem;
-  --item-subtitle-font-size: 1.0rem;
-  --item-date-font-size: 0.9rem;
-  --item-description-font-size: 0.95rem;
-  --skill-category-font-size: 0.95rem;
-  --skill-keyword-font-size: 0.9rem;
-
-  /* --- Spacing (Refined Compact) --- */
-  --spacing-xxs: 0.15rem;
-  --spacing-xs: 0.25rem;
-  --spacing-sm: 0.5rem;
-  --spacing-md: 0.8rem;
-  --spacing-lg: 1.2rem;
-  --spacing-xl: 1.8rem;
-
-  --line-height: 1.5;
-}
-
-/* --- FONT SIZE SCALER --- */
-body.font-size-small {
-  --base-font-size: var(--font-size-sm);
-  --line-height: 1.4;
-  --h1-font-size: 2.0rem;
-  --h2-font-size: 1.05rem;
-  --headline-font-size: 1.0rem;
-  --contact-font-size: 0.85rem;
-  --item-title-font-size: 0.95rem;
-  --item-subtitle-font-size: 0.9rem;
-  --item-date-font-size: 0.85rem;
-  --item-description-font-size: 0.9rem;
-  --skill-category-font-size: 0.9rem;
-  --skill-keyword-font-size: 0.85rem;
-}
-body.font-size-large {
-  --base-font-size: var(--font-size-lg);
-  --line-height: 1.6;
-  --h1-font-size: 2.4rem;
-  --h2-font-size: 1.25rem;
-  --headline-font-size: 1.2rem;
-  --contact-font-size: 1.0rem;
-  --item-title-font-size: 1.15rem;
-  --item-subtitle-font-size: 1.1rem;
-  --item-date-font-size: 1.0rem;
-  --item-description-font-size: 1.05rem;
-  --skill-category-font-size: 1.05rem;
-  --skill-keyword-font-size: 1.0rem;
-}
-
-/* --- THEME DEFINITIONS --- */
-body.theme-slate-gray {
-  --primary-color: #5d6d7e;
-  --border-color: #d1d9e2;
-}
-body.theme-burgundy {
-  --primary-color: #88304e;
-  --border-color: #e5b8c6;
-}
-body.theme-forest-green {
-  --primary-color: #2e8b57;
-  --border-color: #b3e0c7;
-}
-body.theme-deep-purple {
-  --primary-color: #6a0dad;
-  --border-color: #d4c1e4;
-}
-
-/* --- FONT FAMILY DEFINITIONS --- */
-body.fira-merriweather {
-  --font-family-main: 'Fira Sans', sans-serif;
-  --font-family-heading: 'Merriweather', serif;
-}
-body.lato-roboto-slab {
-  --font-family-main: 'Lato', sans-serif;
-  --font-family-heading: 'Roboto Slab', serif;
-}
-body.inter-lora {
-  --font-family-main: 'Inter', sans-serif;
-  --font-family-heading: 'Lora', serif;
-}
-body.open-sans-playfair {
-  --font-family-main: 'Open Sans', sans-serif;
-  --font-family-heading: 'Playfair Display', serif;
-}
-
-/* --- BASE STYLES --- */
-@page {
-  size: A4;
-  margin: 1.5cm 1.5cm 1.5cm 1.5cm;
-}
-
-body {
-  font-family: var(--font-family-main);
-  font-size: var(--base-font-size);
-  line-height: var(--line-height);
-  color: var(--text-color);
-  background-color: var(--page-bg-color);
-  margin: 0;
-  padding: 0;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
+        @page {
+            size: A4;
+            margin: 0.5cm 0.8cm; /* Even smaller margins */
+            orphans: 2;
+            widows: 2;
+        }
+        
+        body {
+            font-family: var(--font-family-main);
+            font-size: var(--base-font-size); 
+            line-height: var(--line-height);
+            color: var(--text-color); 
+            background-color: var(--page-bg-color);
+            margin: 0; 
+            padding: 0;
+            -webkit-print-color-adjust: exact; 
+            print-color-adjust: exact;
+        }
+        /* --- Font Family Definitions --- */
+/* Roboto + Open Sans (Default) */
+body.roboto-opensans, :root {
+    --font-family-main: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-family-heading: 'Open Sans', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
 }
 
-h1,
-h2 {
-  font-family: var(--font-family-heading);
-  margin: 0;
-  font-weight: 700;
-  color: var(--heading-color);
-}
-h1 {
-  font-size: var(--h1-font-size);
-  margin-bottom: var(--spacing-sm);
-}
-h2 {
-  font-size: var(--h2-font-size);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1.2px;
-  padding-bottom: var(--spacing-xs);
-  margin-top: var(--spacing-xl);
-  margin-bottom: var(--spacing-md);
-  color: var(--heading-color);
-  position: relative;
-}
-h2::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 1px;
-  background-color: var(--border-color);
-}
-h2:first-of-type {
-  margin-top: 0;
-}
-a {
-  color: var(--primary-color);
-  text-decoration: none;
-  font-weight: 600;
-}
-a:hover {
-  text-decoration: underline;
+/* Inter + Source Sans */
+body.inter-sourcesans {
+    --font-family-main: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-family-heading: 'Source Sans Pro', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
 }
 
-/* --- HEADER SECTION --- */
-.resume-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  margin-bottom: var(--spacing-lg);
-  padding-bottom: var(--spacing-sm);
-  border-bottom: 2px solid var(--primary-color);
+/* Lato + Merriweather */
+body.lato-merriweather {
+    --font-family-main: 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-family-heading: 'Merriweather', 'Lato', Georgia, serif;
 }
 
-.header-text-content {
-  flex-grow: 1;
-}
-.headline {
-  font-size: var(--headline-font-size);
-  color: var(--text-color);
-  margin: 0;
-}
-.contact-info {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  text-align: right;
-  font-size: var(--contact-font-size);
-  color: var(--muted-color);
-}
-.contact-info li {
-  line-height: 1.4;
+/* Nunito + Crimson Text */
+body.nunito-crimson {
+    --font-family-main: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-family-heading: 'Crimson Text', 'Nunito', Georgia, serif;
 }
 
-/* --- MAIN CONTENT SECTIONS --- */
-.item {
-  margin-bottom: var(--spacing-lg);
-}
-.item:last-child {
-  margin-bottom: 0;
-}
+        /* RTL Support */
+        html[lang="ar"] body { direction: rtl; text-align: right; }
+        html[lang="ar"] ul { padding-left: 0; padding-right: 1.2em; }
 
-.item-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: var(--spacing-xxs);
-}
-.item-title-org {
-  flex-grow: 1;
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-}
-.item-title-org .title {
-  font-family: var(--font-family-heading);
-  font-weight: 700;
-  font-size: var(--item-title-font-size);
-  color: var(--heading-color);
-}
-.item-title-org .organization {
-  font-style: italic;
-  font-size: var(--item-subtitle-font-size);
-  color: var(--muted-color);
-  margin-left: var(--spacing-sm);
-}
-.item-date-location {
-  font-size: var(--item-date-font-size);
-  color: var(--muted-color);
-  text-align: right;
-  flex-shrink: 0;
-  white-space: nowrap;
-}
+        h1, h2, h3 {
+            font-family: var(--font-family-heading);
+            margin: 0;
+            color: var(--heading-color); 
+            font-weight: 700;
+        }
+        
+        h1 { 
+            font-size: var(--h1-font-size); 
+            text-align: left; 
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        h2 {
+            font-size: var(--h2-font-size); 
+            color: var(--secondary-color);
+            border-bottom: 1px solid var(--secondary-color);
+            padding-bottom: var(--spacing-xs);
+            margin-top: var(--spacing-lg);
+            margin-bottom: var(--spacing-md);
+        }
+        
+        h2:first-of-type { 
+            margin-top: var(--spacing-sm);
+        }
+        
+        h2 i { 
+            margin-right: var(--spacing-xs); 
+            font-size: 0.9em; 
+        }
+        
+        html[lang="ar"] h2 i { 
+            margin-right: 0; 
+            margin-left: var(--spacing-xs); 
+        }
+        
+        h3 { 
+            font-size: var(--h3-font-size); 
+            color: var(--heading-color); 
+            margin-bottom: var(--spacing-xs);
+            font-weight: 700;
+        }
 
-.item .description {
-  font-size: var(--item-description-font-size);
-  margin-top: var(--spacing-xxs);
-}
-.item .description ul {
-  list-style-type: disc;
-  padding-left: 20px;
-  margin: 0;
-}
-.item .description ul li {
-  margin-bottom: var(--spacing-xxs);
-}
+        p { margin: 0 0 var(--spacing-sm) 0; }
+        a { color: var(--secondary-color); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        ul { 
+            padding-left: 1.2em; 
+            margin-top: var(--spacing-xs); 
+            margin-bottom: var(--spacing-sm);
+        }
+        li { margin-bottom: var(--spacing-xs); }
 
-/* --- SKILLS SECTION (Text-Based) --- */
-.skill-group {
-  margin-bottom: var(--spacing-sm);
-}
-.skill-category-title {
-  font-size: var(--skill-category-font-size);
-  font-weight: 700;
-  color: var(--heading-color);
-  display: inline;
-}
-.skill-category-title::after {
-  content: ": ";
-}
-.skill-keywords {
-  display: inline;
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-.skill-keywords li {
-  display: inline;
-  font-size: var(--skill-keyword-font-size);
-  color: var(--text-color);
-}
-.skill-keywords li:not(:last-child)::after {
-  content: ", ";
-}
-</style>
+        /* Header Section */
+        .resume-header {
+            text-align: left;
+            padding: var(--spacing-md) 0;
+            margin-bottom: var(--spacing-lg);
+            border-bottom: 1px solid var(--border-color);
+        }
+        html[lang="ar"] .resume-header { text-align: right; }
+
+        .header-content-wrapper {
+            display: flex;
+            align-items: center;
+            flex-direction: row;
+            gap: var(--spacing-lg);
+        }
+
+        .header-avatar-side {
+            width: 6em;
+            height: 6em;
+            border-radius: 50%;
+            object-fit: cover;
+            flex-shrink: 0;
+            border: 1px solid var(--secondary-color);
+            background: white;
+        }
+
+        .header-text-content {
+            flex-grow: 1;
+        }
+
+        .header-text-content h1 {
+            margin: 0 0 var(--spacing-xs);
+            color: var(--heading-color);
+            font-weight: 700;
+        }
+        
+        .header-text-content .headline {
+            font-size: 1.05em;
+            margin-bottom: var(--spacing-md);
+            color: var(--muted-color);
+            font-weight: 400;
+        }
+        
+        .header-text-content .contact-info {
+            font-size: 0.9em;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            color: var(--text-color);
+        }
+        
+        .header-text-content .contact-info li {
+            display: inline-block;
+            margin-right: var(--spacing-lg);
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .header-text-content .contact-info li:last-child {
+            margin-right: 0;
+        }
+        
+        .header-text-content .contact-info i {
+            color: var(--secondary-color);
+            margin-right: var(--spacing-xs);
+        }
+        
+        .header-text-content .contact-info a {
+            color: inherit;
+            text-decoration: none;
+        }
+        
+        .header-text-content .contact-info a:hover {
+            color: var(--secondary-color);
+        }
+
+        /* Media query for smaller screens */
+        @media (max-width: 600px) {
+            .header-content-wrapper {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                gap: var(--spacing-md);
+            }
+            
+            .header-avatar-side {
+                width: 7em;
+                height: 7em;
+            }
+        }
+
+        /* Main Content Sections */
+        .resume-section { 
+            margin-bottom: var(--spacing-md);
+            page-break-inside: auto;
+            break-inside: auto;
+        }
+
+        .item {
+            margin-bottom: var(--spacing-md);
+            padding-left: var(--spacing-sm);
+            border-left: 2px solid var(--border-color);
+            page-break-inside: auto;
+            break-inside: auto;
+        }
+        
+        html[lang="ar"] .item {
+             border-left: none;
+             border-right: 2px solid var(--border-color);
+             padding-left: 0;
+             padding-right: var(--spacing-sm);
+        }
+
+        .item:last-child {
+            margin-bottom: 0;
+        }
+
+        .item-header {
+            /* display: flex;
+            justify-content: space-between;
+            align-items: baseline; */
+            margin-bottom: var(--spacing-xs);
+            /* flex-wrap: wrap; */
+            /* gap: var(--spacing-xs); */
+            page-break-after: auto;
+            break-after: auto;
+            page-break-inside: auto;
+            break-inside: auto;
+        }
+
+        .item-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            width: 100%;
+            flex-wrap: wrap;
+            gap: var(--spacing-xs);
+        }
+        
+        .item-title-org { flex-grow: 1; }
+        
+        .item-title-org .title {
+            font-weight: bold;
+            font-size: 1.05em;
+            color: var(--heading-color);
+        }
+        
+        html[lang="ar"] .item-title-org .title {
+            margin-left: var(--spacing-xs);
+        }
+        
+        .item-title-org .organization {
+            font-style: italic;
+            color: var(--muted-color);
+            margin-left: var(--spacing-xs);
+        }
+
+        .item-date-location {
+            font-size: 0.9em;
+            color: var(--muted-color);
+            text-align: right;
+            flex-shrink: 0;
+            margin-left: var(--spacing-sm);
+        }
+        
+        html[lang="ar"] .item-date-location {
+            text-align: left;
+            margin-left: 0;
+            margin-right: var(--spacing-sm);
+        }
+        
+        .item-date-location .date { font-weight: normal; }
+        
+        .item-date-location .location { 
+            margin-left: var(--spacing-sm);
+        }
+        
+        html[lang="ar"] .item-date-location .location {
+            margin-left: 0;
+            margin-right: var(--spacing-sm);
+        }
+
+        .item .description {
+            font-size: 0.95em;
+            color: var(--text-color);
+        }
+        
+        .item .description ul {
+            margin-top: var(--spacing-xs);
+            margin-bottom: var(--spacing-xs);
+            padding-left: 1em;
+        }
+        
+        .item .description ul li {
+            margin-bottom: var(--spacing-xs);
+        }
+
+        /* Skills Section */
+        .skills-container {
+            display: block;
+            page-break-inside: auto;
+            break-inside: auto;
+        }
+        
+        .skill-group {
+            page-break-inside: auto;
+            break-inside: auto;
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .skill-group:last-child {
+            margin-bottom: 0;
+        }
+        
+        .skill-category-title {
+            font-size: 1em;
+            font-weight: bold;
+            color: var(--heading-color);
+            margin-bottom: var(--spacing-xs);
+            page-break-after: auto;
+            break-after: auto;
+        }
+        
+        .skill-keywords {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-xs);
+        }
+        
+        .skill-keywords li {
+            background-color: var(--skill-tag-bg);
+            color: var(--text-color);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: 10px;
+            font-size: 0.85em;
+            margin-bottom: 0;
+        }
+
+        .courses-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            columns: 2;
+            column-gap: var(--spacing-lg);
+            page-break-inside: auto;
+            break-inside: auto;
+        }
+
+        .course-title {
+            font-weight: bold;
+        }
+
+        /* Headers can break naturally */
+        h2 {
+            page-break-after: auto;
+            break-after: auto;
+            page-break-inside: auto;
+            break-inside: auto;
+        }
+
+        /* Natural text flow */
+        p, li {
+            page-break-inside: auto;
+            break-inside: auto;
+        }
+    </style>
