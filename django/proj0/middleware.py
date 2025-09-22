@@ -6,5 +6,5 @@ class CustomXFrameOptionsMiddleware(MiddlewareMixin):
         if request.path.startswith('/site/'):
             response['X-Frame-Options'] = 'ALLOWALL'
         else:
-            response['X-Frame-Options'] = 'DENY'
+            response['X-Frame-Options'] = 'ALLOWALL'
         return response
