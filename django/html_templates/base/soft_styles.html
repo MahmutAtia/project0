@@ -1,0 +1,363 @@
+<style>
+    /*
+     * This is a refined and enhanced version of the "Soft Professional" template.
+     * It maintains your original variable structure and core style, while introducing
+     * subtle improvements to create a more compact, modern, and polished final design.
+     */
+
+    :root {
+        /* --- Color Palette (Pastel Accent) --- */
+        --primary-color: #a9cce3; 
+        --skill-tag-bg: #eaf2f8; 
+        --icon-color: #a9cce3;
+
+        --heading-color: #34495e; 
+        --text-color: #4a4a4a;
+        --muted-color: #888888;
+        --page-bg-color: #ffffff;
+
+        /* --- Font Families (Default: Nunito + Raleway) --- */
+        --font-family-main: 'Nunito', sans-serif;
+        --font-family-heading: 'Raleway', sans-serif;
+        
+        /* --- Font Size Variables --- */
+        --font-size-sm: 9.5pt;
+        --font-size-md: 10.5pt;
+        --font-size-lg: 11.5pt;
+        
+        --base-font-size: var(--font-size-md);
+        --h1-font-size: 2.3rem; /* Slightly more compact */
+        --h2-font-size: 1.2rem; /* Slightly more compact */
+        --h3-font-size: 1.05rem; /* Tighter heading */
+        
+        --headline-font-size: 1.05rem;
+        --contact-font-size: 0.9rem;
+        --item-title-font-size: 1.05rem;
+        --item-date-font-size: 0.9rem;
+        --item-description-font-size: 0.98rem;
+        --skill-category-font-size: 1rem;
+        --skill-keyword-font-size: 0.9rem;
+
+        /* --- Spacing (Compact) --- */
+        --spacing-xs: 0.2rem;
+        --spacing-sm: 0.4rem;
+        --spacing-md: 0.6rem;
+        --spacing-lg: 1.0rem;
+        --spacing-xl: 1.5rem;
+        
+        --line-height: 1.4; /* Slightly tighter for compactness */
+    }
+
+    /* --- Font Size Scaler --- */
+    body.font-size-small {
+        --base-font-size: var(--font-size-sm);
+        --line-height: 1.35;
+        --h1-font-size: 2.1rem;
+        --h2-font-size: 1.1rem;
+        --h3-font-size: 0.95rem;
+        --headline-font-size: 0.95rem;
+        --contact-font-size: 0.85rem;
+        --item-title-font-size: 0.95rem;
+        --item-date-font-size: 0.85rem;
+        --item-description-font-size: 0.95rem;
+        --skill-category-font-size: 0.95rem;
+        --skill-keyword-font-size: 0.85rem;
+    }
+    body.font-size-large {
+        --base-font-size: var(--font-size-lg);
+        --line-height: 1.5;
+        --h1-font-size: 2.5rem;
+        --h2-font-size: 1.3rem;
+        --h3-font-size: 1.1rem;
+        --headline-font-size: 1.15rem;
+        --contact-font-size: 0.95rem;
+        --item-title-font-size: 1.1rem;
+        --item-date-font-size: 0.95rem;
+        --item-description-font-size: 1.05rem;
+        --skill-category-font-size: 1.05rem;
+        --skill-keyword-font-size: 0.95rem;
+    }
+
+    /* --- Theme Definitions --- */
+    body.theme-slate-blue {
+        --primary-color: #a9cce3;
+        --skill-tag-bg: #eaf2f8;
+        --icon-color: var(--primary-color);
+    }
+    body.theme-dusty-rose {
+        --primary-color: #e6b0aa;
+        --skill-tag-bg: #f9ebea;
+        --icon-color: var(--primary-color);
+    }
+    body.theme-sage-green {
+        --primary-color: #a9dfbf;
+        --skill-tag-bg: #eafaf1;
+        --icon-color: var(--primary-color);
+    }
+    body.theme-lavender {
+        --primary-color: #d7bde2;
+        --skill-tag-bg: #f4eef7;
+        --icon-color: var(--primary-color);
+    }
+
+    /* --- Font Family Definitions --- */
+    body.nunito-raleway {
+        --font-family-main: 'Nunito', sans-serif;
+        --font-family-heading: 'Raleway', sans-serif;
+    }
+    body.lato-montserrat {
+        --font-family-main: 'Lato', sans-serif;
+        --font-family-heading: 'Montserrat', sans-serif;
+    }
+    body.inter-poppins {
+        --font-family-main: 'Inter', sans-serif;
+        --font-family-heading: 'Poppins', sans-serif;
+    }
+    body.quicksand-rubik {
+        --font-family-main: 'Quicksand', sans-serif;
+        --font-family-heading: 'Rubik', sans-serif;
+    }
+
+    /* --- Base Styles --- */
+    @page { size: A4; margin: 1.5cm; }
+    
+    body {
+        font-family: var(--font-family-main);
+        font-size: var(--base-font-size); 
+        line-height: var(--line-height);
+        color: var(--text-color); 
+        background-color: var(--page-bg-color);
+        margin: 0; padding: 0;
+        -webkit-print-color-adjust: exact; 
+        print-color-adjust: exact;
+    }
+
+    /* --- Typography --- */
+    h1, h2, h3 {
+        font-family: var(--font-family-heading);
+        margin: 0;
+        font-weight: 600; 
+        color: var(--heading-color);
+    }
+    
+    h1 { 
+        font-size: var(--h1-font-size); 
+        font-weight: 700;
+        margin-bottom: var(--spacing-sm);
+    }
+    
+    h2 {
+        font-size: var(--h2-font-size); 
+        font-weight: 600;
+        color: var(--heading-color);
+        background-color: var(--skill-tag-bg);
+        padding: var(--spacing-sm) var(--spacing-md);
+        margin-top: var(--spacing-lg); /* More compact top margin */
+        margin-bottom: var(--spacing-sm); /* More compact bottom margin */
+        border-radius: 16px; /* A softer, more professional curve */
+        display: inline-block;
+        text-transform: none; 
+        border: none;
+    }
+    
+    h2:first-of-type { 
+        margin-top: var(--spacing-md);
+    }
+    
+    h2 i { 
+        margin-right: var(--spacing-xs); 
+        color: var(--primary-color);
+    }
+    
+    h3 { 
+        font-size: var(--h3-font-size); 
+        color: var(--heading-color); 
+        margin-bottom: var(--spacing-xs);
+        font-weight: 600;
+    }
+
+    p { margin: 0 0 var(--spacing-sm) 0; }
+    a { color: var(--primary-color); text-decoration: none; }
+    a:hover { color: var(--heading-color); text-decoration: none; }
+    
+    ul { 
+        padding-left: 1.4em; 
+        list-style: none;
+        margin-top: var(--spacing-sm);
+        margin-bottom: 0;
+    }
+    
+    ul li { 
+        padding-left: 0;
+        text-indent: -1.4em;
+        margin-bottom: var(--spacing-sm);
+    }
+
+    ul li::before {
+        content: "•"; /* Replaces the en-dash with a clean, classic bullet */
+        color: var(--primary-color);
+        font-weight: bold;
+        display: inline-block; 
+        width: 1.4em;
+        margin-left: -0.2em;
+    }
+
+    /* --- Header Section --- */
+    .resume-header {
+        text-align: left;
+        padding-bottom: var(--spacing-md);
+        margin-bottom: var(--spacing-lg);
+        border: none;
+    }
+
+    .header-content-wrapper {
+        display: flex;
+        align-items: center;
+        flex-direction: row;
+        gap: var(--spacing-xl);
+    }
+
+    .header-avatar-side {
+        width: 6em; /* Slightly more compact */
+        height: 6em;
+        border-radius: 50%;
+        object-fit: cover;
+        flex-shrink: 0;
+        border: 2px solid var(--primary-color); /* A subtle colored ring */
+    }
+
+    .header-text-content .headline {
+        font-size: var(--headline-font-size);
+        margin-bottom: var(--spacing-xs); /* Tighter spacing */
+        color: var(--muted-color);
+    }
+    
+    .header-text-content .contact-info {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .header-text-content .contact-info li {
+        font-size: var(--contact-font-size);
+        display: inline-block;
+        margin-right: var(--spacing-lg);
+        margin-bottom: var(--spacing-xs); /* Tighter spacing */
+        padding-left: 0;
+        text-indent: 0;
+    }
+
+    .header-text-content .contact-info li::before {
+        content: "";
+        display: none;
+    }
+    
+    .header-text-content .contact-info li:last-child { margin-right: 0; }
+    .header-text-content .contact-info i { color: var(--icon-color); margin-right: var(--spacing-xs); }
+    .header-text-content .contact-info a { color: inherit; }
+    .header-text-content .contact-info a:hover { color: var(--primary-color); }
+
+    /* --- Main Content Sections --- */
+    .resume-section { 
+        margin-bottom: var(--spacing-md);
+        page-break-inside: auto;
+    }
+
+    .item {
+        margin-bottom: var(--spacing-lg);
+        padding-left: 0;
+        border-left: none;
+        page-break-inside: auto;
+    }
+    
+    .item:last-child { margin-bottom: 0; }
+
+    .item-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        width: 100%;
+        flex-wrap: wrap;
+        gap: var(--spacing-sm);
+        margin-bottom: var(--spacing-xs);
+    }
+    
+    .item-title-org .title {
+        font-size: var(--item-title-font-size);
+        font-weight: 600;
+        color: var(--heading-color);
+    }
+    
+    .item-title-org .organization {
+        font-style: normal;
+        color: var(--muted-color);
+        margin-left: var(--spacing-sm);
+    }
+
+    .item-date-location {
+        font-size: var(--item-date-font-size);
+        color: var(--muted-color);
+        text-align: right;
+        flex-shrink: 0;
+        white-space: nowrap;
+    }
+    
+    .item-date-location .location { 
+        margin-left: var(--spacing-md);
+    }
+
+    .item .description {
+        font-size: var(--item-description-font-size);
+        color: var(--text-color);
+    }
+    
+    .item .description ul {
+        margin-top: var(--spacing-xs); /* Tighter spacing */
+        padding-left: 1em;
+    }
+    
+    /* --- Skills Section --- */
+    .skill-group {
+        margin-bottom: var(--spacing-md);
+        page-break-inside: avoid;
+    }
+    
+    .skill-category-title {
+        font-size: var(--skill-category-font-size);
+        font-weight: 600;
+        color: var(--heading-color);
+        margin-bottom: var(--spacing-xs); /* Tighter spacing */
+    }
+    
+    .skill-keywords {
+        list-style: none;
+        padding: 0; margin: 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--spacing-xs); /* Tighter spacing */
+    }
+    
+    .skill-keywords li {
+        font-size: var(--skill-keyword-font-size);
+        background-color: var(--skill-tag-bg);
+        color: var(--text-color);
+        padding: var(--spacing-xs) var(--spacing-sm);
+        border-radius: 12px;
+        margin-bottom: 0;
+        padding-left: var(--spacing-sm);
+        text-indent: 0;
+    }
+
+    .skill-keywords li::before {
+        content: "";
+        display: none;
+    }
+
+    /* --- Courses Section --- */
+    .courses-list {
+        columns: 2;
+        column-gap: var(--spacing-xl);
+        padding-left: 0;
+        list-style: none;
+    }
+</style>

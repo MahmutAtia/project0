@@ -352,9 +352,78 @@ def get_font_config(font_family, template_style):
             'css_file': 'fonts-ibmplexsans-ibmplexserif.css',
             'primary': 'IBM Plex Sans',
             'secondary': 'IBM Plex Serif'
+        },
+        'nunito-raleway': {
+            'css_name': 'nunito-raleway',
+            'css_file': 'fonts-nunito-raleway.css',
+            'primary': 'Raleway',
+            'secondary': 'Nunito'
+        },
+        'lato-montserrat': {
+            'css_name': 'lato-montserrat',
+            'css_file': 'fonts-lato-montserrat.css',
+            'primary': 'Montserrat',
+            'secondary': 'Lato'
+        },
+        'quicksand-rubik': {
+            'css_name': 'quicksand-rubik',
+            'css_file': 'fonts-quicksand-rubik.css',
+            'primary': 'Rubik',
+            'secondary': 'Quicksand'
+        },
+        'quicksand-rubik': {
+            'css_name': 'quicksand-rubik',
+            'css_file': 'fonts-quicksand-rubik.css',
+            'primary': 'Rubik',
+            'secondary': 'Quicksand'
+        },
+        'fira-merriweather': {
+            'css_name': 'fira-merriweather',
+            'css_file': 'fonts-fira-merriweather.css',
+            'primary': 'Fira Sans',
+            'secondary': 'Merriweather'
+        },
+        'lato-roboto-slab': {
+            'css_name': 'lato-roboto-slab',
+            'css_file': 'fonts-lato-roboto-slab.css',
+            'primary': 'Lato',
+            'secondary': 'Roboto Slab'
+        },
+        'inter-lora': {
+            'css_name': 'inter-lora',
+            'css_file': 'fonts-inter-lora.css',
+            'primary': 'Inter',
+            'secondary': 'Lora'
+        },
+        'open-sans-playfair': {
+            'css_name': 'open-sans-playfair',
+            'css_file': 'fonts-open-sans-playfair.css',
+            'primary': 'Open Sans',
+            'secondary': 'Playfair Display'
+        },
+        'roboto-raleway': {
+            'css_name': 'roboto-raleway',
+            'css_file': 'fonts-roboto-raleway.css',
+            'primary': 'Roboto',
+            'secondary': 'Raleway'
+        },
+        'sourcesans-oswald': {
+            'css_name': 'sourcesans-oswald',
+            'css_file': 'fonts-sourcesans-oswald.css',
+            'primary': 'Source Sans Pro',
+            'secondary': 'Oswald'
+        },
+        'opensans-montserrat': {
+            'css_name': 'opensans-montserrat',
+            'css_file': 'fonts-opensans-montserrat.css',
+            'primary': 'Open Sans',
+            'secondary': 'Montserrat'
         }
     }
-    
+
+
+
+
     # Default fonts for each template style
     template_defaults = {
         'default': 'roboto-opensans',
@@ -363,8 +432,14 @@ def get_font_config(font_family, template_style):
         'classic': 'crimson-lato',
         'minimal': 'nunitosans-sourceserif',
         'creative': 'poppins-merriweather',
-        'professional': 'inter-poppins'
+        'professional': 'inter-poppins',
+        'soft': 'nunito-raleway',
+        'minimal3': 'fira-merriweather',
+        'minimal2': 'roboto-raleway',
+        'asymmetrical': 'opensans-montserrat'
     }
+
+    
     
     # Use provided font_family or fall back to template default
     if not font_family:
@@ -530,9 +605,27 @@ def get_template_config(template_name):
             'template_style': 'professional',
             'layout_type': 'single_column',
             'use_universal': True
+        },
+        'soft': {
+            'template_style': 'soft',
+            'layout_type': 'single_column',
+            'use_universal': True
+        },
+        'template_minimal3': {
+            'template_style': 'minimal3',
+            'layout_type': 'single_column',
+            'use_universal': True
+        },
+        'template_minimal2': {
+            'template_style': 'minimal2',
+            'layout_type': 'single_column',
+            'use_universal': True
+        },
+        'template_asymmetrical': {
+            'template_style': 'asymmetrical',
+            'layout_type': 'single_column',
+            'use_universal': True
         }
-        
-
     }
     
     return template_configs.get(template_name, {

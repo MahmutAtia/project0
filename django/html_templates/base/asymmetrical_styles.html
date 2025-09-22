@@ -1,27 +1,48 @@
 <style>
-    /* --- Asymmetrical Modern Template --- */
+    /*
+     * --- Asymmetrical Modern Template (Enhanced Version) ---
+     * This version adds font scaling, color themes, and improved two-column
+     * functionality while preserving the original design's core look and feel.
+     */
+
     :root {
         /* --- Color Palette (Sophisticated & Warm) --- */
         --primary-color: #E2703A; /* Burnt Orange accent */
         --heading-color: #2D3A4B; /* Deep Charcoal Blue */
         --text-color: #4A5568; /* Darker Slate Grey for body text */
         --muted-color: #718096; /* Medium Grey for dates/locations */
-        --page-bg-color: #ffffff; /* Clean white background */
-        --border-color: #E0E4E7; /* Light grey for subtle lines */
-        --skill-tag-bg: #F8F4ED; /* Very light warm grey for skill tags */
-        --main-section-border: #F0F2F5; /* A very light grey for the vertical line */
+        --page-bg-color: #ffffff;
+        --border-color: #E0E4E7;
+        --skill-tag-bg: #F8F4ED;
+        --main-section-border: #F0F2F5;
+        --header-bg: #FAFAFA; /* Light gray for a subtle header background */
 
 
         /* --- Font Families (Modern Sans-Serif) --- */
         --font-family-main: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
         --font-family-heading: 'Montserrat', 'Helvetica Neue', Helvetica, Arial, sans-serif;
         
-        /* --- Font Size Variables --- */
-        --base-font-size: 10.5pt;
+        /* --- Font Size Variables (Scalable) --- */
+        --font-size-sm: 9.5pt;
+        --font-size-md: 10.5pt;
+        --font-size-lg: 11.5pt;
+
+        /* Default to medium font size */
+        --base-font-size: var(--font-size-md);
         --h1-font-size: 2.5rem;
         --h2-font-size: 1.2rem;
         --h3-font-size: 1.05rem;
         
+        /* Component-specific font sizes for scaling */
+        --headline-font-size: 1.05rem;
+        --contact-font-size: 0.9em;
+        --item-title-font-size: 1.05em;
+        --item-date-font-size: 0.9em;
+        --item-description-font-size: 0.98em;
+        --skill-category-font-size: 1em;
+        --skill-keyword-font-size: 0.9em;
+
+
         /* --- Spacing (Balanced) --- */
         --spacing-xs: 0.25rem;
         --spacing-sm: 0.5rem;
@@ -32,6 +53,55 @@
         --line-height: 1.5;
     }
 
+    /* --- FONT SIZE SCALER --- */
+    body.font-size-small {
+        --base-font-size: var(--font-size-sm);
+        --h1-font-size: 2.3rem;
+        --h2-font-size: 1.1rem;
+        --h3-font-size: 0.95rem;
+        --line-height: 1.4;
+        --headline-font-size: 0.95rem;
+        --contact-font-size: 0.8em;
+        --item-title-font-size: 0.95em;
+        --item-date-font-size: 0.8em;
+        --item-description-font-size: 0.9em;
+        --skill-category-font-size: 0.9em;
+        --skill-keyword-font-size: 0.85em;
+    }
+    body.font-size-large {
+        --base-font-size: var(--font-size-lg);
+        --h1-font-size: 2.7rem;
+        --h2-font-size: 1.3rem;
+        --h3-font-size: 1.15rem;
+        --line-height: 1.6;
+        --headline-font-size: 1.15rem;
+        --contact-font-size: 1.0em;
+        --item-title-font-size: 1.15em;
+        --item-date-font-size: 1.0em;
+        --item-description-font-size: 1.05em;
+        --skill-category-font-size: 1.1em;
+        --skill-keyword-font-size: 1.0em;
+    }
+
+    /* --- THEME DEFINITIONS --- */
+    body.theme-sophisticated-warm {}
+    body.theme-slate-teal {
+        --primary-color: #0d9488;
+        --heading-color: #1f2937;
+        --text-color: #4b5563;
+        --muted-color: #6b7280;
+        --skill-tag-bg: #e0f2f1;
+        --header-bg: #f8fafc;
+    }
+    body.theme-classic-navy {
+        --primary-color: #1e3a8a;
+        --heading-color: #111827;
+        --text-color: #374151;
+        --muted-color: #9ca3af;
+        --skill-tag-bg: #eff6ff;
+        --header-bg: #f9fbfd;
+    }
+    
     @page {
         size: A4;
         margin: 1.8cm;
@@ -74,8 +144,8 @@
         padding-bottom: var(--spacing-sm);
         margin-top: var(--spacing-xl);
         margin-bottom: var(--spacing-lg);
-        display: inline-block; /* Make underline fit content */
-        border-bottom: 2px solid var(--primary-color); /* Accent underline */
+        display: inline-block;
+        border-bottom: 2px solid var(--primary-color);
     }
     
     h2:first-of-type { 
@@ -84,7 +154,7 @@
     
     h2 i { 
         margin-right: var(--spacing-md); 
-        color: var(--muted-color); /* Icons are muted */
+        color: var(--muted-color);
         font-size: 0.9em;
     }
     
@@ -94,14 +164,17 @@
     
     /* --- Header Section --- */
     .resume-header {
-        text-align: right; /* Aligns header content to the right */
+        text-align: right;
         margin-bottom: var(--spacing-lg);
         padding-bottom: var(--spacing-md);
+        background-color: var(--header-bg);
+        padding: var(--spacing-lg) 1.8cm;
+        margin: 0 -1.8cm var(--spacing-lg) -1.8cm;
     }
 
     .header-content-wrapper {
         display: flex;
-        flex-direction: row-reverse; /* Reverse order for right alignment */
+        flex-direction: row-reverse;
         align-items: center;
         gap: var(--spacing-lg);
     }
@@ -112,20 +185,20 @@
         border-radius: 50%;
         object-fit: cover;
         flex-shrink: 0;
-        border: 3px solid var(--primary-color); /* Stronger border */
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Subtle shadow */
+        border: 3px solid var(--primary-color);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
 
     .header-text-content {
-        flex-grow: 1; /* Allows text to take available space */
+        flex-grow: 1;
     }
 
     .header-text-content .headline {
-        font-size: 1.05em;
+        font-size: var(--headline-font-size);
         margin-top: var(--spacing-sm);
         margin-bottom: var(--spacing-md);
         color: var(--muted-color);
-        font-style: italic; /* Emphasize headline */
+        font-style: italic;
     }
     
     .contact-info {
@@ -133,10 +206,10 @@
         padding: 0;
         margin: 0;
         display: flex;
-        justify-content: flex-end; /* Align contact info to the right */
+        justify-content: flex-end;
         flex-wrap: wrap;
         gap: var(--spacing-xs) var(--spacing-md);
-        font-size: 0.9em;
+        font-size: var(--contact-font-size);
     }
     
     .contact-info li {
@@ -145,7 +218,7 @@
     }
     
     .contact-info i { 
-        color: var(--primary-color); /* Accent color for icons */
+        color: var(--primary-color);
         margin-right: var(--spacing-sm); 
         font-size: 0.95em;
     }
@@ -153,22 +226,22 @@
     /* --- Main Content Sections (with vertical line) --- */
     .resume-body {
         position: relative;
-        padding-left: var(--spacing-lg); /* Space for the vertical line */
+        padding-left: var(--spacing-lg);
     }
 
     .resume-body::before {
         content: '';
         position: absolute;
-        left: 0; /* Position the line at the very left of the body */
+        left: 0;
         top: 0;
         bottom: 0;
-        width: 2px; /* Thickness of the line */
+        width: 2px;
         background-color: var(--main-section-border);
     }
 
     .resume-section { 
         margin-bottom: var(--spacing-md);
-        padding-left: var(--spacing-lg); /* Indent sections to clear the line */
+        padding-left: var(--spacing-lg);
     }
 
     .item {
@@ -185,26 +258,27 @@
     }
     
     .item-title-org .title {
-        font-size: 1.05em;
-        font-weight: 700; /* Stronger title */
+        font-size: var(--item-title-font-size);
+        font-weight: 700;
         color: var(--heading-color);
     }
     
     .item-title-org .organization {
-        font-style: italic; /* Italicize organization */
+        font-style: italic;
         color: var(--text-color);
         margin-left: var(--spacing-sm);
+        font-size: var(--item-subtitle-font-size);
     }
 
     .item-date-location {
-        font-size: 0.9em;
+        font-size: var(--item-date-font-size);
         color: var(--muted-color);
         text-align: right;
         flex-shrink: 0;
     }
     
     .item .description {
-        font-size: 0.98em;
+        font-size: var(--item-description-font-size);
     }
     
     /* --- TWO-TIER HIERARCHY IMPLEMENTATION --- */
@@ -215,25 +289,23 @@
     }
     
     .item .description ul li {
-        display: inline; /* Make list items flow like text */
+        display: inline;
         padding-left: 0;
         text-indent: 0;
         margin-bottom: 0;
     }
 
     .item .description ul li::before {
-        content: ""; /* Removes original bullet styling */
+        content: "";
         width: 0;
         margin-left: 0;
     }
     
-    /* Adds a semicolon after each list item */
     .item .description ul li:not(:last-child)::after {
         content: "; ";
-        white-space: pre; /* Ensures the space is respected */
+        white-space: pre;
     }
     
-    /* Replaces the last semicolon with a period for proper punctuation */
     .item .description ul li:last-child::after {
         content: ".";
     }
@@ -244,11 +316,11 @@
     }
     
     .skill-category-title {
-        font-size: 1em;
+        font-size: var(--skill-category-font-size);
         font-weight: 700;
         color: var(--heading-color);
         margin-bottom: var(--spacing-sm);
-        text-transform: capitalize; /* Just capitalize, not full uppercase */
+        text-transform: capitalize;
     }
     
     .skill-keywords {
@@ -260,7 +332,7 @@
     }
     
     .skill-keywords li {
-        font-size: 0.9em;
+        font-size: var(--skill-keyword-font-size);
         background-color: var(--skill-tag-bg);
         color: var(--text-color);
         padding: var(--spacing-xs) var(--spacing-md);
@@ -278,15 +350,22 @@
 
     /* --- Courses Section --- */
     .courses-list {
-        columns: 2;
-        column-gap: var(--spacing-xl);
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-md) var(--spacing-xl);
         list-style: none;
         padding-left: 0;
+        
+    }
+
+    .courses-list li {
+        padding: 0;
+        text-indent: 0;
     }
 
     .courses-list li::before {
         content: "•";
         color: var(--primary-color);
-        margin-right: var(--spacing-sm);
+        margin-right: var(--spacing-xs);
     }
 </style>

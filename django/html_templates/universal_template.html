@@ -26,6 +26,15 @@
         {% include 'base/creative_styles.html' %}
     {% elif style == 'professional' %}
         {% include 'base/professional_styles.html' %}
+    {% elif style == 'soft' %}
+        {% include 'base/soft_styles.html' %}
+
+    {% elif style == 'asymmetrical' %}
+        {% include 'base/asymmetrical_styles.html' %}
+    {% elif style == 'minimal2' %}
+        {% include 'base/minimal2_styles.html' %}
+    {% elif style == 'minimal3' %}
+        {% include 'base/minimal3_styles.html' %}
     {% else %}
         {% include 'base/default_styles.html' %}
     {% endif %}
