@@ -31,8 +31,12 @@ services:
   api:
     build: ./api
     image: ${DOCKER_USERNAME:-mahmutatia}/proj0_api_image
-    ports:
-      - "580:80"
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1024m
+          memory_swap: 2048m # Total memory (RAM + Swap)
     environment:
       - DEBUG=${DEBUG:-0}
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
@@ -52,7 +56,9 @@ services:
     deploy:
       resources:
         limits:
+          cpus: '2.0'
           memory: 2048m  # Set a 2 GB limit (adjust based on total host RAM and other services)
+          memory_swap: 4096m # Total memory (RAM + Swap)
     depends_on:
       - db
     environment:
@@ -108,7 +114,6 @@ services:
   db:
     image: postgres:16
     environment:
-      # Fixed: Use POSTGRES_* variables (not DJANGO_DB_*)
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
@@ -153,12 +158,16 @@ services:
       - NEXT_PUBLIC_IPDATA_API_KEY=${NEXT_PUBLIC_IPDATA_API_KEY}
       
     image: ${DOCKER_USERNAME:-mahmutatia}/proj0_careerflow_image
-    ports:
-      - "3000:3000"
     depends_on:
       - api
       - django
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1024m
+          memory_swap: 2048m # Total memory (RAM + Swap)
 
 volumes:
   postgres_data:
