@@ -36,7 +36,7 @@ services:
         limits:
           cpus: '1.0'
           memory: 1024m
-          memory_swap: 2048m # Total memory (RAM + Swap)
+          memswap_limit: 2048m # Total memory (RAM + Swap)
     environment:
       - DEBUG=${DEBUG:-0}
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
@@ -58,7 +58,7 @@ services:
         limits:
           cpus: '2.0'
           memory: 2048m  # Set a 2 GB limit (adjust based on total host RAM and other services)
-          memory_swap: 4096m # Total memory (RAM + Swap)
+          memswap_limit: 4096m # Total memory (RAM + Swap)
     depends_on:
       - db
     environment:
@@ -167,7 +167,7 @@ services:
         limits:
           cpus: '1.0'
           memory: 1024m
-          memory_swap: 2048m # Total memory (RAM + Swap)
+          memswap_limit: 2048m # Total memory (RAM + Swap)
 
 volumes:
   postgres_data:
