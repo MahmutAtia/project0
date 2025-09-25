@@ -186,14 +186,28 @@ a:hover {
 .resume-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: flex-end; /* Keeps name and contact info aligned at the bottom */
+  position: relative; /* Essential for positioning the avatar inside */
   margin-bottom: var(--spacing-lg);
   padding-bottom: var(--spacing-sm);
   border-bottom: 2px solid var(--primary-color);
 }
+.header-avatar-side {
+  position: absolute;
+  bottom: var(--spacing-sm);
+  right: 0;
+  width: 10em;
+  height: 10em;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--primary-color);
+  background: white;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
 
 .header-text-content {
   flex-grow: 1;
+  padding-right: 12em;
 }
 .headline {
   font-size: var(--headline-font-size);
