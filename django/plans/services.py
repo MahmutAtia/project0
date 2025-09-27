@@ -14,7 +14,6 @@ from .models import (
     UserSubscription,
     UsageRecord,
     PlanFeatureLimit,
-    PlanPayment,
 )
 
 logger = logging.getLogger(__name__)

@@ -16,11 +16,9 @@ from django.urls import reverse
 from polar_sdk.webhooks import validate_event, WebhookVerificationError
 
 
-from .models import Plan, UserSubscription, PlanPayment, Feature, UsageRecord
+from .models import Plan, UserSubscription, Feature, UsageRecord
 from .serializers import (
     PlanSerializer,
-    UserSubscriptionSerializer,
-    PlanPaymentSerializer,
 )
 from .services import PlanService, UsageService, SubscriptionService  
 import logging

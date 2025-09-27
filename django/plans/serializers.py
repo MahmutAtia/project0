@@ -5,7 +5,6 @@ from .models import (
     PlanFeatureLimit,
     UserSubscription,
     UsageRecord,
-    PlanPayment,
 )
 
 
@@ -42,22 +41,6 @@ class PlanSerializer(serializers.ModelSerializer):
             "features",
             "is_popular",
         ]
-
-
-class PlanPaymentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PlanPayment
-        fields = [
-            "id",
-            "total",
-            "currency",
-            "variant",
-            "status",
-            "token",
-            "created",
-            "modified",
-        ]
-        read_only_fields = ["token", "created", "modified"]
 
 
 class UserSubscriptionSerializer(serializers.ModelSerializer):

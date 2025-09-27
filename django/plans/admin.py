@@ -7,7 +7,6 @@ from .models import (
     PlanFeatureLimit,
     UserSubscription,
     UsageRecord,
-    PlanPayment,
 )
 
 
@@ -120,69 +119,6 @@ class UserSubscriptionAdmin(admin.ModelAdmin):
         )
 
     extend_subscriptions.short_description = "Extend selected subscriptions by 30 days"
-
-
-@admin.register(PlanPayment)
-class PlanPaymentAdmin(admin.ModelAdmin):
-    list_display = [
-        "user",
-        "plan",
-        "total",
-        "variant",
-        "get_status_display",
-        "modified",
-        "created",
-    ]
-    list_filter = ["status", "variant", "plan", "created"]
-    search_fields = ["user__username", "user__email", "description"]
-    readonly_fields = ["created", "modified", "token"]
-
-    actions = ["mark_confirmed", "mark_rejected"]
-
-    def get_status_display(self, obj):
-        colors = {
-            "waiting": "orange",
-            "preauth": "blue",
-            "confirmed": "green",
-            "rejected": "red",
-            "refunded": "purple",
-            "error": "darkred",
-            "input": "gray",
-        }
-        color = colors.get(obj.status, "gray")
-        return format_html(
-            '<span style="color: {}; font-weight: bold;">{}</span>',
-            color,
-            obj.status.upper(),
-        )
-
-    get_status_display.short_description = "Status"
-
-    def mark_confirmed(self, request, queryset):
-        for payment in queryset:
-            if payment.status in ["waiting", "preauth"]:
-                payment.change_status("confirmed")
-                # Create or update subscription
-                from .services import PaymentService
-
-                try:
-                    PaymentService.handle_payment_success(payment)
-                except Exception as e:
-                    self.message_user(
-                        request,
-                        f"Error processing payment {payment.id}: {str(e)}",
-                        level="ERROR",
-                    )
-        self.message_user(request, f"Selected payments were marked as confirmed.")
-
-    mark_confirmed.short_description = "Mark selected payments as confirmed"
-
-    def mark_rejected(self, request, queryset):
-        for payment in queryset:
-            payment.change_status("rejected")
-        self.message_user(request, f"Selected payments were marked as rejected.")
-
-    mark_rejected.short_description = "Mark selected payments as rejected"
 
 
 @admin.register(UsageRecord)
