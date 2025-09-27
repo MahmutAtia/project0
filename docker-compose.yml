@@ -35,10 +35,13 @@ services:
       - "580:80"
 
     volumes:
-      - ./api:/app
+      - ./api:/api
     environment:
-      - DEBUG=${DEBUG:-0}
+      - DEBUG=${DEBUG:-1}
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - GOOGLE_API_KEY_2=${GOOGLE_API_KEY_2}
+      - GOOGLE_API_KEY_3=${GOOGLE_API_KEY_3}
+      - GOOGLE_API_KEY_4=${GOOGLE_API_KEY_4}
       - LANGCHAIN_TRACING_V2=${LANGCHAIN_TRACING_V2:-false}
       - LANGCHAIN_ENDPOINT=${LANGCHAIN_ENDPOINT}
       - LANGCHAIN_API_KEY=${LANGCHAIN_API_KEY}
@@ -52,7 +55,7 @@ services:
     volumes:
       - ./django/static:/app/static
       - ./django/media:/app/media
-      - ./django:app
+      - ./django:/app
     expose:
       - "8000"
     ports:

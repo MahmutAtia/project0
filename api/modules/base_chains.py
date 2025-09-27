@@ -6,7 +6,7 @@ from langchain_core.runnables import (
 from langchain_core.output_parsers import StrOutputParser
 from operator import itemgetter
 
-from .llm import llm_with_alternatives
+from .llm import rotating_llm
 
 
 class BaseChain:
@@ -28,13 +28,13 @@ class BaseChain:
         self.output_parser = output_parser
         self.chain = None
 
-    def build_chain(self, prompt, model="gemini-2.0-flash"):
+    def build_chain(self, prompt):
         """
         Builds the chain of components, connecting inputs, prompt, language model, and output parser.
 
         Returns:
             Runnable: The constructed chain.
         """
-        llm = llm_with_alternatives.with_config(configurable={"model": model})
+        llm = rotating_llm
         self.chain = self.input_chain | prompt | llm | self.output_parser
         return self.chain

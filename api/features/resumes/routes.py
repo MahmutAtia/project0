@@ -38,7 +38,6 @@ class ResumeSectionRequest(BaseModel):
 
 router = APIRouter()
 
-
 @router.post("/edit_section")
 async def edit_section(
     request: ResumeSectionRequest,

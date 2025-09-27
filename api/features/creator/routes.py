@@ -62,7 +62,7 @@ add_routes(
 add_routes(
     router,
     chain_instance.build_chain(
-        create_resume_website_bloks_prompt, model="gemini-2.5-flash"
+        create_resume_website_bloks_prompt
     ),
     path="/create_resume_website_bloks",
     disabled_endpoints=[

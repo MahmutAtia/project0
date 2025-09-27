@@ -36,10 +36,12 @@ services:
         limits:
           cpus: '1.0'
           memory: 1024m
-          memswap_limit: 2048m # Total memory (RAM + Swap)
     environment:
       - DEBUG=${DEBUG:-0}
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - GOOGLE_API_KEY_2=${GOOGLE_API_KEY_2}
+      - GOOGLE_API_KEY_3=${GOOGLE_API_KEY_3}
+      - GOOGLE_API_KEY_4=${GOOGLE_API_KEY_4}
       - LANGCHAIN_TRACING_V2=${LANGCHAIN_TRACING_V2:-false}
       - LANGCHAIN_ENDPOINT=${LANGCHAIN_ENDPOINT}
       - LANGCHAIN_API_KEY=${LANGCHAIN_API_KEY}
@@ -58,7 +60,6 @@ services:
         limits:
           cpus: '2.0'
           memory: 2048m  # Set a 2 GB limit (adjust based on total host RAM and other services)
-          memswap_limit: 4096m # Total memory (RAM + Swap)
     depends_on:
       - db
     environment:
@@ -167,7 +168,6 @@ services:
         limits:
           cpus: '1.0'
           memory: 1024m
-          memswap_limit: 2048m # Total memory (RAM + Swap)
 
 volumes:
   postgres_data:
