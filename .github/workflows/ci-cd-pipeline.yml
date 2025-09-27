@@ -121,6 +121,10 @@ jobs:
             
             echo "--> Pulling latest Docker images..."
             docker compose -f docker-compose.yml pull
+
+            echo "--> Cleaning up old containers to avoid name conflicts..."
+            docker compose -f docker-compose.yml down --remove-orphans || true
+
             
             echo "--> Restarting all services with new images..."
             docker compose -f docker-compose.yml --env-file .env up -d --no-build --remove-orphans --force-recreate
@@ -151,10 +155,8 @@ jobs:
             echo "--> Collecting static files..."
             docker compose -f docker-compose.yml --env-file .env run --rm django python manage.py collectstatic --noinput --clear
             
-            if [ -f "django/script.py" ]; then
-              echo "--> Downloading external assets..."
-              docker compose -f docker-compose.yml --env-file .env run --rm django python script.py
-            fi
+            echo "--> Downloading external assets..."
+            docker compose -f docker-compose.yml --env-file .env run --rm django python script.py
 
             echo "--> Cleaning up unused Docker resources..."
             docker system prune -a -f --volumes
