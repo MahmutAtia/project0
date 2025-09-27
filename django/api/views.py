@@ -932,37 +932,7 @@ def export_user_data(request):
             except:
                 export_data['generated_documents'] = []
             
-            # 4. Subscription Data
             try:
-                from plans.models import UserSubscription, PlanPayment
-                subscriptions = UserSubscription.objects.filter(user=user)
-                export_data['subscriptions'] = []
-                for sub in subscriptions:
-                    sub_data = {
-                        'id': sub.id,
-                        'plan_name': sub.plan.name if sub.plan else None,
-                        'status': sub.status,
-                        'start_date': sub.start_date.isoformat() if sub.start_date else None,
-                        'end_date': sub.end_date.isoformat() if sub.end_date else None,
-                        'auto_renew': sub.auto_renew,
-                        'created_at': sub.created_at.isoformat() if hasattr(sub, 'created_at') else None,
-                    }
-                    export_data['subscriptions'].append(sub_data)
-                
-                # 5. Payment History
-                payments = PlanPayment.objects.filter(user=user)
-                export_data['payments'] = []
-                for payment in payments:
-                    payment_data = {
-                        'id': payment.id,
-                        'amount': str(payment.amount),
-                        'currency': payment.currency,
-                        'status': payment.status,
-                        'payment_method': getattr(payment, 'payment_method', 'unknown'),
-                        'created_at': payment.created_at.isoformat(),
-                    }
-                    export_data['payments'].append(payment_data)
-                
                 # 6. Usage Statistics
                 from plans.models import UsageRecord
                 usage_records = UsageRecord.objects.filter(user=user)
@@ -978,8 +948,6 @@ def export_user_data(request):
                     }
                     export_data['usage_records'].append(usage_data)
             except:
-                export_data['subscriptions'] = []
-                export_data['payments'] = []
                 export_data['usage_records'] = []
             
             # 7. Background Tasks
@@ -1271,9 +1239,9 @@ def delete_user_account(user):
             
             # Delete subscription-related data
             try:
-                from plans.models import UserSubscription, PlanPayment, UsageRecord
+                from plans.models import UserSubscription, UsageRecord
                 UserSubscription.objects.filter(user=user).delete()
-                PlanPayment.objects.filter(user=user).delete()
+
                 UsageRecord.objects.filter(user=user).delete()
             except:
                 pass

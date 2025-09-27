@@ -286,14 +286,6 @@ def get_usage_stats(request):
     )
 
 
-@api_view(["GET"])
-@permission_classes([IsAuthenticated])
-def get_payment_history(request):
-    """Get user's payment history"""
-    payments = PlanPayment.objects.filter(user=request.user).order_by("-created")
-    serializer = PlanPaymentSerializer(payments, many=True)
-    return Response(serializer.data)
-
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])

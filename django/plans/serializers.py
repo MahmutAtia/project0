@@ -43,31 +43,6 @@ class PlanSerializer(serializers.ModelSerializer):
         ]
 
 
-class UserSubscriptionSerializer(serializers.ModelSerializer):
-    plan = PlanSerializer(read_only=True)
-    is_expired = serializers.ReadOnlyField()
-    latest_payment = serializers.SerializerMethodField()
-
-    class Meta:
-        model = UserSubscription
-        fields = [
-            "id",
-            "plan",
-            "status",
-            "start_date",
-            "end_date",
-            "is_expired",
-            "latest_payment",
-            "created_at",
-        ]
-
-    def get_latest_payment(self, obj):
-        payment = (
-            PlanPayment.objects.filter(subscription=obj).order_by("-created").first()
-        )
-        if payment:
-            return PlanPaymentSerializer(payment).data
-        return None
 
 
 class UsageRecordSerializer(serializers.ModelSerializer):
