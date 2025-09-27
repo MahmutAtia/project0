@@ -6,12 +6,19 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.runnables import RunnableLambda
 
 from langchain_google_genai import chat_models as cg
+import random
 
-# Save original
+
+
+# Prevent automatic retries in the Google Gemini client
 _original_chat_with_retry = cg._chat_with_retry
 
 def _no_retry(*args, **kwargs):
-    # Force max_retries=0
+    # Remove max_retries if it exists in kwargs
+    kwargs.pop('max_retries', None) 
+    
+    # Force max_retries=0 by explicitly passing it now
+    # Since it's no longer in kwargs, this is safe.
     return _original_chat_with_retry(*args, max_retries=0, **kwargs)
 
 cg._chat_with_retry = _no_retry
@@ -31,7 +38,6 @@ API_KEYS = [
     os.getenv("GOOGLE_API_KEY_4"),
 ]
 
-print(f"Loaded {API_KEYS} API keys.")   
 key_cycle = itertools.cycle([k for k in API_KEYS if k])
 
 def rotating_gemini(input, config=None, **kwargs):
@@ -39,8 +45,11 @@ def rotating_gemini(input, config=None, **kwargs):
     if config and "configurable" in config:
         model = config["configurable"].get("model")
 
+    # shuffle API keys to distribute usage
+    random.shuffle(API_KEYS)
+
     for i, api_key in enumerate(API_KEYS): # directly iterate over the list
-        print(f"Trying model={model or 'gemini-2.0-flash'} with key {i+1}", flush=True)
+        print(f"Trying model={model or 'gemini-2.0-flash'} with key {api_key[-4:]} )", flush=True)
 
         if not api_key:
             print(f"⚠️ Skipping empty key at position {i+1}", flush=True)
@@ -69,15 +78,3 @@ rotating_llm = RunnableLambda(rotating_gemini)
 
 
 
-# # just give one key for now
-# def rotating_gemini(input, config=None, **kwargs):
-#     model = None
-#     if config and "configurable" in config:
-#         model = config["configurable"].get("model")
-    
-#     api_key = "AIzaSyD0lTb6o6aQ9UVo4fbC0g3KFBBEB2D2zeU"
-#     return ChatGoogleGenerativeAI(
-#         model=model or "gemini-2.0-flash",
-#         google_api_key=api_key,
-#     ).invoke(input, config=config, **kwargs)
-# rotating_llm = RunnableLambda(rotating_gemini)
