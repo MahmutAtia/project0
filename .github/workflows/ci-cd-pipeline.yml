@@ -14,7 +14,7 @@ on:
 env:
   PROJECT_DIR: 'prod' # The directory where the backend code will be deployed.
   FRONTEND_DIR: 'careerflow' # The subdirectory for the frontend code.
-  DOMAIN: 'vbs.attiais.me' # Your application's domain.
+  DOMAIN: 'careerstudio.work' # Your application's domain.
   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
   DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
 
@@ -156,7 +156,7 @@ jobs:
             docker compose -f docker-compose.yml --env-file .env run --rm django python manage.py collectstatic --noinput --clear
             
             echo "--> Downloading external assets..."
-            docker compose -f docker-compose.yml --env-file .env run --rm django python script.py
+            docker compose -f docker-compose.yml --e  nv-file .env run --rm django python script.py
 
             echo "--> Cleaning up unused Docker resources..."
             docker system prune -a -f --volumes
