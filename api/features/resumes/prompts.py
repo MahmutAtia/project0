@@ -5,29 +5,46 @@ import os
 with open(os.path.join(os.path.dirname(__file__), "resume.yaml"), "r") as f:
     yaml_template = f.read()
 
+# yaml_resume_content_template
+with open(os.path.join(os.path.dirname(__file__), "resume_content.yaml"), "r") as f:
+    yaml_resume_content_template = f.read()
+
 template = """  You are a Human Resources professional tasked with modifing a structured YAML file for a resume. The YAML file should be enhanced for professional appeal and include a compelling "about" section.
 
 Instructions:
 
-Extract, Interpret, and Enhance: Extract explicit information, interpret context to infer implicit details (without fabrication), and enhance content for a professional and impactful presentation. Use strong action verbs, quantify achievements where possible (without inventing numbers), use concise language, and focus on impact.
+**1. Extract, Interpret, Enhance (EIE method):**
 
-"about_candidate" Section (Crucial): Create a compelling "about_candidate" section (at least 150 words) that provides a personalized overview of the candidate beyond the resume's factual content. This section should:
-Capture the candidate's personality, motivations, and career aspirations.
-Highlight their unique strengths and what drives them.
+* **Extract**: Collect all explicit details from the resume (experience, education, skills, projects, etc.).
+* **Interpret**: Identify implicit strengths (e.g., leadership, adaptability, industry knowledge). Fill gaps only if strongly implied by the content.
+* **Enhance**: Rewrite with action verbs, results-oriented phrasing, and concise impact statements. Quantify achievements **only when real numbers are present** (never invent).
 
-Use engaging and professional language.
-Synthesize information from the entire resume but avoid simply repeating it. Focus on the "why" behind their choices and experiences.
-Imagine this is a brief personal introduction the candidate would give in a networking setting.
-Data Mapping, Cleaning, and YAML Output: Map extracted and enhanced information to the YAML template. Perform data cleaning (standardizing dates, handling missing data). Output valid YAML.
+---
 
+**2. About Section (≥100 words, compelling, personal):**
 
-Summarization and Objective: Provide a concise, impactful summary and rewrite the objective to be more compelling if needed.
+* Write in a natural, networking-style tone.
+* Include: motivations, values, personality, and career aspirations.
+* Highlight what drives the candidate beyond technical facts.
+* Synthesize key themes from the resume into a narrative of **why** they do the work.
+* Avoid repetition of resume bullet points.
 
-Arrays, Nested Structures, Skill Categorization, and Technologies: Follow previous instructions for handling these elements.
+---
 
-No Fabrication: Do not invent information but enhance and present the candidate's actual experiences and achievements in the best possible light. Try to fill in the missing information as possible.
+**3. Experience & Achievements:**
 
-Simple, Readable, and Impactful Language: Use clear, concise, and professional language throughout.
+* Use **action verbs** (e.g., led, delivered, optimized, implemented, streamlined).
+* Emphasize **impact over tasks** (e.g., “Improved workflow efficiency by redesigning…” instead of “Responsible for workflows”).
+* Keep bullets **1–2 lines max**, with focus on **results, contributions, measurable outcomes**.
+* Align phrasing with **job description keywords** for ATS.
+
+---
+
+**4. Summarization & Objective:**
+
+* Rewrite the **objective** into a forward-looking, compelling statement aligned with the target role.
+* Provide a **short professional summary** (2–3 sentences) that captures expertise, value proposition, and industry focus.
+
 
 # --- YAML Formatting Rules ---
 # 1.  **Quoting:**
@@ -89,19 +106,42 @@ YAML Template:
 
 create_template_last_part = """
 ’’’
-
 Instructions:
 
-Extract, Interpret, and Enhance: Extract explicit information, interpret context to infer implicit details (without fabrication), and enhance content for a professional and impactful presentation. Use strong action verbs, quantify achievements where possible (without inventing numbers), use concise language, and focus on impact.
+**1. Extract, Interpret, Enhance (EIE method):**
 
-"About" Section (Crucial): Create a compelling "about" section (at least 150 words) that provides a personalized overview of the candidate beyond the resume's factual content. This section should:
+* **Extract**: Collect all explicit details from the resume (experience, education, skills, projects, etc.).
+* **Interpret**: Identify implicit strengths (e.g., leadership, adaptability, industry knowledge). Fill gaps only if strongly implied by the content.
+* **Enhance**: Rewrite with action verbs, results-oriented phrasing, and concise impact statements. Quantify achievements **only when real numbers are present** (never invent).
 
-Capture the candidate's personality, motivations, and career aspirations.
-Highlight their unique strengths and what drives them.
-Use engaging and professional language.
-Synthesize information from the entire resume but avoid simply repeating it. Focus on the "why" behind their choices and experiences.
-Imagine this is a brief personal introduction the candidate would give in a networking setting.
-Data Mapping, Cleaning, and YAML Output: Map extracted and enhanced information to the YAML template. Perform data cleaning (standardizing dates, handling missing data). Output valid YAML. Do not use 'N/A' or 'None' or 'null' in the yaml output. Leave fields empty if you do not have the information.
+---
+
+**2. About Section (≥100 words, compelling, personal):**
+
+* Write in a natural, networking-style tone.
+* Include: motivations, values, personality, and career aspirations.
+* Highlight what drives the candidate beyond technical facts.
+* Synthesize key themes from the resume into a narrative of **why** they do the work.
+* Avoid repetition of resume bullet points.
+
+---
+
+**3. Experience & Achievements:**
+
+* Use **action verbs** (e.g., led, delivered, optimized, implemented, streamlined).
+* Emphasize **impact over tasks** (e.g., “Improved workflow efficiency by redesigning…” instead of “Responsible for workflows”).
+* Keep bullets **1–2 lines max**, with focus on **results, contributions, measurable outcomes**.
+* Align phrasing with **job description keywords** for ATS.
+
+---
+
+**4. Summarization & Objective:**
+
+* Rewrite the **objective** into a forward-looking, compelling statement aligned with the target role.
+* Provide a **short professional summary** (2–3 sentences) that captures expertise, value proposition, and industry focus.
+
+
+Perform data cleaning (standardizing dates, handling missing data). Output valid YAML. Do not use 'N/A' or 'None' or 'null' in the yaml output. Leave fields empty if you do not have the information.
 # --- YAML Formatting Rules ---
 # 1.  **Quoting:**
 #     -   For all single-line string values, use double quotes (""). Example: `city: "New York"`
@@ -114,23 +154,15 @@ Data Mapping, Cleaning, and YAML Output: Map extracted and enhanced information 
 #     -   Do not output any YAML comments (`#`).
 #     -   Ensure all keys and values are on the same line unless using a block scalar (`|`).
 
-Summarization and Objective: Provide a concise, impactful summary and rewrite the objective to be more compelling if needed.
-
-Arrays, Nested Structures, Skill Categorization, and Technologies: Follow previous instructions for handling these elements.
-
-No Fabrication: Do not invent information but enhance and present the candidate's actual experiences and achievements in the best possible light. Try to fill in the missing information as possible.
-
-Simple, Readable, and Impactful Language: Use clear, concise, and professional language throughout.
-
-Use primeicons find the icon that best represents the candidate's profession and include it in the primeicon field.
-
 Output all in the {language} language.
 
 ATS Evaluation Result For Candidate Current Resume:
 {ats_result}
 
-Input Resume Text: {input_text}
+Input Resume Text: #You can always benefit from the following text that user provided even if it is not a valid resume:
+{input_text}
 
+If the user did not provide any valid resume or any useful information, please create a basic resume template with placeholder information for basic sections. For example, use "your name", "your email", "your phone number", "your address","job experience 1" erc. as placeholders. Fill just basic sections personal info, education, experience, skills, projects.
 Output YAML:"""
 
 ats_create_resume_prompt = (
@@ -155,15 +187,38 @@ job_desc_template_last_part = """
 
 Instructions:
 
-Extract, Interpret, and Enhance: Extract explicit information, interpret context to infer implicit details (without fabrication), and enhance content for a professional and impactful presentation. Use strong action verbs, quantify achievements where possible (without inventing numbers), use concise language, and focus on impact.
+**1. Extract, Interpret, Enhance (EIE method):**
 
-"About" Section (Crucial): Create a compelling "about" section (at least 100 words) that provides a personalized overview of the candidate beyond the resume's factual content. This section should:
+* **Extract**: Collect all explicit details from the resume (experience, education, skills, projects, etc.).
+* **Interpret**: Identify implicit strengths (e.g., leadership, adaptability, industry knowledge). Fill gaps only if strongly implied by the content.
+* **Enhance**: Rewrite with action verbs, results-oriented phrasing, and concise impact statements. Quantify achievements **only when real numbers are present** (never invent).
 
-Capture the candidate's personality, motivations, and career aspirations.
-Highlight their unique strengths and what drives them.
-Synthesize information from the entire resume but avoid simply repeating it. Focus on the "why" behind their choices and experiences.
-Imagine this is a brief personal introduction the candidate would give in a networking setting.
-Data Mapping, Cleaning, and YAML Output: Map extracted and enhanced information to the YAML template. Perform data cleaning (standardizing dates, handling missing data). Output valid YAML. Do not use 'N/A' or 'None' or 'null' in the yaml output. Leave fields empty if you do not have the information.
+---
+
+**2. About Section (≥100 words, compelling, personal):**
+
+* Write in a natural, networking-style tone.
+* Include: motivations, values, personality, and career aspirations.
+* Highlight what drives the candidate beyond technical facts.
+* Synthesize key themes from the resume into a narrative of **why** they do the work.
+* Avoid repetition of resume bullet points.
+
+---
+
+**3. Experience & Achievements:**
+
+* Use **action verbs** (e.g., led, delivered, optimized, implemented, streamlined).
+* Emphasize **impact over tasks** (e.g., “Improved workflow efficiency by redesigning…” instead of “Responsible for workflows”).
+* Keep bullets **1–2 lines max**, with focus on **results, contributions, measurable outcomes**.
+* Align phrasing with **job description keywords** for ATS.
+
+---
+
+**4. Summarization & Objective:**
+
+* Rewrite the **objective** into a forward-looking, compelling statement aligned with the target role.
+* Provide a **short professional summary** (2–3 sentences) that captures expertise, value proposition, and industry focus.
+
 
 # --- YAML Formatting Rules ---
 # 1.  **Quoting:**
@@ -179,17 +234,6 @@ Data Mapping, Cleaning, and YAML Output: Map extracted and enhanced information 
 #     -   Do not output any YAML comments (`#`).
 #     -   Ensure all keys and values are on the same line unless using a block scalar (`|`).
 
-Summarization and Objective: Provide a concise, impactful summary and rewrite the objective to be more compelling if needed.
-
-Arrays, Nested Structures, Skill Categorization, and Technologies: Follow previous instructions for handling these elements.
-
-No Fabrication: Do not invent information but enhance and present the candidate's actual experiences and achievements in the best possible light. Try to fill in the missing information as possible.
-
-Simple, Readable, and Impactful Language: Use clear, concise, and professional language throughout.
-
-Use primeicons find the icon that best represents the candidate's profession and include it in the primeicon field.
-
-Do not output any comments or and other explanations just the YAML file.
 
 Output all in the {language} language.
 
@@ -201,7 +245,10 @@ job description:
 ATS Evaluation Result For Candidate Current Resume:
 {ats_result}
 
-Input Resume Text: {input_text}
+Input Resume Text: #You can always benefit from the following text that user provided even if it is not a valid resume:
+{input_text}
+
+If the user did not provide any valid resume or any useful information, please create a basic resume template with placeholder information for basic sections. For example, use "your name", "your email", "your phone number", "your address","job experience 1" erc. as placeholders. Fill just basic sections personal info, education, experience, skills, projects.
 Output YAML:"""
 
 ats_job_desc_resume_prompt = (
@@ -217,27 +264,28 @@ ats_job_desc_resume_prompt = (
 
 ats_checker_template = """ You are an Applicant Tracking System (ATS) Resume Evaluator.
 
-Evaluate the candidate's resume against the job description below. Return your analysis in the following format:
+If the input text is not a resume, politely inform the user that the provided text does not appear to be a valid resume and request a proper resume for evaluation. But say you will prepare a AI template to start with according to the provided information, please Sign in with google then click "GO TO Editor" to edit your resume with AI.
+If the input text is a resume, evaluate the candidate's resume against the job description below. Return your analysis in the following format:
 
 ---
 🏆 OVERALL SCORE: [score]/100
 
 🧩 COMPONENT SCORES:
-- Skills Match: [score]/40
-- Experience Relevance: [score]/20
+- Skills Match: [score]/30
+- Experience Relevance: [score]/25
+- Keyword Optimization: [score]/15
 - Education Fit: [score]/10
 - Contact Info & Formatting: [score]/10
-- Keyword Match: [score]/10
-- Overall Language Relevance: [score]/10
+- Language & Clarity: [score]/10
 
 🛠️ STRENGTHS:
-[List key strengths found in the resume, such as strong technical skills, leadership experience, etc.]
+- [Short bullet points of strengths]
 
 ⚠️ WEAKNESSES:
-[List weaknesses or issues found in the resume, such as missing keywords, unclear formatting, or lack of relevant experience.]
+- [Short bullet points of weaknesses]
 
 💡 ADVICE:
-[Give clear and concise advice on how to improve the resume to better match the job description.]
+- [Actionable ATS-focused advice: missing keywords, formatting fixes, quantified results, etc.]
 
 ---
 
@@ -263,28 +311,28 @@ ats_checker_prompt = PromptTemplate.from_template(ats_checker_template)
 
 ats_checker_no_job_desc_template = """You are an ATS Resume Evaluator. A user has uploaded a resume and wants to know how well it would perform in a real-world ATS system.
 
-Evaluate the resume based on general job market standards and the target role (if provided). Return your analysis in the following format:
+If the input text is not a resume, politely inform the user that the provided text does not appear to be a valid resume and request a proper resume for evaluation. But say you will prepare a AI template to start with according to the provided information, please Sign in with google then click "GO TO Editor" to edit your resume with AI.
+If the input text is a resume, evaluate the candidate's resume against the job description below. Return your analysis in the following format:
 ---
 🏆 OVERALL SCORE: [score]/100
 
 🧩 COMPONENT SCORES:
-- Skills Relevance: [score]/30  
-- Experience Quality & Clarity: [score]/20
-- Education & Certifications: [score]/10
-- Formatting & Readability: [score]/20
-- ATS-Friendliness: [score]/10
-- Clarity of Career Direction: [score]/10
-
-🎯 TARGET ROLE: [target_role or "Not specified"]
+- Skills Match: [score]/30
+- Experience Relevance: [score]/25
+- Keyword Optimization: [score]/15
+- Education Fit: [score]/10
+- Contact Info & Formatting: [score]/10
+- Language & Clarity: [score]/10
 
 🛠️ STRENGTHS:
-[List the strongest elements of the resume.]
+- [Short bullet points of strengths]
 
 ⚠️ WEAKNESSES:
-[List the weakest elements or common red flags.]
+- [Short bullet points of weaknesses]
 
 💡 ADVICE:
-[Provide actionable, practical advice for improving the resume.] 
+- [Actionable ATS-focused advice: missing keywords, formatting fixes, quantified results, etc.]
+
 ---
 
 - The output must be maximum 200 words.
@@ -303,4 +351,80 @@ the evaluation output: """
 
 ats_checker_no_job_desc_prompt = PromptTemplate.from_template(
     ats_checker_no_job_desc_template
+)
+
+
+
+########################## Global Update ##########################
+global_edit_first_part = """  You are a Human Resources professional tasked with creating a structured YAML file from a resume. The YAML file should be enhanced for professional appeal and include a compelling "about" section. The resume text is provided below:
+
+YAML Template:
+```yaml
+"""
+
+global_edit_last_part = """
+’’’
+Instructions:
+
+**1. Extract, Interpret, Enhance (EIE method):**
+
+* **Extract**: Collect all explicit details from the resume (experience, education, skills, projects, etc.).
+* **Interpret**: Identify implicit strengths (e.g., leadership, adaptability, industry knowledge). Fill gaps only if strongly implied by the content.
+* **Enhance**: Rewrite with action verbs, results-oriented phrasing, and concise impact statements. Quantify achievements **only when real numbers are present** (never invent).
+
+---
+
+**2. About Section (≥100 words, compelling, personal):**
+
+* Write in a natural, networking-style tone.
+* Include: motivations, values, personality, and career aspirations.
+* Highlight what drives the candidate beyond technical facts.
+* Synthesize key themes from the resume into a narrative of **why** they do the work.
+* Avoid repetition of resume bullet points.
+
+---
+
+**3. Experience & Achievements:**
+
+* Use **action verbs** (e.g., led, delivered, optimized, implemented, streamlined).
+* Emphasize **impact over tasks** (e.g., “Improved workflow efficiency by redesigning…” instead of “Responsible for workflows”).
+* Keep bullets **1–2 lines max**, with focus on **results, contributions, measurable outcomes**.
+* Align phrasing with **job description keywords** for ATS.
+
+---
+
+**4. Summarization & Objective:**
+
+* Rewrite the **objective** into a forward-looking, compelling statement aligned with the target role.
+* Provide a **short professional summary** (2–3 sentences) that captures expertise, value proposition, and industry focus.
+
+
+Perform data cleaning (standardizing dates, handling missing data). Output valid YAML. Do not use 'N/A' or 'None' or 'null' in the yaml output. Leave fields empty if you do not have the information.
+# --- YAML Formatting Rules ---
+# 1.  **Quoting:**
+#     -   For all single-line string values, use double quotes (""). Example: `city: "New York"`
+#     -   If a single-line string value itself contains a double quote ("), use single quotes ('') to wrap it. Example: `name: 'His name is "John"'`
+#     -   For all multi-line strings (like `description` or `about_candidate`), use the literal block scalar (`|`).
+# 2.  **No Escaping:**
+#     -   **Crucial:** Do NOT escape any characters. Do not add backslashes (`\`). YAML handles special characters like `:`, `'`, and `"` correctly when the right quoting style is used.
+# 3.  **Structure:**
+#     -   Strictly follow the indentation and structure of the provided YAML template.
+#     -   Do not output any YAML comments (`#`).
+#     -   Ensure all keys and values are on the same line unless using a block scalar (`|`).
+
+Output all in the same language as the input resume.
+
+
+Input Resume Text: #You can always benefit from the following text that user provided even if it is not a valid resume:
+{input_text}
+
+User Instructions for update: #Please update the resume according to the following instructions. If the instructions are irrelevant or not clear, you can ignore them or make minor adjustments to improve the resume:
+{instructions}
+
+Output YAML:"""
+
+global_edit_prompt = (
+    PromptTemplate.from_template(global_edit_first_part)
+    + yaml_resume_content_template
+    + global_edit_last_part
 )
