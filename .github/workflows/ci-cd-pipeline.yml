@@ -103,6 +103,11 @@ jobs:
             echo "--> Navigating to deployment directory: ${{ env.PROJECT_DIR }}"
             cd ${{ env.PROJECT_DIR }}
 
+
+            echo "--> Listing contents of current directory:"
+            ls -la
+
+
             # Check for and load environment variables from the .env file
             echo "--> Checking for .env file..."
             if [ -f .env ]; then
