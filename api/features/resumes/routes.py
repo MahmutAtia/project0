@@ -26,12 +26,14 @@ class ResumeRequest(BaseModel):
     language: str = ""
     job_description: str = ""
     instructions: str = ""
+    aboutCandidate: str = "" 
 
 
 class ResumeSectionRequest(BaseModel):
     sectionTitle: str
     sectionData: dict
     prompt: str
+    aboutCandidate: str = ""
 
 
 
@@ -54,6 +56,8 @@ async def edit_section(
                 "section_title": request.sectionTitle,
                 "section_yaml": yaml.dump(request.sectionData),
                 "prompt": request.prompt,
+                "about_candidate": request.aboutCandidate or "No context about the candidate was provided."
+
             }
         )
 
@@ -224,11 +228,17 @@ async def global_edit_resume(
     Globally edits a resume based on user instructions.
     """
     try:
+        # The frontend will send a JSON string, so we parse it first.
+        resume_data = json.loads(request.input_text)
+        # Then convert the Python object to a YAML string for the chain.
+        resume_yaml = yaml.dump(resume_data, sort_keys=False)
+
         # Create prompt and call chain
         result = await global_edit_chain.ainvoke(
             {
-                "input_text": request.input_text,
+                "input_text": resume_yaml,
                 "instructions": request.instructions or "the user did not provide any extra instructions",
+                "about_candidate": request.aboutCandidate or "No context about the candidate was provided."
             }
         )
 

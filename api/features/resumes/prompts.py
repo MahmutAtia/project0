@@ -84,6 +84,9 @@ PAY ATTENTION, Quote all strings in the yaml output with double quotes. Use | fo
 PAY ATTENTION to all yaml parsing rules and indentation.
 Do not output any yaml comments in the output.
 
+Here are some information about the candidate that might help you to edit the section and make it more aware of the candidate:
+{about_candidate}
+
 Provided Section yaml to edit:
 ```yaml
 {section_yaml}
@@ -159,10 +162,10 @@ Output all in the {language} language.
 ATS Evaluation Result For Candidate Current Resume:
 {ats_result}
 
-Input Resume Text: #You can always benefit from the following text that user provided even if it is not a valid resume:
+Input Resume Text: #You can always benefit from the following text that user provided even if it does not seem to be a resume:
 {input_text}
 
-If the user did not provide any valid resume or any useful information, please create a basic resume template with placeholder information for basic sections. For example, use "your name", "your email", "your phone number", "your address","job experience 1" erc. as placeholders. Fill just basic sections personal info, education, experience, skills, projects.
+If the user did not provide any thing that looks like a resume or any useful information, please create a basic resume template with placeholder information for basic sections. For example, use "your name", "your email", "your phone number", "your address","job experience 1" erc. as placeholders. Fill just basic sections personal info, education, experience, skills, projects.
 Output YAML:"""
 
 ats_create_resume_prompt = (
@@ -245,10 +248,10 @@ job description:
 ATS Evaluation Result For Candidate Current Resume:
 {ats_result}
 
-Input Resume Text: #You can always benefit from the following text that user provided even if it is not a valid resume:
+Input Resume Text: #You can always benefit from the following text that user provided even if it does not seem to be a resume:
 {input_text}
 
-If the user did not provide any valid resume or any useful information, please create a basic resume template with placeholder information for basic sections. For example, use "your name", "your email", "your phone number", "your address","job experience 1" erc. as placeholders. Fill just basic sections personal info, education, experience, skills, projects.
+If the user did not provide any thing that looks like a resume or any useful information, please create a basic resume template with placeholder information for basic sections. For example, use "your name", "your email", "your phone number", "your address","job experience 1" erc. as placeholders. Fill just basic sections personal info, education, experience, skills, projects.
 Output YAML:"""
 
 ats_job_desc_resume_prompt = (
@@ -264,8 +267,10 @@ ats_job_desc_resume_prompt = (
 
 ats_checker_template = """ You are an Applicant Tracking System (ATS) Resume Evaluator.
 
-If the input text is not a resume, politely inform the user that the provided text does not appear to be a valid resume and request a proper resume for evaluation. But say you will prepare a AI template to start with according to the provided information, please Sign in with google then click "GO TO Editor" to edit your resume with AI.
-If the input text is a resume, evaluate the candidate's resume against the job description below. Return your analysis in the following format:
+If the input text does not seem a  text extracted from resume, output format will be:
+    Politely inform the user that the provided text does not appear to be a resume and request a proper resume for evaluation. But say you will prepare a AI template to start with according to the provided information, please Sign in with google then click "GO TO Editor" to edit your resume with AI.
+
+If the input text is a resume, evaluate the candidate's resume against the job description below. Return your analysis in the following format: **critical** in this case do not output any other text, comments or explanations, only the format below:
 
 ---
 🏆 OVERALL SCORE: [score]/100
@@ -311,8 +316,10 @@ ats_checker_prompt = PromptTemplate.from_template(ats_checker_template)
 
 ats_checker_no_job_desc_template = """You are an ATS Resume Evaluator. A user has uploaded a resume and wants to know how well it would perform in a real-world ATS system.
 
-If the input text is not a resume, politely inform the user that the provided text does not appear to be a valid resume and request a proper resume for evaluation. But say you will prepare a AI template to start with according to the provided information, please Sign in with google then click "GO TO Editor" to edit your resume with AI.
-If the input text is a resume, evaluate the candidate's resume against the job description below. Return your analysis in the following format:
+If the input text does not seem a  text extracted from resume, output format will be:
+    Politely inform the user that the provided text does not appear to be a resume and request a proper resume for evaluation. But say you will prepare a AI template to start with according to the provided information, please Sign in with google then click "GO TO Editor" to edit your resume with AI.
+
+If the input text is a resume, evaluate the candidate's resume against the job description below. Return your analysis in the following format: **critical** in this case do not output any other text, comments or explanations, only the format below:
 ---
 🏆 OVERALL SCORE: [score]/100
 
@@ -414,8 +421,11 @@ Perform data cleaning (standardizing dates, handling missing data). Output valid
 
 Output all in the same language as the input resume.
 
+Here are some information about the candidate that might help you to edit the section and make it more aware of the candidate:
+{about_candidate}
 
-Input Resume Text: #You can always benefit from the following text that user provided even if it is not a valid resume:
+
+Input Resume Text:
 {input_text}
 
 User Instructions for update: #Please update the resume according to the following instructions. If the instructions are irrelevant or not clear, you can ignore them or make minor adjustments to improve the resume:
