@@ -2,6 +2,7 @@
 <section class="resume-section certifications-section">
     <h2>{% if show_icons %}<i class="fas fa-certificate"></i> {% endif %}Certifications</h2>
     {% for cert in certifications %}
+    {% if not cert.hidden %}
     <article class="item">
         <div class="item-header">
             <div class="item-header-row">
@@ -24,6 +25,7 @@
             <div class="description"><p>{{ cert.description }}</p></div>
         {% endif %}
     </article>
+    {% endif %}
     {% endfor %}
 </section>
 {% endif %}

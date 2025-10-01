@@ -5,6 +5,7 @@
         <div class="description">
             <p>
                 {% for interest in interests %}
+                {% if interest.hidden %}{% continue %}{% endif %}
                 {% if interest.keywords %}
                     {% for keyword in interest.keywords %}{{ keyword }}{% if not loop.last %}, {% endif %}{% endfor %}
                 {% elif interest.name %}

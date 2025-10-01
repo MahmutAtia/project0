@@ -2,6 +2,7 @@
 <section class="resume-section experience-section">
     <h2>{% if show_icons %}<i class="fas fa-briefcase"></i> {% endif %}Work Experience</h2>
     {% for job in experience %}
+    {% if not job.hidden %}
     <article class="item">
         <div class="item-header">
             <div class="item-header-row">
@@ -44,6 +45,7 @@
             </div>
         {% endif %}
     </article>
+    {% endif %}
     {% endfor %}
 </section>
 {% endif %}

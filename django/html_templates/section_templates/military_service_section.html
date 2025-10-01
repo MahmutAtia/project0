@@ -2,6 +2,7 @@
 <section class="resume-section military-section">
     <h2>{% if show_icons %}<i class="fas fa-shield-alt"></i> {% endif %}Military Service</h2>
     {% for service in military_service %}
+    {% if not service.hidden %}
     <article class="item">
         <div class="item-header">
             <div class="item-header-row">
@@ -33,6 +34,7 @@
             </div>
         {% endif %}
     </article>
+    {% endif %}
     {% endfor %}
 </section>
 {% endif %}

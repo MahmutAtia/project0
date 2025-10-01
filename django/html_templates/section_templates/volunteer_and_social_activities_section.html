@@ -2,6 +2,7 @@
 <section class="resume-section volunteer-section">
     <h2>{% if show_icons %}<i class="fas fa-hands-helping"></i> {% endif %}Volunteer Experience</h2>
     {% for vol in volunteer_and_social_activities %}
+    {% if not vol.hidden %}
     <article class="item">
         <div class="item-header">
             <div class="item-title-org">
@@ -19,6 +20,7 @@
             <div class="description"><p>{{ vol.description }}</p></div>
         {% endif %}
     </article>
+    {% endif %}
     {% endfor %}
 </section>
 {% endif %}

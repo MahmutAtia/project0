@@ -2,6 +2,7 @@
 <section class="resume-section patents-section">
     <h2>{% if show_icons %}<i class="fas fa-lightbulb"></i> {% endif %}Patents</h2>
     {% for patent in patents %}
+    {% if not patent.hidden %}
     <article class="item">
         <div class="item-header">
             <div class="item-header-row">
@@ -39,6 +40,7 @@
             </div>
         {% endif %}
     </article>
+    {% endif %}
     {% endfor %}
 </section>
 {% endif %}

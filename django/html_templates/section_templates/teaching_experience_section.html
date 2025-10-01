@@ -2,6 +2,7 @@
 <section class="resume-section teaching-section">
     <h2>{% if show_icons %}<i class="fas fa-chalkboard-teacher"></i> {% endif %}Teaching Experience</h2>
     {% for teaching in teaching_experience %}
+    {% if not teaching.hidden %}
     <article class="item">
         <div class="item-header">
             <div class="item-header-row">
@@ -31,7 +32,9 @@
         {% if teaching.description %}
             <div class="description"><p>{{ teaching.description }}</p></div>
         {% endif %}
+
     </article>
+    {% endif %}
     {% endfor %}
 </section>
 {% endif %}

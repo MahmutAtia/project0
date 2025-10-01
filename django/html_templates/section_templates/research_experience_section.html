@@ -2,6 +2,7 @@
 <section class="resume-section research-section">
     <h2>{% if show_icons %}<i class="fas fa-microscope"></i> {% endif %}Research Experience</h2>
     {% for research in research_experience %}
+    {% if not research.hidden %}
     <article class="item">
         <div class="item-header">
             <div class="item-header-row">
@@ -37,6 +38,7 @@
             </div>
         {% endif %}
     </article>
+    {% endif %}
     {% endfor %}
 </section>
 {% endif %}

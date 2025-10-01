@@ -2,6 +2,7 @@
 <section class="resume-section conferences-section">
     <h2>{% if show_icons %}<i class="fas fa-users"></i> {% endif %}Conferences</h2>
     {% for conf in conferences %}
+    {% if not conf.hidden %}
     <article class="item">
         <div class="item-header">
             <div class="item-header-row">
@@ -25,6 +26,7 @@
             </div>
         {% endif %}
     </article>
+    {% endif %}
     {% endfor %}
 </section>
 {% endif %}
