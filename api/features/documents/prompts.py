@@ -67,6 +67,20 @@ Personal information:
 Information about the job and the company:
 {other_info}
 
+Perform data cleaning (standardizing dates, handling missing data). Output valid YAML. Do not use 'N/A' or 'None' or 'null' in the yaml output. Leave fields empty if you do not have the information.
+# --- YAML Formatting Rules ---
+# 1.  **Quoting:**
+#     -   For all single-line string values, use double quotes (""). Example: `city: "New York"`
+#     -   If a single-line string value itself contains a double quote ("), use single quotes ('') to wrap it. Example: `name: 'His name is "John"'`
+#     -   For all multi-line strings (like `description` or `about_candidate`), use the literal block scalar (`|`).
+# 2.  **No Escaping:**
+#     -   **Crucial:** Do NOT escape any characters. Do not add backslashes (`\`). YAML handles special characters like `:`, `'`, and `"` correctly when the right quoting style is used.
+# 3.  **Structure:**
+#     -   Strictly follow the indentation and structure of the provided YAML template.
+#     -   Do not output any YAML comments (`#`).
+#     -   Ensure all keys and values are on the same line unless using a block scalar (`|`).
+
+
 Yaml Output:"""
 
 cover_letter_prompt = PromptTemplate.from_template(cover_letter_template)
@@ -139,6 +153,20 @@ Personal information:
 
 Other information:
 {other_info}
+
+Perform data cleaning (standardizing dates, handling missing data). Output valid YAML. Do not use 'N/A' or 'None' or 'null' in the yaml output. Leave fields empty if you do not have the information.
+# --- YAML Formatting Rules ---
+# 1.  **Quoting:**
+#     -   For all single-line string values, use double quotes (""). Example: `city: "New York"`
+#     -   If a single-line string value itself contains a double quote ("), use single quotes ('') to wrap it. Example: `name: 'His name is "John"'`
+#     -   For all multi-line strings (like `description` or `about_candidate`), use the literal block scalar (`|`).
+# 2.  **No Escaping:**
+#     -   **Crucial:** Do NOT escape any characters. Do not add backslashes (`\`). YAML handles special characters like `:`, `'`, and `"` correctly when the right quoting style is used.
+# 3.  **Structure:**
+#     -   Strictly follow the indentation and structure of the provided YAML template.
+#     -   Do not output any YAML comments (`#`).
+#     -   Ensure all keys and values are on the same line unless using a block scalar (`|`).
+
 Yaml Output:"""
 recommendation_letter_prompt = PromptTemplate.from_template(
     recommendation_letter_template
@@ -207,6 +235,20 @@ Personal information about the applicant:
 Information about the program/scholarship/opportunity:
 {other_info}
 
+Perform data cleaning (standardizing dates, handling missing data). Output valid YAML. Do not use 'N/A' or 'None' or 'null' in the yaml output. Leave fields empty if you do not have the information.
+# --- YAML Formatting Rules ---
+# 1.  **Quoting:**
+#     -   For all single-line string values, use double quotes (""). Example: `city: "New York"`
+#     -   If a single-line string value itself contains a double quote ("), use single quotes ('') to wrap it. Example: `name: 'His name is "John"'`
+#     -   For all multi-line strings (like `description` or `about_candidate`), use the literal block scalar (`|`).
+# 2.  **No Escaping:**
+#     -   **Crucial:** Do NOT escape any characters. Do not add backslashes (`\`). YAML handles special characters like `:`, `'`, and `"` correctly when the right quoting style is used.
+# 3.  **Structure:**
+#     -   Strictly follow the indentation and structure of the provided YAML template.
+#     -   Do not output any YAML comments (`#`).
+#     -   Ensure all keys and values are on the same line unless using a block scalar (`|`).
+
+
 Yaml Output:"""
 
 motivation_letter_prompt = PromptTemplate.from_template(motivation_letter_template)
@@ -225,8 +267,51 @@ Add this field to the yaml output without any comments:
 ```yaml
 feedback_message: "<here short feedback message,max 100 characters>" # Interact with user here. try to help user to understand the changes and what else may be needed. 
 ```
+
+Perform data cleaning (standardizing dates, handling missing data). Output valid YAML. Do not use 'N/A' or 'None' or 'null' in the yaml output. Leave fields empty if you do not have the information.
+# --- YAML Formatting Rules ---
+# 1.  **Quoting:**
+#     -   For all single-line string values, use double quotes (""). Example: `city: "New York"`
+#     -   If a single-line string value itself contains a double quote ("), use single quotes ('') to wrap it. Example: `name: 'His name is "John"'`
+#     -   For all multi-line strings (like `description` or `about_candidate`), use the literal block scalar (`|`).
+# 2.  **No Escaping:**
+#     -   **Crucial:** Do NOT escape any characters. Do not add backslashes (`\`). YAML handles special characters like `:`, `'`, and `"` correctly when the right quoting style is used.
+# 3.  **Structure:**
+#     -   Strictly follow the indentation and structure of the provided YAML template.
+#     -   Do not output any YAML comments (`#`).
+#     -   Ensure all keys and values are on the same line unless using a block scalar (`|`).
+
+
 client prompt:
 {prompt}
 yaml section output:"""
 
 edit_docs_section_prompt = PromptTemplate.from_template(edit_docs_section_template)
+
+global_edit_document_template = """You are a Human Resources professional tasked with globally editing a {document_type} document based on client instructions.
+Your task is to edit the content of the provided yaml document after understanding the client instructions.
+```yaml
+{document_yaml}
+```
+Add this field to the yaml output without any comments:
+```yaml
+feedback_message: "<here short feedback message,max 100 characters>" # Interact with user here. try to help user to understand the changes and what else may be needed.
+```
+Perform data cleaning (standardizing dates, handling missing data). Output valid YAML. Do not use 'N/A' or 'None' or 'null' in the yaml output. Leave fields empty if you do not have the information.
+# --- YAML Formatting Rules ---
+# 1.  **Quoting:**
+#     -   For all single-line string values, use double quotes (""). Example: `city: "New York"`
+#     -   If a single-line string value itself contains a double quote ("), use single quotes ('') to wrap it. Example: `name: 'His name is "John"'`
+#     -   For all multi-line strings (like `description` or `about_candidate`), use the literal block scalar (`|`).
+# 2.  **No Escaping:**
+#     -   **Crucial:** Do NOT escape any characters. Do not add backslashes (`\`). YAML handles special characters like `:`, `'`, and `"` correctly when the right quoting style is used.
+# 3.  **Structure:**
+#     -   Strictly follow the indentation and structure of the provided YAML template.
+#     -   Do not output any YAML comments (`#`).
+#     -   Ensure all keys and values are on the same line unless using a block scalar (`|`).
+
+client prompt:
+{instructions}
+yaml document output:"""
+
+global_edit_document_prompt = PromptTemplate.from_template(global_edit_document_template)
