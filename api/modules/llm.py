@@ -55,11 +55,11 @@ def rotating_gemini(input, config=None, **kwargs):
         try:
             # Get the next key from our global cycle
             current_key = next(key_cycle)
-            print(f"Trying model='{model or 'gemini-2.0-flash'}' with key ending in ...{current_key[-4:]}", flush=True)
+            print(f"Trying model='{model or 'gemini-3.5-flash'}' with key ending in ...{current_key[-4:]}", flush=True)
 
 
             llm = ChatGoogleGenerativeAI(
-                model=model or "gemini-2.0-flash",
+                model="gemini-3.5-flash",
                 google_api_key=current_key,
             )
             return llm.invoke(input, config=config, **kwargs)
