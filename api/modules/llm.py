@@ -59,7 +59,7 @@ def rotating_gemini(input, config=None, **kwargs):
 
 
             llm = ChatGoogleGenerativeAI(
-                model="gemini-3.5-flash",
+                model="gemini-3.1-flash-lite",
                 google_api_key=current_key,
             )
             return llm.invoke(input, config=config, **kwargs)
