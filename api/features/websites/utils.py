@@ -122,7 +122,7 @@ async def generate_website_and_update_django(task_id: str, resume_yaml: str, pre
             generated_website = await create_resume_website_bloks_chain.ainvoke({
                 "resume_yaml": resume_yaml,
                 "preferences": preferences,
-            }, config={"configurable": {"model": "gemini-2.5-pro"}})
+            }, config={"configurable": {"model": "gemini-3-flash-preview"}})
 
             
             # Add a check to ensure the AI returned a valid string
