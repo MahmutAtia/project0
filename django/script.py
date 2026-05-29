@@ -132,8 +132,48 @@ def download_assets():
         'ibmplexsans-ibmplexserif': {
             'name': 'IBM Plex Sans + IBM Plex Serif',
             'url': 'https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;700&family=IBM+Plex+Serif:wght@400;500;700&display=swap'
+        },
+        'nunito-raleway': {
+            'name': 'Nunito + Raleway',
+            'url': 'https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700&family=Raleway:wght@300;400;500;600;700&display=swap'
+        },
+        'lato-montserrat': {
+            'name': 'Lato + Montserrat',
+            'url': 'https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Montserrat:wght@300;400;500;600;700&display=swap'
+        },
+        # Fonts for minimal3
+        'fira-merriweather': {
+            'name': 'Fira Sans + Merriweather',
+            'url': 'https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;700&family=Merriweather:wght@400;700&display=swap'
+        },
+        'lato-roboto-slab': {
+            'name': 'Lato + Roboto Slab',
+            'url': 'https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Roboto+Slab:wght@400;700&display=swap'
+        },
+        'inter-lora': {
+            'name': 'Inter + Lora',
+            'url': 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Lora:wght@400;700&display=swap'
+        },
+        'open-sans-playfair': {
+            'name': 'Open Sans + Playfair Display',
+            'url': 'https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Playfair+Display:wght@400;700&display=swap'
+        },
+        # Fonts for minimal2
+        'roboto-raleway': {
+            'name': 'Roboto + Raleway',
+            'url': 'https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Raleway:wght@400;500;700&display=swap'
+        },
+        'sourcesans-oswald': {
+            'name': 'Source Sans Pro + Oswald',
+            'url': 'https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700&family=Oswald:wght@400;500;700&display=swap'
+        },
+        # Font for asymmetrical
+        'opensans-montserrat': {
+            'name': 'Open Sans + Montserrat',
+            'url': 'https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Montserrat:wght@400;500;600;700&display=swap'
         }
     }
+
 
     # Download font combinations
     for font_key, font_config in font_combinations.items():

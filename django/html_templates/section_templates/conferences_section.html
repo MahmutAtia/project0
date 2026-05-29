@@ -2,16 +2,19 @@
 <section class="resume-section conferences-section">
     <h2>{% if show_icons %}<i class="fas fa-users"></i> {% endif %}Conferences</h2>
     {% for conf in conferences %}
+    {% if not conf.hidden %}
     <article class="item">
         <div class="item-header">
-            <div class="item-title-org">
-                {% if conf.name %}<span class="title">{{ conf.name }}</span>{% endif %}
-            </div>
-            <div class="item-date-location">
-                {% if conf.date %}
-                <span class="date">{{ conf.date }}</span>
-                {% endif %}
-                {% if conf.location %}<span class="location"> | {{ conf.location }}</span>{% endif %}
+            <div class="item-header-row">
+                <div class="item-title-org">
+                    {% if conf.name %}<span class="title">{{ conf.name }}</span>{% endif %}
+                </div>
+                <div class="item-date-location">
+                    {% if conf.date %}
+                    <span class="date">{{ conf.date }}</span>
+                    {% endif %}
+                    {% if conf.location %}<span class="location"> | {{ conf.location }}</span>{% endif %}
+                </div>
             </div>
         </div>
         {% if conf.description %}
@@ -23,6 +26,7 @@
             </div>
         {% endif %}
     </article>
+    {% endif %}
     {% endfor %}
 </section>
 {% endif %}

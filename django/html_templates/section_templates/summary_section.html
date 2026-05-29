@@ -1,6 +1,10 @@
 {% if summary %}
 <section class="resume-section summary-section">
     <h2>{% if show_icons %}<i class="fas fa-user"></i> {% endif %}Professional Summary</h2>
-    <p>{{ summary }}</p>
+    <div class="item">
+        <div class="description">
+            <p>{{ summary }}</p>
+        </div>
+    </div>
 </section>
 {% endif %}

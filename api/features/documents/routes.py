@@ -11,7 +11,8 @@ from .prompts import (
    cover_letter_prompt,
     recommendation_letter_prompt,
     motivation_letter_prompt,
-    edit_docs_section_prompt
+    edit_docs_section_prompt,
+    global_edit_document_prompt
 )
 
 
@@ -30,8 +31,51 @@ class EditDocumentSectionRequest(BaseModel):
     section_data: Dict
     prompt: str
 
+class GlobalEditDocumentRequest(BaseModel):
+    document_data: str  # The full document data as a JSON string
+    document_type: str
+    instructions: str
+
 
 router = APIRouter()
+
+
+
+
+
+
+@router.post("/global_edit")
+async def global_edit_document(
+    request: GlobalEditDocumentRequest,
+    auth_data: dict = Depends(verify_document_edit),
+):
+    """
+    Globally edits a document based on user instructions.
+    """
+    try:
+        # The frontend will send a JSON string, so we parse it first.
+        document_data = yaml.safe_load(request.document_data)
+        # Then convert the Python object to a YAML string for the chain.
+        document_yaml = yaml.dump(document_data, sort_keys=False)
+
+        # Create prompt and call chain
+        chain = chain_instance.build_chain(global_edit_document_prompt)
+        result = await chain.ainvoke(
+            {
+                "document_type": request.document_type,
+                "document_yaml": document_yaml,
+                "instructions": request.instructions,
+            }
+        )
+
+        # Parse the result and return it
+        edited_document = yaml.safe_load(result)
+        return edited_document
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to globally edit document: {str(e)}"
+        )
 
 
 @router.post("/generate")

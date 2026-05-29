@@ -2,19 +2,28 @@
 <section class="resume-section patents-section">
     <h2>{% if show_icons %}<i class="fas fa-lightbulb"></i> {% endif %}Patents</h2>
     {% for patent in patents %}
+    {% if not patent.hidden %}
     <article class="item">
         <div class="item-header">
-            <div class="item-title-org">
-                {% if patent.title %}<span class="title">{{ patent.title }}</span>{% endif %}
-                {% if patent.patent_number %}<span class="organization">Patent #{{ patent.patent_number }}</span>{% endif %}
+            <div class="item-header-row">
+                <div class="item-title-org">
+                    {% if patent.title %}<span class="title">{{ patent.title }}</span>{% endif %}
+                </div>
+                <div class="item-date-location">
+                    {% if patent.filing_date %}
+                    <span class="date">Filed: {{ patent.filing_date }}</span>
+                    {% endif %}
+                </div>
             </div>
-            <div class="item-date-location">
-                {% if patent.filing_date %}
-                <span class="date">Filed: {{ patent.filing_date }}</span>
-                {% endif %}
-                {% if patent.grant_date %}
-                <span class="date"> | Granted: {{ patent.grant_date }}</span>
-                {% endif %}
+            <div class="item-header-row">
+                <div class="item-title-org">
+                    {% if patent.patent_number %}<span class="organization">Patent #{{ patent.patent_number }}</span>{% endif %}
+                </div>
+                <div class="item-date-location">
+                    {% if patent.grant_date %}
+                    <span class="date"> | Granted: {{ patent.grant_date }}</span>
+                    {% endif %}
+                </div>
             </div>
         </div>
         {% if patent.inventors %}
@@ -31,6 +40,7 @@
             </div>
         {% endif %}
     </article>
+    {% endif %}
     {% endfor %}
 </section>
 {% endif %}

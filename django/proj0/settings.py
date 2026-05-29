@@ -28,11 +28,28 @@ SECRET_KEY = "django-insecure-u$04p_1&)e*=o+scbzp4x()8w2er8g1l28_$hep47p&fx5&#wp
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DJANGO_DEBUG", "True") == "True"
 
-# filepath: /home/e-kalite/Documents/careerflow/django/proj0/settings.py
-ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+# Update this with your actual domain(s) in production
+CSRF_TRUSTED_ORIGINS = [origin for origin in os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",") if origin]
+
+ALLOWED_HOSTS = [host for host in os.getenv("DJANGO_ALLOWED_HOSTS", "").split(",") if host]
 if "django" not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append("django")
 
+# Frame options - Allow embedding for generated sites
+X_FRAME_OPTIONS = 'SAMEORIGIN'  # Change from default 'DENY' to allow same-origin framing
+
+if not DEBUG:
+    # 1. Critical: Mark cookies as Secure (HTTPS only)
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    # 2. Critical: Tell Django it is behind an HTTPS proxy
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    # 3. Remove SSL redirect for admin issues
+    # SECURE_SSL_REDIRECT = True
+else:
+    # Development settings - allow HTTP cookies
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
 
 # For development, allow all ngrok subdomains
 if DEBUG:
@@ -74,7 +91,6 @@ INSTALLED_APPS = [
     "accounts",
     "plans",
 ]
-
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -83,7 +99,8 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
-    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # "django.middleware.clickjacking.XFrameOptionsMiddleware",  # Remove this line
+    "proj0.middleware.CustomXFrameOptionsMiddleware",  # Add this line
     "allauth.account.middleware.AccountMiddleware",
 ]
 
@@ -174,8 +191,10 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 
-SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-SESSION_CACHE_ALIAS = "default"
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
+SESSION_COOKIE_AGE = 86400  # 24 hours
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
 
 # Auth Settings

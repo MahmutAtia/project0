@@ -3,8 +3,7 @@ from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
 from decimal import Decimal
 import uuid
-from payments import PurchasedItem
-from payments.models import BasePayment
+
 
 
 class Feature(models.Model):
@@ -124,36 +123,6 @@ class UserSubscription(models.Model):
         from django.utils import timezone
 
         return self.end_date and timezone.now() > self.end_date
-
-
-# Using django-payments for payment handling
-class PlanPayment(BasePayment):
-    """Payment model using django-payments"""
-
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    plan = models.ForeignKey(Plan, on_delete=models.CASCADE)
-    subscription = models.ForeignKey(
-        UserSubscription, on_delete=models.CASCADE, null=True, blank=True
-    )
-
-    # dj -payments fields
-
-    # def get_failure_url(self):
-    #     return f"/plans/payment/failure/{self.id}/"
-
-    # def get_success_url(self):
-    #     return f"/plans/payment/success/{self.id}/"
-
-    # def get_purchased_items(self):
-    #     return [
-    #         PurchasedItem(
-    #             name=f"{self.plan.name} Subscription",
-    #             quantity=1,
-    #             price=self.plan.price,
-    #             currency="USD",
-    #             sku=f"plan-{self.plan.id}",
-    #         )
-    #     ]
 
 
 class UsageRecord(models.Model):

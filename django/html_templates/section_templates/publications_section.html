@@ -2,16 +2,23 @@
 <section class="resume-section publications-section">
     <h2>{% if show_icons %}<i class="fas fa-book"></i> {% endif %}Publications</h2>
     {% for pub in publications %}
+    {% if not pub.hidden %}
     <article class="item">
         <div class="item-header">
-            <div class="item-title-org">
-                {% if pub.title %}<span class="title">{{ pub.title }}</span>{% endif %}
-                {% if pub.publisher %}<span class="organization">{{ pub.publisher }}</span>{% endif %}
+            <div class="item-header-row">
+                <div class="item-title-org">
+                    {% if pub.title %}<span class="title">{{ pub.title }}</span>{% endif %}
+                </div>
+                <div class="item-date-location">
+                    {% if pub.publication_date %}
+                    <span class="date">{{ pub.publication_date }}</span>
+                    {% endif %}
+                </div>
             </div>
-            <div class="item-date-location">
-                {% if pub.publication_date %}
-                <span class="date">{{ pub.publication_date }}</span>
-                {% endif %}
+            <div class="item-header-row">
+                <div class="item-title-org">
+                    {% if pub.publisher %}<span class="organization">{{ pub.publisher }}</span>{% endif %}
+                </div>
             </div>
         </div>
         {% if pub.authors %}
@@ -28,6 +35,7 @@
             </div>
         {% endif %}
     </article>
+    {% endif %}
     {% endfor %}
 </section>
 {% endif %}

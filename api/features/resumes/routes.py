@@ -7,7 +7,7 @@ from .utils import (
     extract_text_from_file,
     generate_resume_and_update_django,
 )
-from .chains import chain_instance,ats_checker_chain, ats_checker_no_job_desc_chain
+from .chains import chain_instance,ats_checker_chain, ats_checker_no_job_desc_chain,global_edit_chain 
 from .prompts import (
     create_resume_prompt,
     edit_resume_section_prompt
@@ -26,18 +26,19 @@ class ResumeRequest(BaseModel):
     language: str = ""
     job_description: str = ""
     instructions: str = ""
+    aboutCandidate: str = "" 
 
 
 class ResumeSectionRequest(BaseModel):
     sectionTitle: str
     sectionData: dict
     prompt: str
+    aboutCandidate: str = ""
 
 
 
 
 router = APIRouter()
-
 
 @router.post("/edit_section")
 async def edit_section(
@@ -55,6 +56,8 @@ async def edit_section(
                 "section_title": request.sectionTitle,
                 "section_yaml": yaml.dump(request.sectionData),
                 "prompt": request.prompt,
+                "about_candidate": request.aboutCandidate or "No context about the candidate was provided."
+
             }
         )
 
@@ -171,6 +174,7 @@ async def ats_checker_and_generate(
     language = form_data.get("targetLanguage", "en")
     target_role = form_data.get("targetRole", "")
     generate_new_resume_flag = form_data.get("generate_new_resume", True)
+    input_method = form_data.get("inputMethod", "upload")  # "upload" or "paste"
 
     # --- 2. Synchronous ATS Check ---
     ats_chain = ats_checker_chain if job_description else ats_checker_no_job_desc_chain
@@ -180,6 +184,7 @@ async def ats_checker_and_generate(
         "target_role": target_role,
         "language": language,
         "user_input_role": target_role,
+        "input_method": input_method
     })
 
 
@@ -211,3 +216,38 @@ async def ats_checker_and_generate(
         "generation_task_id": generation_task_id
     }
 
+
+
+# global edit resume endpoint
+@router.post("/global_edit_resume")
+async def global_edit_resume(
+    request: ResumeRequest,
+    auth_data: dict = Depends(verify_resume_generation),
+):
+    """
+    Globally edits a resume based on user instructions.
+    """
+    try:
+        # The frontend will send a JSON string, so we parse it first.
+        resume_data = json.loads(request.input_text)
+        # Then convert the Python object to a YAML string for the chain.
+        resume_yaml = yaml.dump(resume_data, sort_keys=False)
+
+        # Create prompt and call chain
+        result = await global_edit_chain.ainvoke(
+            {
+                "input_text": resume_yaml,
+                "instructions": request.instructions or "the user did not provide any extra instructions",
+                "about_candidate": request.aboutCandidate or "No context about the candidate was provided."
+            }
+        )
+
+        # return the edited resume content
+        edited_resume = yaml.safe_load(result)
+        return edited_resume
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to globally edit resume: {str(e)}"
+        )
+    
+      

@@ -65,17 +65,19 @@ class Command(BaseCommand):
         ]
 
         created_plans = []
+        updated_plans = []
         for plan_data in plans_data:
-            plan, created = Plan.objects.get_or_create(
-                name=plan_data["name"], defaults=plan_data
+            plan_name = plan_data.pop("name")  # Remove name for defaults
+            plan, created = Plan.objects.update_or_create(
+                name=plan_name, defaults=plan_data
             )
+            
             if created:
                 created_plans.append(plan)
                 self.stdout.write(self.style.SUCCESS(f"Created plan: {plan.name}"))
             else:
-                self.stdout.write(
-                    self.style.WARNING(f"Plan already exists: {plan.name}")
-                )
+                updated_plans.append(plan)
+                self.stdout.write(self.style.SUCCESS(f"Updated plan: {plan.name}"))
 
         # Create feature limits
         feature_limits = {
@@ -111,7 +113,7 @@ class Command(BaseCommand):
                 for feature_code, limit in limits.items():
                     try:
                         feature = Feature.objects.get(code=feature_code)
-                        plan_limit, created = PlanFeatureLimit.objects.get_or_create(
+                        plan_limit, created = PlanFeatureLimit.objects.update_or_create(
                             plan=plan, feature=feature, defaults={"limit": limit}
                         )
 
@@ -119,6 +121,12 @@ class Command(BaseCommand):
                             self.stdout.write(
                                 self.style.SUCCESS(
                                     f"Created limit for {plan.name} - {feature.name}: {limit}"
+                                )
+                            )
+                        else:
+                            self.stdout.write(
+                                self.style.SUCCESS(
+                                    f"Updated limit for {plan.name} - {feature.name}: {limit}"
                                 )
                             )
                     except Feature.DoesNotExist:
@@ -130,6 +138,6 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"Successfully created {len(created_plans)} new plans with feature limits"
+                f"Successfully created {len(created_plans)} and updated {len(updated_plans)} plans."
             )
         )

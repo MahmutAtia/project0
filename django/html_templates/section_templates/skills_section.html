@@ -3,6 +3,7 @@
     <h2>{% if show_icons %}<i class="fas fa-cogs"></i> {% endif %}Skills</h2>
     
     {% for skill_group in skills %}
+    {% if not skill_group.hidden %}
         <div class="skill-group">
             {% if skill_group.category %}
                 <h3 class="skill-category-title">{{ skill_group.category }}</h3>
@@ -17,6 +18,7 @@
                 {% endif %}
             </ul>
         </div>
+    {% endif %}
     {% endfor %}
 </section>
 {% endif %}

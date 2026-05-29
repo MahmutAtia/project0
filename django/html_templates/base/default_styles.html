@@ -322,16 +322,25 @@ body.nunito-crimson {
         }
 
         .item-header {
-            display: flex;
+            /* display: flex;
             justify-content: space-between;
-            align-items: baseline;
+            align-items: baseline; */
             margin-bottom: var(--spacing-xs);
-            flex-wrap: wrap;
-            gap: var(--spacing-xs);
+            /* flex-wrap: wrap; */
+            /* gap: var(--spacing-xs); */
             page-break-after: auto;
             break-after: auto;
             page-break-inside: auto;
             break-inside: auto;
+        }
+
+        .item-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            width: 100%;
+            flex-wrap: wrap;
+            gap: var(--spacing-xs);
         }
         
         .item-title-org { flex-grow: 1; }

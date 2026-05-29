@@ -13,7 +13,7 @@ FRONTEND_REPO="https://github.com/MahmutAtia/proj0_front.git"
 PROJECT_DIR="prod"
 FRONTEND_DIR="careerflow"
 BRANCH="prod2"
-DOMAIN="vbs.attiais.me"
+DOMAIN="careerstudio.work"
 
 # Colors for output
 RED='\033[0;31m'

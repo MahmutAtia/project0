@@ -8,7 +8,6 @@ urlpatterns = [
     path("plans/", views.get_plans, name="api-plans"),
     path("subscription/", views.get_user_subscription, name="user-subscription"),
     path("usage/", views.get_usage_stats, name="usage-stats"),
-    path("payments/", views.get_payment_history, name="payment-history"),
     path("cancel/", views.cancel_subscription, name="cancel-subscription"),
     path("reactivate/", views.reactivate_subscription, name="reactivate-subscription"),
     path("update-plan/", views.update_subscription_plan, name="update-subscription-plan"),

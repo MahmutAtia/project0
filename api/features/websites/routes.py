@@ -53,7 +53,7 @@ async def edit_website_section(
     """
     try:
         # Create prompt and call chain
-        chain = chain_instance.build_chain(edit_website_block_prompt, model="gemini-2.5-flash")
+        chain = chain_instance.build_chain(edit_website_block_prompt)
         result = await chain.ainvoke(
             {
                "current_name": request.block_name,
@@ -62,8 +62,8 @@ async def edit_website_section(
                 "current_js": textwrap.indent(request.current_js, "  "),
                 "prompt": request.prompt,
                 "artifacts": request.artifacts,
-            }
-
+            },
+            config={"configurable": {"model": "gemini-3-flash-preview"}}
         )
         # Parse result
         section_data = yaml.safe_load(result)

@@ -1,0 +1,281 @@
+<style>
+/*
+ * This CSS template is an enhanced, compact, and professionally styled version
+ * of the "Gridline Modern" resume. It now includes scalable fonts, customizable
+ * color themes, and font family options, all integrated without breaking
+ * the existing design.
+ */
+
+:root {
+  /* --- Color Palette (Default: Professional Blues) --- */
+  --primary-color: #3b82f6; /* A clean, professional blue */
+  --heading-color: #1f2937; /* Dark charcoal */
+  --text-color: #4b5563; /* Medium gray for body text */
+  --muted-color: #9ca3af; /* Light gray for dates, locations, etc. */
+  --border-color: #e5e7eb; /* Subtle light gray */
+  --page-bg-color: #ffffff;
+  --header-bg: #f9fafb;
+
+  /* --- Font Families (Default: Inter & Merriweather) --- */
+  --font-family-main: 'Inter', sans-serif;
+  --font-family-heading: 'Merriweather', serif;
+
+  /* --- Font Size Variables (Compact & Scaleable) --- */
+  --base-font-size: 10pt;
+  --h1-font-size: 2.1rem;
+  --h2-font-size: 1.1rem;
+
+  /* Component-specific font sizes */
+  --headline-font-size: 1.1rem;
+  --contact-font-size: 0.95rem;
+  --item-title-font-size: 1.05rem;
+  --item-subtitle-font-size: 0.95rem;
+  --item-date-font-size: 0.9rem;
+  --item-description-font-size: 0.95rem;
+  --skill-category-font-size: 0.95rem;
+  --skill-keyword-font-size: 0.9rem;
+
+  /* --- Spacing (Refined for Compactness) --- */
+  --spacing-xxs: 0.15rem;
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.4rem;
+  --spacing-md: 0.75rem;
+  --spacing-lg: 1.1rem;
+  --spacing-xl: 1.6rem;
+
+  --line-height: 1.4;
+}
+
+/* --- FONT SIZE SCALING --- */
+body.font-size-small {
+  --base-font-size: 9pt;
+  --h1-font-size: 2.0rem;
+  --h2-font-size: 1.0rem;
+  --headline-font-size: 1.0rem;
+  --contact-font-size: 0.9rem;
+  --item-title-font-size: 1.0rem;
+  --item-subtitle-font-size: 0.9rem;
+  --item-date-font-size: 0.85rem;
+  --item-description-font-size: 0.9rem;
+  --skill-category-font-size: 0.9rem;
+  --skill-keyword-font-size: 0.85rem;
+}
+body.font-size-large {
+  --base-font-size: 11pt;
+  --h1-font-size: 2.2rem;
+  --h2-font-size: 1.2rem;
+  --headline-font-size: 1.2rem;
+  --contact-font-size: 1.0rem;
+  --item-title-font-size: 1.1rem;
+  --item-subtitle-font-size: 1.0rem;
+  --item-date-font-size: 0.95rem;
+  --item-description-font-size: 1.0rem;
+  --skill-category-font-size: 1.0rem;
+  --skill-keyword-font-size: 0.95rem;
+}
+
+/* --- THEME DEFINITIONS --- */
+body.theme-professional-blue { /* Default */ }
+body.theme-calm-teal {
+  --primary-color: #14b8a6;
+  --heading-color: #0d9488;
+  --text-color: #374151;
+  --muted-color: #6b7280;
+  --border-color: #ccfbf1;
+}
+body.theme-warm-earth {
+  --primary-color: #f59e0b;
+  --heading-color: #92400e;
+  --text-color: #4b5563;
+  --muted-color: #9ca3af;
+  --border-color: #fef3c7;
+}
+
+/* --- FONT FAMILY DEFINITIONS --- */
+body.roboto-raleway { /* Default */
+  --font-family-main: 'Roboto', sans-serif;
+  --font-family-heading: 'Raleway', sans-serif;
+}
+body.lato-merriweather {
+  --font-family-main: 'Lato', sans-serif;
+  --font-family-heading: 'Merriweather', serif;
+}
+body.sourcesans-oswald {
+  --font-family-main: 'Source Sans Pro', sans-serif;
+  --font-family-heading: 'Oswald', sans-serif;
+}
+
+@page {
+  size: A4;
+  margin: 1.5cm;
+}
+
+body {
+  font-family: var(--font-family-main);
+  font-size: var(--base-font-size);
+  line-height: var(--line-height);
+  color: var(--text-color);
+  background-color: var(--page-bg-color);
+  margin: 0;
+  padding: 0;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+h1,
+h2 {
+  font-family: var(--font-family-heading);
+  margin: 0;
+  color: var(--heading-color);
+}
+h1 {
+  font-size: var(--h1-font-size);
+  font-weight: 700;
+  margin-bottom: var(--spacing-sm);
+}
+h2 {
+  font-size: var(--h2-font-size);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-top: var(--spacing-xl);
+  margin-bottom: var(--spacing-md);
+  position: relative;
+  padding-left: 0.1rem;
+}
+h2::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -4px;
+  width: 100%;
+  height: 1.5px;
+  background-color: var(--border-color);
+}
+h2:first-of-type {
+  margin-top: var(--spacing-md);
+}
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 600;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* --- Header Section --- */
+.resume-header {
+  margin-bottom: var(--spacing-lg);
+}
+.header-content-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--spacing-lg);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 2px solid var(--primary-color);
+}
+
+.header-text-content {
+  flex-grow: 1;
+}
+.header-text-content .headline {
+  font-size: var(--headline-font-size);
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-color);
+}
+.contact-info {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  text-align: right;
+  font-size: var(--contact-font-size);
+  color: var(--muted-color);
+  flex-shrink: 0;
+}
+.contact-info li {
+  line-height: 1.4;
+}
+.contact-info i {
+  display: none;
+}
+.header-avatar-side {
+  display: none;
+}
+
+/* --- Main Content Sections --- */
+.item {
+  margin-bottom: var(--spacing-lg);
+}
+.item:last-child {
+  margin-bottom: 0;
+}
+
+.item-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: var(--spacing-xs);
+}
+.item-title-org .title {
+  font-family: var(--font-family-heading);
+  font-weight: 600;
+  font-size: var(--item-title-font-size);
+  color: var(--heading-color);
+}
+.item-title-org .organization {
+  font-weight: normal;
+  color: var(--text-color);
+  margin-left: var(--spacing-sm);
+  font-size: var(--item-subtitle-font-size);
+}
+.item-date-location {
+  font-size: var(--item-date-font-size);
+  color: var(--muted-color);
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Bulleted list for descriptions */
+.item .description ul {
+  list-style-type: disc;
+  padding-left: 20px;
+  margin: 0;
+}
+.item .description ul li {
+  margin-bottom: var(--spacing-xxs);
+  line-height: 1.35;
+  display: list-item;
+}
+
+/* --- Skills Section --- */
+.skill-group {
+  margin-bottom: var(--spacing-sm);
+}
+.skill-category-title {
+  font-family: var(--font-family-heading);
+  font-weight: 600;
+  font-size: var(--skill-category-font-size);
+  color: var(--heading-color);
+  display: inline;
+}
+.skill-category-title::after {
+  content: ": ";
+}
+.skill-keywords {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: inline;
+}
+.skill-keywords li {
+  display: inline;
+  font-size: var(--skill-keyword-font-size);
+  color: var(--text-color);
+}
+.skill-keywords li:not(:last-child)::after {
+  content: ", ";
+}
+
+</style>
