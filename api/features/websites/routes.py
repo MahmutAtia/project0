@@ -63,7 +63,7 @@ async def edit_website_section(
                 "prompt": request.prompt,
                 "artifacts": request.artifacts,
             },
-            config={"configurable": {"model": "gemini-2.5-flash"}}
+            config={"configurable": {"model": "gemini-3-flash-preview"}}
         )
         # Parse result
         section_data = yaml.safe_load(result)
